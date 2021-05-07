@@ -1,6 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <Description>Web eID authentication token validation library</Description>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageReleaseNotes>Release</PackageReleaseNotes>
+
     <TargetFramework>netstandard2.1</TargetFramework>
     <RootNamespace>WebEID.Security</RootNamespace>
     <AssemblyName>WebEID.Security</AssemblyName>
