@@ -15,10 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Exceptions\" />
-    <Folder Include="Validator\" />
     <Folder Include="Util\" />
-    <Folder Include="Nonce\" />
   </ItemGroup>
 
 </Project>
