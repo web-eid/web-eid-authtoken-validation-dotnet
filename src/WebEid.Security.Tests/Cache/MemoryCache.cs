@@ -4,14 +4,14 @@ namespace WebEID.Security.Tests.Cache
     using Security.Cache;
     using System.Runtime.Caching;
 
-    internal class MemoryCache<T> : ICache<T>
+    internal sealed class MemoryCache<T> : ICache<T>
     {
-        private readonly MemoryCache cacheContent = new MemoryCache("CACHE");
+        private readonly MemoryCache cacheContent = new MemoryCache("test-cache");
         private readonly CacheItemPolicy cacheItemPolicy;
 
         public MemoryCache() : this(DateTimeOffset.MaxValue) { }
 
-        public MemoryCache(TimeSpan cacheItemExpiration): this(DateTimeOffset.Now.Add(cacheItemExpiration)) { }
+        public MemoryCache(TimeSpan cacheItemExpiration) : this(DateTimeOffset.Now.Add(cacheItemExpiration)) { }
 
         public MemoryCache(DateTimeOffset cacheItemExpiration)
         {
