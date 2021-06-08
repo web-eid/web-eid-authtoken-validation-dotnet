@@ -4,7 +4,7 @@ namespace WebEID.Security.Nonce
     using System.Security.Cryptography;
     using Cache;
 
-    public sealed class NonceGeneratorBuilder
+    public class NonceGeneratorBuilder
     {
         private ICache<DateTime> cache;
         private RandomNumberGenerator randomNumberGenerator;
