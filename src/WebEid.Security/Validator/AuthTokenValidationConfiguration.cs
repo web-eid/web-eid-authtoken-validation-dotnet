@@ -1,7 +1,7 @@
 namespace WebEID.Security.Validator
 {
     using System;
-    using System.Collections.ObjectModel;
+    using System.Collections.Generic;
     using System.Linq;
     using System.Security.Cryptography.X509Certificates;
     using Cache;
@@ -18,21 +18,21 @@ namespace WebEID.Security.Validator
         {
             this.SiteOrigin = other.SiteOrigin;
             this.NonceCache = other.NonceCache;
-            this.TrustedCaCertificates = new Collection<X509Certificate>(other.TrustedCaCertificates);
+            this.TrustedCaCertificates = new List<X509Certificate>(other.TrustedCaCertificates);
             this.IsUserCertificateRevocationCheckWithOcspEnabled = other.IsUserCertificateRevocationCheckWithOcspEnabled;
             this.OcspRequestTimeout = other.OcspRequestTimeout;
             this.AllowedClientClockSkew = other.AllowedClientClockSkew;
             this.IsSiteCertificateFingerprintValidationEnabled = other.IsSiteCertificateFingerprintValidationEnabled;
             this.SiteCertificateSha256Fingerprint = other.SiteCertificateSha256Fingerprint;
-            this.DisallowedSubjectCertificatePolicies = new Collection<string>(other.DisallowedSubjectCertificatePolicies);
-            this.NonceDisabledOcspUrls = new Collection<Uri>(other.NonceDisabledOcspUrls);
+            this.DisallowedSubjectCertificatePolicies = new List<string>(other.DisallowedSubjectCertificatePolicies);
+            this.NonceDisabledOcspUrls = new List<Uri>(other.NonceDisabledOcspUrls);
         }
 
         public Uri SiteOrigin { get; set; }
 
         public ICache<DateTime> NonceCache { get; set; }
 
-        public Collection<X509Certificate> TrustedCaCertificates { get; } = new Collection<X509Certificate>();
+        public List<X509Certificate> TrustedCaCertificates { get; } = new List<X509Certificate>();
 
         public bool IsUserCertificateRevocationCheckWithOcspEnabled { get; set; } = true;
 
@@ -52,7 +52,7 @@ namespace WebEID.Security.Validator
             }
         }
 
-        public Collection<string> DisallowedSubjectCertificatePolicies { get; } = new Collection<string>
+        public List<string> DisallowedSubjectCertificatePolicies { get; } = new List<string>
         {
             SubjectCertificatePolicies.EsteidSk2015MobileIdPolicyV1,
             SubjectCertificatePolicies.EsteidSk2015MobileIdPolicyV2,
@@ -60,7 +60,7 @@ namespace WebEID.Security.Validator
             SubjectCertificatePolicies.EsteidSk2015MobileIdPolicy
         };
 
-        public Collection<Uri> NonceDisabledOcspUrls { get; } = new Collection<Uri> { OcspUrls.Esteid2015 };
+        public List<Uri> NonceDisabledOcspUrls { get; } = new List<Uri> { OcspUrls.Esteid2015 };
 
         public void Validate()
         {
