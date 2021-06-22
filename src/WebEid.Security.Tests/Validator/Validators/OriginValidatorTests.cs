@@ -16,7 +16,7 @@ namespace WebEID.Security.Tests.Validator.Validators
         {
             var validator = new OriginValidator(new Uri("https://origin"), null);
             Assert.DoesNotThrow(() =>
-                validator.ValidateOrigin(
+                validator.Validate(
                     new AuthTokenValidatorData(new X509Certificate()) { Origin = "https://origin", Nonce = "", SiteCertificateFingerprint = "" }));
         }
 
@@ -25,7 +25,7 @@ namespace WebEID.Security.Tests.Validator.Validators
         {
             var validator = new OriginValidator(new Uri("https://origin"), null);
             Assert.Throws<OriginMismatchException>(() =>
-                    validator.ValidateOrigin(
+                    validator.Validate(
                         new AuthTokenValidatorData(new X509Certificate()) { Origin = "https://invalid-origin" }))
                 .WithMessage("Origin from the token does not match the configured origin");
         }
@@ -35,7 +35,7 @@ namespace WebEID.Security.Tests.Validator.Validators
         {
             var validator = new OriginValidator(new Uri("https://origin/test"), null);
             Assert.Throws<OriginMismatchException>(() =>
-                    validator.ValidateOrigin(
+                    validator.Validate(
                         new AuthTokenValidatorData(new X509Certificate()) { Origin = "https://origin/test" }))
                 .WithMessage("Origin from the token does not match the configured origin");
         }

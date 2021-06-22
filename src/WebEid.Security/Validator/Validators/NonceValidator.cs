@@ -6,7 +6,7 @@ namespace WebEID.Security.Validator.Validators
     using Microsoft.Extensions.Logging;
     using Nonce;
 
-    public sealed class NonceValidator
+    public sealed class NonceValidator : IValidator
     {
         private readonly ICache<DateTime?> cache;
         private readonly ILogger logger;
@@ -19,10 +19,10 @@ namespace WebEID.Security.Validator.Validators
 
         /// <summary>
         /// Validates that the nonce from the authentication token has the correct length, exists in cache and has not expired.
-        /// throws TokenValidationException when the nonce in the token does not meet the requirements
         /// </summary>
         /// <param name="actualTokenData">authentication token data that contains the nonce</param>
-        public void ValidateNonce(AuthTokenValidatorData actualTokenData)
+        /// <exception cref="TokenValidationException">when the nonce in the token does not meet the requirements</exception>
+        public void Validate(AuthTokenValidatorData actualTokenData)
         {
             var nonceExpirationTime = this.cache.GetAndRemove(actualTokenData.Nonce);
             if (nonceExpirationTime == null)

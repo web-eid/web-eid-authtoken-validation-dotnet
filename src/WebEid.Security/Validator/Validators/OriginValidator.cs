@@ -4,7 +4,7 @@ namespace WebEID.Security.Validator.Validators
     using Exceptions;
     using Microsoft.Extensions.Logging;
 
-    public sealed class OriginValidator
+    public sealed class OriginValidator : IValidator
     {
 
         private readonly Uri expectedOrigin;
@@ -18,10 +18,10 @@ namespace WebEID.Security.Validator.Validators
 
         /// <summary>
         /// Validates that the origin from the authentication token matches with the configured site origin.
-        /// Throws TokenValidationException when origins don't match.
         /// </summary>
         /// <param name="actualTokenData">authentication token data that contains the origin from authentication token</param>
-        public void ValidateOrigin(AuthTokenValidatorData actualTokenData)
+        /// <exception cref="TokenValidationException">when origins don't match</exception>
+        public void Validate(AuthTokenValidatorData actualTokenData)
         {
             try
             {
