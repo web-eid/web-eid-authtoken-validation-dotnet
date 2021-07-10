@@ -3,25 +3,18 @@ namespace WebEID.Security.Tests.Validator
     using Exceptions;
     using NUnit.Framework;
     using Security.Validator;
+    using Security.Validator.Validators;
     using TestUtils;
 
     [TestFixture]
     public class AuthTokenParserTests
     {
-        private string authToken;
-
-        [OneTimeSetUp]
-        public void OneTimeSetUp()
-        {
-            this.authToken = new ResourceReader("WebEID.Security.Tests.Validator").GetBytes("AuthToken.txt")
-                .ToUtf8String();
-        }
-
         [Test]
         public void PopulateDataFromClaimsFillsCorrectDataAndValidationDoesNotFailFromValidToken()
         {
-            var parser = new AuthTokenParser(this.authToken, null);
+            var parser = new AuthTokenParser(Tokens.Signed, null);
             var data = parser.ParseHeaderFromTokenStringAndValidateTokenSignature();
+            data.ValidateCertificatePurpose();
             parser.ParseClaims();
             parser.PopulateDataFromClaims(data);
             Assert.AreEqual("12345678123456781234567812345678", data.Nonce, "Nonce");
@@ -38,45 +31,28 @@ namespace WebEID.Security.Tests.Validator
         [Test]
         public void ParseHeaderFromTokenStringWithMissingX5CFieldThrowsTokenParseException()
         {
-            var invalidAuthToken =
-                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
-            var parser = new AuthTokenParser(invalidAuthToken, null);
+            var parser = new AuthTokenParser(Tokens.X5CMissing, null);
             Assert.Throws<TokenParseException>(() => parser.ParseHeaderFromTokenStringAndValidateTokenSignature());
         }
 
         [Test]
         public void ParseHeaderFromTokenStringWithIncorrectX5CValueThrowsTokenParseException()
         {
-            var invalidAuthToken =
-                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsIng1YyI6InNvbWUgdmFsdWUifQ.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
-            var parser = new AuthTokenParser(invalidAuthToken, null);
+            var parser = new AuthTokenParser(Tokens.X5CNotString, null);
             Assert.Throws<TokenParseException>(() => parser.ParseHeaderFromTokenStringAndValidateTokenSignature());
         }
 
         [Test]
         public void ParseHeaderFromTokenStringWithIncorrectX5CListValueThrowsTokenParseException()
         {
-            var invalidAuthToken =
-                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsIng1YyI6W119.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
-            var parser = new AuthTokenParser(invalidAuthToken, null);
+            var parser = new AuthTokenParser(Tokens.X5CNotArray, null);
             Assert.Throws<TokenParseException>(() => parser.ParseHeaderFromTokenStringAndValidateTokenSignature());
         }
 
         [Test]
-        public void ParseHeaderFromTokenStringWithX5CNullValueThrowsTokenParseException()
+        public void ParseHeaderFromTokenStringWithX5CEmptyValueThrowsTokenParseException()
         {
-            var invalidAuthToken =
-                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsIng1YyI6bnVsbH0.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
-            var parser = new AuthTokenParser(invalidAuthToken, null);
-            Assert.Throws<TokenParseException>(() => parser.ParseHeaderFromTokenStringAndValidateTokenSignature());
-        }
-
-        [Test]
-        public void ParseHeaderFromTokenStringWithX5CListNotStringValueThrowsTokenParseException()
-        {
-            var invalidAuthToken =
-                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsIng1YyI6WzFdfQ.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
-            var parser = new AuthTokenParser(invalidAuthToken, null);
+            var parser = new AuthTokenParser(Tokens.X5CEmpty, null);
             Assert.Throws<TokenParseException>(() => parser.ParseHeaderFromTokenStringAndValidateTokenSignature());
         }
     }

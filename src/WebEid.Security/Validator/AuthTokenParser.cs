@@ -96,7 +96,7 @@ namespace WebEID.Security.Validator
                     ValidateTokenReplay = false,
                     ValidateIssuer = false,
                     ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new ECDsaSecurityKey(publicKey)
+                    IssuerSigningKey = new ECDsaSecurityKey(publicKey) // Should be some generic key
                 };
 
                 new JwtSecurityTokenHandler().ValidateToken(authToken, validationParameters, out _);
