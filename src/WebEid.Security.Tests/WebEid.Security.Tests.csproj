@@ -11,11 +11,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Validator\AuthToken.txt" />
+    <None Remove="Resources\ESTEID2018.cer" />
+    <None Remove="Resources\TEST_of_ESTEID2018.cer" />
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Validator\AuthToken.txt" />
+    <EmbeddedResource Include="Resources\ESTEID2018.cer" />
+    <EmbeddedResource Include="Resources\TEST_of_ESTEID2018.cer" />
   </ItemGroup>
 
   <ItemGroup>
