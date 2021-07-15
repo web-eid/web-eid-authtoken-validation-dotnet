@@ -1,5 +1,6 @@
-namespace WebEID.Security.Tests.Validator.Validators
+namespace WebEid.Security.Tests.Validator.Validators
 {
+    using System;
     using System.Security.Cryptography;
     using System.Security.Cryptography.X509Certificates;
     using Exceptions;
@@ -31,6 +32,15 @@ namespace WebEID.Security.Tests.Validator.Validators
         {
             var validator = new SubjectCertificatePolicyValidator(new[] { new Oid("dummy identifier") });
             Assert.DoesNotThrow(() => validator.Validate(new AuthTokenValidatorData(this.certificate)));
+        }
+
+        [Test]
+        public void ValidateSubjectCertificatePolicyThrowsInvalidPolicyException()
+        {
+            var req = new CertificateRequest("cn=foobar", ECDsa.Create(), HashAlgorithmName.SHA384);
+            var cert = req.CreateSelfSigned(DateTimeOffset.Now, DateTimeOffset.Now.AddYears(1));
+            var validator = new SubjectCertificatePolicyValidator(new[] { new Oid("dummy") });
+            Assert.Throws<UserCertificateInvalidPolicyException>(() => validator.Validate(new AuthTokenValidatorData(cert)));
         }
 
         [OneTimeTearDown]

@@ -1,4 +1,4 @@
-namespace WebEID.Security.Tests.Validator.Validators
+namespace WebEid.Security.Tests.Validator.Validators
 {
     using Exceptions;
     using NUnit.Framework;
@@ -16,7 +16,7 @@ namespace WebEID.Security.Tests.Validator.Validators
         {
             Assert.DoesNotThrow(() =>
             {
-                new SiteCertificateFingerprintValidator(CorrectFingerprint, null).ValidateSiteCertificateFingerprint(
+                new SiteCertificateFingerprintValidator(CorrectFingerprint, new Logger()).Validate(
                     new AuthTokenValidatorData(null) { SiteCertificateFingerprint = CorrectFingerprint });
             });
         }
@@ -26,7 +26,7 @@ namespace WebEID.Security.Tests.Validator.Validators
         {
             Assert.Throws<SiteCertificateFingerprintValidationException>(() =>
             {
-                new SiteCertificateFingerprintValidator(CorrectFingerprint, null).ValidateSiteCertificateFingerprint(
+                new SiteCertificateFingerprintValidator(CorrectFingerprint, new Logger()).Validate(
                     new AuthTokenValidatorData(null) { SiteCertificateFingerprint = IncorrectFingerprint });
             });
         }

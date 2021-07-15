@@ -1,4 +1,4 @@
-namespace WebEID.Security.Tests.Validator.Validators
+namespace WebEid.Security.Tests.Validator.Validators
 {
     using System;
     using System.Security.Cryptography.X509Certificates;
@@ -15,11 +15,11 @@ namespace WebEID.Security.Tests.Validator.Validators
         [Test]
         public void ValidateNonceWithWrongLengthThrowsTokenParseException()
         {
-            using (var cache = new MemoryCache<DateTime?>())
+            using (var cache = new MemoryCache<DateTime>())
             {
                 var nonceKey = "nonce-key";
                 cache.Put(nonceKey, DateTime.MaxValue);
-                var validator = new NonceValidator(cache, null);
+                var validator = new NonceValidator(cache, new Logger());
                 Assert.Throws<TokenParseException>(() =>
                     validator.Validate(new AuthTokenValidatorData(new X509Certificate()) { Nonce = nonceKey }));
             }
@@ -28,10 +28,10 @@ namespace WebEID.Security.Tests.Validator.Validators
         [Test]
         public void ValidateNonceNotInCacheThrowsNonceNotFoundException()
         {
-            using (var cache = new MemoryCache<DateTime?>())
+            using (var cache = new MemoryCache<DateTime>())
             {
                 var nonceKey = "nonce-key";
-                var validator = new NonceValidator(cache, null);
+                var validator = new NonceValidator(cache, new Logger());
                 Assert.Throws<NonceNotFoundException>(() =>
                     validator.Validate(new AuthTokenValidatorData(new X509Certificate()) { Nonce = nonceKey }));
             }
@@ -40,11 +40,11 @@ namespace WebEID.Security.Tests.Validator.Validators
         [Test]
         public void ValidateExpiredNonceThrowsNonceExpiredException()
         {
-            using (var cache = new MemoryCache<DateTime?>())
+            using (var cache = new MemoryCache<DateTime>())
             {
                 var nonceKey = "nonce".PadLeft(INonceGenerator.NonceLength);
                 cache.Put(nonceKey, new DateTime(2000, 1, 1));
-                var validator = new NonceValidator(cache, null);
+                var validator = new NonceValidator(cache, new Logger());
                 Assert.Throws<NonceExpiredException>(() =>
                     validator.Validate(new AuthTokenValidatorData(new X509Certificate()) { Nonce = nonceKey }));
             }
@@ -53,11 +53,11 @@ namespace WebEID.Security.Tests.Validator.Validators
         [Test]
         public void ValidateCorrectNonceDoesNotThrowException()
         {
-            using (var cache = new MemoryCache<DateTime?>())
+            using (var cache = new MemoryCache<DateTime>())
             {
                 var nonceKey = "nonce".PadLeft(INonceGenerator.NonceLength);
                 cache.Put(nonceKey, DateTime.MaxValue);
-                var validator = new NonceValidator(cache, null);
+                var validator = new NonceValidator(cache, new Logger());
                 Assert.DoesNotThrow(() =>
                     validator.Validate(new AuthTokenValidatorData(new X509Certificate()) { Nonce = nonceKey }));
             }

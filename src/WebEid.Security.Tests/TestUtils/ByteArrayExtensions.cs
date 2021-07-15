@@ -1,4 +1,4 @@
-namespace WebEID.Security.Tests.TestUtils
+namespace WebEid.Security.Tests.TestUtils
 {
     using System;
     using System.Text;

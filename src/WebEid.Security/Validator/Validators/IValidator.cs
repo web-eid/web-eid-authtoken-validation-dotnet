@@ -1,7 +1,9 @@
-namespace WebEID.Security.Validator.Validators
+namespace WebEid.Security.Validator.Validators
 {
-    public interface IValidator
+    using System.Threading.Tasks;
+
+    internal interface IValidator
     {
-        void Validate(AuthTokenValidatorData actualTokenData);
+        Task Validate(AuthTokenValidatorData actualTokenData);
     }
 }

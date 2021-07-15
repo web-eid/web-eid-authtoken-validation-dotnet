@@ -1,17 +1,18 @@
-namespace WebEID.Security.Validator.Validators
+namespace WebEid.Security.Validator.Validators
 {
     using System;
+    using System.Threading.Tasks;
     using Cache;
     using Exceptions;
     using Microsoft.Extensions.Logging;
     using Nonce;
 
-    public sealed class NonceValidator : IValidator
+    internal sealed class NonceValidator : IValidator
     {
-        private readonly ICache<DateTime?> cache;
+        private readonly ICache<DateTime> cache;
         private readonly ILogger logger;
 
-        public NonceValidator(ICache<DateTime?> cache, ILogger logger)
+        public NonceValidator(ICache<DateTime> cache, ILogger logger = null)
         {
             this.cache = cache;
             this.logger = logger;
@@ -22,10 +23,10 @@ namespace WebEID.Security.Validator.Validators
         /// </summary>
         /// <param name="actualTokenData">authentication token data that contains the nonce</param>
         /// <exception cref="TokenValidationException">when the nonce in the token does not meet the requirements</exception>
-        public void Validate(AuthTokenValidatorData actualTokenData)
+        public Task Validate(AuthTokenValidatorData actualTokenData)
         {
             var nonceExpirationTime = this.cache.GetAndRemove(actualTokenData.Nonce);
-            if (nonceExpirationTime == null)
+            if (nonceExpirationTime == default)
             {
                 throw new NonceNotFoundException();
             }
@@ -33,11 +34,12 @@ namespace WebEID.Security.Validator.Validators
             {
                 throw new TokenParseException($"Nonce is shorter than the required length of {INonceGenerator.NonceLength}");
             }
-            if (nonceExpirationTime < DateTime.Now)
+            if (nonceExpirationTime < DateTime.UtcNow)
             {
                 throw new NonceExpiredException();
             }
             this.logger?.LogDebug("Nonce was found and has not expired.");
+            return Task.CompletedTask;
         }
     }
 }

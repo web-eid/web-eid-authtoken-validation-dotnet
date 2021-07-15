@@ -1,16 +1,17 @@
-namespace WebEID.Security.Validator.Validators
+namespace WebEid.Security.Validator.Validators
 {
     using System;
+    using System.Threading.Tasks;
     using Exceptions;
     using Microsoft.Extensions.Logging;
 
-    public sealed class OriginValidator : IValidator
+    internal sealed class OriginValidator : IValidator
     {
 
         private readonly Uri expectedOrigin;
         private readonly ILogger logger;
 
-        public OriginValidator(Uri expectedOrigin, ILogger logger)
+        public OriginValidator(Uri expectedOrigin, ILogger logger = null)
         {
             this.expectedOrigin = expectedOrigin;
             this.logger = logger;
@@ -21,7 +22,7 @@ namespace WebEID.Security.Validator.Validators
         /// </summary>
         /// <param name="actualTokenData">authentication token data that contains the origin from authentication token</param>
         /// <exception cref="TokenValidationException">when origins don't match</exception>
-        public void Validate(AuthTokenValidatorData actualTokenData)
+        public Task Validate(AuthTokenValidatorData actualTokenData)
         {
             try
             {
@@ -37,10 +38,15 @@ namespace WebEID.Security.Validator.Validators
                 this.logger?.LogDebug("Origin is equal to expected origin.");
 
             }
-            catch (ArgumentException e)
+            catch (ArgumentException ex)
             {
-                throw new OriginMismatchException(e);
+                throw new OriginMismatchException(ex);
             }
+            catch (UriFormatException ex)
+            {
+                throw new OriginMismatchException(ex);
+            }
+            return Task.CompletedTask;
         }
 
         /// <summary>

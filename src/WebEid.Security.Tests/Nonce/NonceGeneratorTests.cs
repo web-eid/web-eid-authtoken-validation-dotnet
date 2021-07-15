@@ -1,4 +1,4 @@
-namespace WebEID.Security.Tests.Nonce
+namespace WebEid.Security.Tests.Nonce
 {
     using System;
     using System.Security.Cryptography;

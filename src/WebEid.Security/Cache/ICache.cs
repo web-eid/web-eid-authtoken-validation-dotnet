@@ -1,4 +1,4 @@
-namespace WebEID.Security.Cache
+namespace WebEid.Security.Cache
 {
     using System;
 

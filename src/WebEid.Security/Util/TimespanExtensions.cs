@@ -1,4 +1,4 @@
-namespace WebEID.Security.Util
+namespace WebEid.Security.Util
 {
     using System;
 

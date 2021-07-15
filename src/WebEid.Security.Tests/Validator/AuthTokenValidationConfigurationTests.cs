@@ -1,11 +1,18 @@
-namespace WebEID.Security.Tests.Validator
+namespace WebEid.Security.Tests.Validator
 {
     using System;
+    using System.Collections.Generic;
+    using System.Linq;
     using System.Security.Cryptography.X509Certificates;
     using Cache;
     using NUnit.Framework;
+    using Org.BouncyCastle.Asn1.X509;
+    using Org.BouncyCastle.Security;
     using Security.Validator;
+    using Security.Validator.Ocsp;
+    using Security.Validator.Ocsp.Service;
     using TestUtils;
+    using X509Certificate = Org.BouncyCastle.X509.X509Certificate;
 
     [TestFixture]
     public class AuthTokenValidationConfigurationTests
@@ -64,7 +71,7 @@ namespace WebEID.Security.Tests.Validator
                     SiteOrigin = new Uri("https://valid", UriKind.RelativeOrAbsolute),
                     NonceCache = cache
                 };
-                configuration.TrustedCaCertificates.Add(new X509Certificate());
+                configuration.TrustedCaCertificates.Add(new X509Certificate2());
                 configuration.OcspRequestTimeout = TimeSpan.Zero;
                 Assert.Throws<ArgumentOutOfRangeException>(() => configuration.Validate())
                     .WithMessage("OCSP request timeout must be greater than zero (Parameter 'duration')");
@@ -81,7 +88,7 @@ namespace WebEID.Security.Tests.Validator
                     SiteOrigin = new Uri("https://valid", UriKind.RelativeOrAbsolute),
                     NonceCache = cache
                 };
-                configuration.TrustedCaCertificates.Add(new X509Certificate());
+                configuration.TrustedCaCertificates.Add(new X509Certificate2());
                 configuration.AllowedClientClockSkew = TimeSpan.Zero;
                 Assert.Throws<ArgumentOutOfRangeException>(() => configuration.Validate())
                     .WithMessage("Allowed client clock skew must be greater than zero (Parameter 'duration')");
@@ -99,7 +106,7 @@ namespace WebEID.Security.Tests.Validator
                     NonceCache = cache
                 };
                 configuration.SiteCertificateSha256Fingerprint = "fingerprint";
-                configuration.TrustedCaCertificates.Add(new X509Certificate());
+                configuration.TrustedCaCertificates.Add(new X509Certificate2());
                 Assert.DoesNotThrow(() => configuration.Validate());
             }
         }
@@ -117,7 +124,16 @@ namespace WebEID.Security.Tests.Validator
                 configuration.OcspRequestTimeout = TimeSpan.FromMinutes(1);
                 configuration.AllowedClientClockSkew = TimeSpan.FromMinutes(1);
                 configuration.SiteCertificateSha256Fingerprint = "fingerprint";
-                configuration.TrustedCaCertificates.Add(new X509Certificate());
+                configuration.TrustedCaCertificates.Add(new X509Certificate2(Certificates.GetTestEsteid2015Ca()));
+                configuration.TrustedCaCertificates.Add(new X509Certificate2(Certificates.GetTestEsteid2018Ca()));
+                configuration.DesignatedOcspServiceConfiguration = new DesignatedOcspServiceConfiguration(
+                    new Uri("http://ocsp.ee"),
+                    DotNetUtilities.FromX509Certificate(Certificates.GetTestEsteid2018Ca()),
+                    new List<X509Certificate>
+                    {
+                        DotNetUtilities.FromX509Certificate(Certificates.GetTestEsteid2015Ca()),
+                        DotNetUtilities.FromX509Certificate(Certificates.GetTestEsteid2018Ca())
+                    });
 
                 var copyOfConfiguration = configuration.Copy();
                 Assert.AreEqual(configuration, copyOfConfiguration);

@@ -1,0 +1,172 @@
+namespace WebEid.Security.Validator
+{
+    using System;
+    using System.Linq;
+    using System.Security.Cryptography.X509Certificates;
+    using Cache;
+    using Microsoft.Extensions.Logging;
+    using Ocsp.Service;
+    using Util;
+
+    public class AuthTokenValidatorBuilder
+    {
+        private readonly ILogger logger;
+        private readonly AuthTokenValidationConfiguration configuration = new AuthTokenValidationConfiguration();
+
+        public AuthTokenValidatorBuilder(ILogger logger = null)
+        {
+            this.logger = logger;
+        }
+
+        /// <summary>
+        /// Sets the expected site origin, i.e. the domain that the application is running on.
+        /// Origin is a mandatory configuration parameter
+        /// </summary>
+        /// <param name="origin">origin URL as defined in <a href="https://developer.mozilla.org/en-US/docs/Web/API/Location/origin">MDN</a>,
+        /// in the form of <example>[scheme]://[hostname][":"port]</example></param>
+        /// <returns>the builder instance for method chaining></returns>
+        public AuthTokenValidatorBuilder WithSiteOrigin(Uri origin)
+        {
+            this.configuration.SiteOrigin = origin;
+            this.logger?.LogDebug("Origin set to {0}", this.configuration.SiteOrigin);
+            return this;
+        }
+
+        /// <summary>
+        /// Provides access to the nonce cache that was used during nonce generation for storing
+        /// nonce expiration times.
+        /// Nonce cache is a mandatory configuration parameter.
+        /// </summary>
+        /// <param name="cache">nonce cache</param>
+        /// <returns>the builder instance for method chaining</returns>
+        public AuthTokenValidatorBuilder WithNonceCache(ICache<DateTime> cache)
+        {
+            this.configuration.NonceCache = cache;
+            return this;
+        }
+
+        /// <summary>
+        /// Adds the given certificates to the list of trusted subject certificate intermediate Certificate Authorities.
+        /// In order for the user certificate to be considered valid, the certificate of the issuer of the user certificate
+        /// must be present in this list.
+        /// At least one trusted intermediate Certificate Authority must be provided as a mandatory configuration parameter.
+        /// </summary>
+        /// <param name="certificates">trusted intermediate Certificate Authority certificates</param>
+        /// <returns>the builder instance for method chaining</returns>
+        public AuthTokenValidatorBuilder WithTrustedCertificateAuthorities(params X509Certificate[] certificates)
+        {
+            this.configuration.TrustedCaCertificates.AddRange(certificates.Select(c => new X509Certificate2(c)));
+            this.logger?.LogDebug("Trusted intermediate certificate authorities set to {0}",
+                this.configuration.TrustedCaCertificates.Select(c => c.GetSubjectCn()));
+            return this;
+        }
+
+        /// <summary>
+        /// Adds the given policies to the list of disallowed user certificate policies.
+        /// In order for the user certificate to be considered valid, it must not contain any policies
+        /// present in this list.
+        /// </summary>
+        /// <param name="policies">disallowed user certificate policies</param>
+        /// <returns>the builder instance for method chaining</returns>
+        public AuthTokenValidatorBuilder WithDisallowedCertificatePolicies(params string[] policies)
+        {
+            foreach (var policy in policies)
+            {
+                this.configuration.DisallowedSubjectCertificatePolicies.Add(policy);
+            }
+            this.logger?.LogDebug("Disallowed subject certificate policies set to {0}",
+                string.Join(", ", this.configuration.DisallowedSubjectCertificatePolicies));
+            return this;
+        }
+
+        /// <summary>
+        /// Turns off user certificate revocation check with OCSP.
+        /// By default user certificate revocation check with OCSP is turned on.
+        /// </summary>
+        /// <returns>the builder instance for method chaining</returns>
+        public AuthTokenValidatorBuilder WithoutUserCertificateRevocationCheckWithOcsp()
+        {
+            this.configuration.IsUserCertificateRevocationCheckWithOcspEnabled = false;
+            this.logger?.LogDebug("User certificate revocation check with OCSP is disabled");
+            return this;
+        }
+
+        /// <summary>
+        /// Sets both the connection and response timeout of user certificate revocation check OCSP requests.
+        /// This is an optional configuration parameter, the default is 5 seconds.
+        /// </summary>
+        /// <param name="ocspRequestTimeout">the duration of OCSP request connection and response timeout</param>
+        /// <returns>the builder instance for method chaining</returns>
+        public AuthTokenValidatorBuilder WithOcspRequestTimeout(TimeSpan ocspRequestTimeout)
+        {
+            this.configuration.OcspRequestTimeout = ocspRequestTimeout;
+            this.logger?.LogDebug("OCSP request timeout set to {0}.", ocspRequestTimeout);
+            return this;
+        }
+
+        /// <summary>
+        /// Adds the given URLs to the list of OCSP URLs for which the nonce protocol extension will be disabled.
+        /// The OCSP URL is extracted from the user certificate and some OCSP services don't support the nonce extension.
+        /// </summary>
+        /// <param name="urls">OCSP URLs for which the nonce protocol extension will be disabled</param>
+        /// <returns>the builder instance for method chaining</returns>
+        public AuthTokenValidatorBuilder WithNonceDisabledOcspUrls(params Uri[] urls)
+        {
+            this.configuration.NonceDisabledOcspUrls.AddRange(urls);
+            this.logger?.LogDebug("OCSP URLs for which the nonce protocol extension is disabled set to {0}", this.configuration.NonceDisabledOcspUrls);
+            return this;
+        }
+
+        /// <summary>
+        /// Activates the provided designated OCSP service for user certificate revocation check with OCSP.
+        /// The designated service is only used for checking the status of the certificates whose issuers are
+        /// supported by the service, falling back to the default OCSP service access location from
+        /// the certificate's AIA extension if not.
+        /// </summary>
+        /// <param name="serviceConfiguration">configuration of the designated OCSP service</param>
+        /// <returns>the builder instance for method chaining</returns>
+        public AuthTokenValidatorBuilder WithDesignatedOcspServiceConfiguration(DesignatedOcspServiceConfiguration serviceConfiguration)
+        {
+            this.configuration.DesignatedOcspServiceConfiguration = serviceConfiguration;
+            this.logger?.LogDebug("Using designated OCSP service configuration");
+            return this;
+        }
+
+        /// <summary>
+        /// Sets the tolerated clock skew of the client computer when verifying the token expiration field <code>exp</code>.
+        /// This is an optional configuration parameter, the default is 3 minutes.
+        /// </summary>
+        /// <param name="allowedClockSkew">The tolerated clock skew of the client computer</param>
+        /// <returns>the builder instance for method chaining</returns>
+        public AuthTokenValidatorBuilder WithAllowedClientClockSkew(TimeSpan allowedClockSkew)
+        {
+            this.configuration.AllowedClientClockSkew = allowedClockSkew;
+            this.logger?.LogDebug("Allowed client clock skew set to {0} second(s)", this.configuration.AllowedClientClockSkew.TotalSeconds);
+            return this;
+        }
+
+        /// <summary>
+        /// Sets the expected site certificate fingerprint, i.e. the SHA-256 fingerprint of the HTTPS certificate
+        /// that the site is using, and turns on site certificate validation.
+        /// </summary>
+        /// <param name="certificateSha256Fingerprint">SHA-256 fingerprint of the HTTPS certificate that the site is using</param>
+        /// <returns>the builder instance for method chaining</returns>
+        public AuthTokenValidatorBuilder WithSiteCertificateSha256Fingerprint(string certificateSha256Fingerprint)
+        {
+            this.configuration.SiteCertificateSha256Fingerprint = certificateSha256Fingerprint;
+            this.logger?.LogDebug("Certificate fingerprint validation is enabled, fingerprint is {0}", certificateSha256Fingerprint);
+            return this;
+        }
+
+        /// <summary>
+        /// Validates the configuration and builds the <see cref="AuthTokenValidator"/> object with it.
+        /// The returned <see cref="AuthTokenValidator"/> object is immutable/thread-safe.
+        /// </summary>
+        /// <returns></returns>
+        public IAuthTokenValidator Build()
+        {
+            this.configuration.Validate();
+            return new AuthTokenValidator(this.configuration, this.logger);
+        }
+    }
+}

@@ -1,4 +1,4 @@
-namespace WebEID.Security.Validator
+namespace WebEid.Security.Validator
 {
     using System;
     using System.Collections;
@@ -7,10 +7,12 @@ namespace WebEID.Security.Validator
     using System.IdentityModel.Tokens.Jwt;
     using System.Linq;
     using System.Security.Claims;
+    using System.Security.Cryptography;
     using System.Security.Cryptography.X509Certificates;
     using Microsoft.Extensions.Logging;
     using Microsoft.IdentityModel.Tokens;
     using Newtonsoft.Json.Linq;
+    using Util;
 
     /// <summary>
     /// Parses the Web eID authentication token using the System.IdentityModel.Tokens.Jwt library.
@@ -18,6 +20,7 @@ namespace WebEID.Security.Validator
     public class AuthTokenParser
     {
         private readonly string authToken;
+        private readonly TimeSpan allowedClockSkew;
         private readonly ILogger logger;
         private IEnumerable<Claim> claims;
 
@@ -27,9 +30,10 @@ namespace WebEID.Security.Validator
         /// <param name="authToken">the Web eID authentication token with signature</param>
         /// <param name="allowedClockSkew">the tolerated client computer clock skew when verifying the token <code>exp</code>field</param>
         /// <param name="logger">logger instance</param>
-        public AuthTokenParser(string authToken, ILogger logger)
+        public AuthTokenParser(string authToken, TimeSpan allowedClockSkew, ILogger logger)
         {
             this.authToken = authToken;
+            this.allowedClockSkew = allowedClockSkew;
             this.logger = logger;
         }
 
@@ -38,7 +42,7 @@ namespace WebEID.Security.Validator
         /// </summary>
         /// <returns><see cref="AuthTokenValidatorData"/> object with token header data filled in</returns>
         /// <exception cref="TokenParseException">when header parsing fails or header fields are missing or invalid</exception>
-        public AuthTokenValidatorData ParseHeaderFromTokenStringAndValidateTokenSignature()
+        internal AuthTokenValidatorData ParseHeaderFromTokenString()
         {
             try
             {
@@ -63,8 +67,6 @@ namespace WebEID.Security.Validator
                 // Validate signature algorithm name
                 signatureAlgorithm.ForName();
 
-                ValidateTokenSignature(this.authToken, subjectCertificate);
-
                 return new AuthTokenValidatorData(subjectCertificate);
             }
             catch (TokenParseException)
@@ -77,29 +79,63 @@ namespace WebEID.Security.Validator
             }
         }
 
+        internal void ValidateTokenSignature(X509Certificate certificate)
+        {
+            ValidateTokenSignature(this.authToken, certificate, this.allowedClockSkew);
+        }
+
         /// <summary>
         ///  Validates only JWT token issuer signing key
         /// </summary>
         /// <param name="authToken">the Web eID authentication token with signature</param>
         /// <param name="certificate">User certificate from x5c field of JWT token</param>
-        private static void ValidateTokenSignature(string authToken, X509Certificate certificate)
+        /// <param name="allowedClockSkew"></param>
+        private static void ValidateTokenSignature(string authToken,
+            X509Certificate certificate,
+            TimeSpan allowedClockSkew)
         {
             using (var certificate2 = new X509Certificate2(certificate))
-            using (var publicKey = certificate2.GetECDsaPublicKey())
             {
+                var certificate2 = new X509Certificate2(certificate);
+                // Don't dispose the key, see: https://github.com/AzureAD/azure-activedirectory-identitymodel-extensions-for-dotnet/issues/1433
+                var publicKey = certificate2.GetAsymmetricPublicKey();
                 // Validate only issuer signing key
                 var validationParameters = new TokenValidationParameters()
                 {
-                    ValidateLifetime = false,
+                    ClockSkew = allowedClockSkew,
+                    ValidateLifetime = true,
+                    LifetimeValidator = (notBefore, expires, securityToken, tokenValidationParameters) =>
+                    {
+                        var clonedParameters = tokenValidationParameters.Clone();
+                        clonedParameters.LifetimeValidator = null;
+                        Microsoft.IdentityModel.Tokens.Validators.ValidateLifetime(notBefore,
+                            expires,
+                            securityToken,
+                            clonedParameters);
+                        return true;
+                    },
                     ValidateAudience = false,
                     ValidateActor = false,
                     ValidateTokenReplay = false,
                     ValidateIssuer = false,
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new ECDsaSecurityKey(publicKey) // Should be some generic key
+                    ValidateIssuerSigningKey = false,
+                    IssuerSigningKey = publicKey.CreateSecurityKeyWithoutCachingSignatureProviders(),
+                    CryptoProviderFactory = new CryptoProviderFactory { CacheSignatureProviders = false }
                 };
 
                 new JwtSecurityTokenHandler().ValidateToken(authToken, validationParameters, out _);
+            }
+            catch (SecurityTokenExpiredException ex)
+            {
+                throw new TokenExpiredException(ex);
+            }
+            catch (SecurityTokenInvalidSignatureException ex)
+            {
+                throw new TokenSignatureValidationException(ex);
+            }
+            catch (SecurityTokenException ex)
+            {
+                throw new TokenParseException(ex);
             }
         }
 
@@ -181,7 +217,21 @@ namespace WebEID.Security.Validator
         {
             try
             {
-                return claims.First(claim => claim != null && claim.Type == claimType)?.Value;
+                var claim = claims.First(c => c != null && c.Type == claimType);
+                if (string.IsNullOrEmpty(claim?.Value))
+                {
+                    throw new TokenParseException($"{claimType} field must be present and not empty in authentication token body");
+                }
+
+                if (!claim.ValueType.EndsWith("string"))
+                {
+                    throw new TokenParseException($"{claimType} field type must be string in authentication token body");
+                }
+                return claim?.Value;
+            }
+            catch (TokenParseException)
+            {
+                throw;
             }
             catch
             {
@@ -202,6 +252,10 @@ namespace WebEID.Security.Validator
 
         private static List<string> GetListFieldOrThrow(Dictionary<string, object> fields, string fieldName)
         {
+            if (!fields.ContainsKey(fieldName))
+            {
+                throw new TokenParseException($"{fieldName} field must be present");
+            }
             if (fields[fieldName] == null)
             {
                 throw new TokenParseException(
@@ -215,7 +269,7 @@ namespace WebEID.Security.Validator
             }
             catch
             {
-                throw new TokenParseException($"{fieldName} field must be present in authentication token header and must be an array");
+                throw new TokenParseException($"{fieldName} field in authentication token header must be an array");
             }
 
             if (fieldValue.Count == 0)
@@ -265,7 +319,7 @@ namespace WebEID.Security.Validator
                 var certificateBytes = Convert.FromBase64String(certificateInBase64);
                 return new X509Certificate(certificateBytes);
             }
-            catch (ArgumentException)
+            catch (CryptographicException)
             {
                 throw new TokenParseException("x5c field must contain a valid certificate");
             }

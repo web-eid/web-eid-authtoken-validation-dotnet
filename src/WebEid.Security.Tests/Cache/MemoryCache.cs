@@ -1,4 +1,4 @@
-namespace WebEID.Security.Tests.Cache
+namespace WebEid.Security.Tests.Cache
 {
     using System;
     using Security.Cache;
@@ -22,7 +22,7 @@ namespace WebEID.Security.Tests.Cache
         {
             var value = this.cacheContent.Get(key);
             this.cacheContent.Remove(key);
-            return (T)value;
+            return (T)(value ?? default(T));
         }
 
         public bool Contains(string key)
