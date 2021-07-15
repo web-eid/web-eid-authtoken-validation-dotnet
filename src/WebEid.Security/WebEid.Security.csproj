@@ -6,8 +6,8 @@
     <PackageReleaseNotes>Release</PackageReleaseNotes>
 
     <TargetFramework>netstandard2.1</TargetFramework>
-    <RootNamespace>WebEID.Security</RootNamespace>
-    <AssemblyName>WebEID.Security</AssemblyName>
+    <RootNamespace>WebEid.Security</RootNamespace>
+    <AssemblyName>WebEid.Security</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>

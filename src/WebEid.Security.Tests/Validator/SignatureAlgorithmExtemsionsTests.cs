@@ -1,4 +1,4 @@
-namespace WebEID.Security.Tests.Validator
+namespace WebEid.Security.Tests.Validator
 {
     using System.Security;
     using NUnit.Framework;

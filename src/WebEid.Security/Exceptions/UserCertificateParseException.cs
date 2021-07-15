@@ -1,6 +1,7 @@
-namespace WebEID.Security.Exceptions
+namespace WebEid.Security.Exceptions
 {
     using System;
+    using System.Diagnostics.CodeAnalysis;
     using System.Runtime.Serialization;
 
     /// <summary>
@@ -9,14 +10,11 @@ namespace WebEID.Security.Exceptions
     [Serializable]
     public class UserCertificateParseException : TokenValidationException
     {
-        public UserCertificateParseException() : this(null)
-        {
-        }
-
         public UserCertificateParseException(Exception innerException) : base("Error parsing certificate", innerException)
         {
         }
 
+        [ExcludeFromCodeCoverage]
         protected UserCertificateParseException(SerializationInfo info, StreamingContext context) : base(info, context) { }
     }
 }

@@ -4,7 +4,7 @@ on: [ push, pull_request ]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
       - uses: actions/checkout@v2
@@ -14,6 +14,14 @@ jobs:
         with:
           dotnet-version: 5.0.x # SDK Version to use.
           
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v1.0.2
+        with:
+          vs-version: 16.10 # Visual Studio Version to use.
+
+      - name: Setup VSTest
+        uses: darenm/Setup-VSTest@v1
+
       - name: Cache Nuget packages      
         uses: actions/cache@v2
         with:
@@ -26,7 +34,7 @@ jobs:
         run: dotnet restore src/WebEid.Security.sln
         
       - name: Build
-        run: dotnet build --configuration Release --no-restore src/WebEid.Security.sln
+        run: msbuild src/WebEid.Security.sln /t:Build /p:Configuration=Release
 
       - name: Test
-        run: dotnet test --no-restore --verbosity normal src/WebEid.Security.sln
+        run: vstest.console.exe src/WebEid.Security.Tests/bin/Release/net5.0/WebEID.Security.Tests.dll

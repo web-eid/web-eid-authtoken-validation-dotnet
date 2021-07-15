@@ -1,4 +1,4 @@
-namespace WebEID.Security.Nonce
+namespace WebEid.Security.Nonce
 {
     /// <summary>
     /// Generates cryptographic nonces.

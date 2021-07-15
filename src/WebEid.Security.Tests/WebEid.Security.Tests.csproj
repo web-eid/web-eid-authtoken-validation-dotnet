@@ -5,19 +5,41 @@
 
     <IsPackable>false</IsPackable>
 
-    <AssemblyName>WebEID.Security.Tests</AssemblyName>
+    <AssemblyName>WebEid.Security.Tests</AssemblyName>
 
-    <RootNamespace>WebEID.Security.Tests</RootNamespace>
+    <RootNamespace>WebEid.Security.Tests</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="FakesAssemblies\**" />
+    <EmbeddedResource Remove="FakesAssemblies\**" />
+    <None Remove="FakesAssemblies\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Remove="Resources\ESTEID2018.cer" />
+    <None Remove="Resources\Karl-Kristjan-Joeorg.cer" />
+    <None Remove="Resources\ocsp_response.der" />
+    <None Remove="Resources\ocsp_response_revoked.der" />
+    <None Remove="Resources\ocsp_response_unknown.der" />
+    <None Remove="Resources\ocsp_response_with_2_responder_certs.der" />
+    <None Remove="Resources\ocsp_response_with_2_responses.der" />
+    <None Remove="Resources\TEST_of_ESTEID-SK_2015.cer" />
     <None Remove="Resources\TEST_of_ESTEID2018.cer" />
+    <None Remove="Resources\TEST_of_SK_OCSP_RESPONDER_2020.cer" />
   </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="Resources\ESTEID2018.cer" />
+    <EmbeddedResource Include="Resources\Karl-Kristjan-Joeorg.cer" />
+    <EmbeddedResource Include="Resources\ocsp_response.der" />
+    <EmbeddedResource Include="Resources\ocsp_response_revoked.der" />
+    <EmbeddedResource Include="Resources\ocsp_response_unknown.der" />
+    <EmbeddedResource Include="Resources\ocsp_response_with_2_responder_certs.der" />
+    <EmbeddedResource Include="Resources\ocsp_response_with_2_responses.der" />
+    <EmbeddedResource Include="Resources\TEST_of_ESTEID-SK_2015.cer" />
     <EmbeddedResource Include="Resources\TEST_of_ESTEID2018.cer" />
+    <EmbeddedResource Include="Resources\TEST_of_SK_OCSP_RESPONDER_2020.cer" />
   </ItemGroup>
 
   <ItemGroup>
@@ -25,6 +47,8 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.QualityTools.Testing.Fakes" Version="16.11.230815" />
+    <PackageReference Include="Moq" Version="4.16.1" />
     <PackageReference Include="nunit" Version="3.12.0" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.15.1" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.4.0" />
@@ -33,6 +57,16 @@
 
   <ItemGroup>
     <ProjectReference Include="..\WebEid.Security\WebEid.Security.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AdditionalDesignTimeBuildInput Remove="FakesAssemblies\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="System.Runtime.5.0.0.0.Fakes.dll">
+      <HintPath>FakesAssemblies\System.Runtime.5.0.0.0.Fakes.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>

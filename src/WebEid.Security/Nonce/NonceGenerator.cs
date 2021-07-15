@@ -1,4 +1,4 @@
-namespace WebEID.Security.Nonce
+namespace WebEid.Security.Nonce
 {
     using System;
     using System.Security.Cryptography;
@@ -33,7 +33,7 @@ namespace WebEID.Security.Nonce
         {
             var nonceBytes = new byte[INonceGenerator.NonceLength];
             this.randomNumberGenerator.GetBytes(nonceBytes);
-            var expirationTime = DateTime.Now.Add(this.ttl);
+            var expirationTime = DateTime.UtcNow.Add(this.ttl);
             var base64StringNonce = Convert.ToBase64String(nonceBytes);
             this.cache.Put(base64StringNonce, expirationTime);
             return base64StringNonce;

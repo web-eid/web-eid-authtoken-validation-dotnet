@@ -1,4 +1,4 @@
-namespace WebEID.Security.Tests.TestUtils
+namespace WebEid.Security.Tests.TestUtils
 {
     using System;
     using System.IO;
@@ -10,7 +10,7 @@ namespace WebEID.Security.Tests.TestUtils
 
         private readonly string assemblyNamespace;
 
-        private static readonly ResourceReader Reader = new ResourceReader("WebEID.Security.Tests.Resources");
+        private static readonly ResourceReader Reader = new ResourceReader("WebEid.Security.Tests.Resources");
 
         public static byte[] ReadFromResource(string filename)
         {

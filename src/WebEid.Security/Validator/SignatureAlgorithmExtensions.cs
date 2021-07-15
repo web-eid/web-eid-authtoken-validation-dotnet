@@ -1,4 +1,4 @@
-namespace WebEID.Security.Validator
+namespace WebEid.Security.Validator
 {
     using System;
     using System.Security;

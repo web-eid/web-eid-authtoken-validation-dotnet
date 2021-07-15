@@ -1,4 +1,4 @@
-namespace WebEID.Security.Tests.Cache
+namespace WebEid.Security.Tests.Cache
 {
     using System;
     using System.Threading;

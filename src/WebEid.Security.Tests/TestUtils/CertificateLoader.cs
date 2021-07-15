@@ -1,4 +1,4 @@
-namespace WebEID.Security.Tests.TestUtils
+namespace WebEid.Security.Tests.TestUtils
 {
     using System;
     using System.Linq;
@@ -15,6 +15,11 @@ namespace WebEID.Security.Tests.TestUtils
         public static X509Certificate LoadCertificateFromResource(string resourceName)
         {
             return new X509Certificate(ResourceReader.ReadFromResource(resourceName));
+        }
+
+        public static X509Certificate LoadCertificateFromBase64String(string certificate)
+        {
+            return new X509Certificate(Convert.FromBase64String(certificate));
         }
     }
 }

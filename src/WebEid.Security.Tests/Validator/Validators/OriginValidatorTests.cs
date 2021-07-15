@@ -1,4 +1,4 @@
-namespace WebEID.Security.Tests.Validator.Validators
+namespace WebEid.Security.Tests.Validator.Validators
 {
     using System;
     using System.Security.Cryptography.X509Certificates;
@@ -14,7 +14,7 @@ namespace WebEID.Security.Tests.Validator.Validators
         [Test]
         public void ValidOriginUriDoesNotThrowException()
         {
-            var validator = new OriginValidator(new Uri("https://origin"), null);
+            var validator = new OriginValidator(new Uri("https://origin"), new Logger());
             Assert.DoesNotThrow(() =>
                 validator.Validate(
                     new AuthTokenValidatorData(new X509Certificate()) { Origin = "https://origin", Nonce = "", SiteCertificateFingerprint = "" }));
@@ -23,7 +23,7 @@ namespace WebEID.Security.Tests.Validator.Validators
         [Test]
         public void InvalidOriginUriThrowsOriginMismatchException()
         {
-            var validator = new OriginValidator(new Uri("https://origin"), null);
+            var validator = new OriginValidator(new Uri("https://origin"), new Logger());
             Assert.Throws<OriginMismatchException>(() =>
                     validator.Validate(
                         new AuthTokenValidatorData(new X509Certificate()) { Origin = "https://invalid-origin" }))
@@ -31,13 +31,11 @@ namespace WebEID.Security.Tests.Validator.Validators
         }
 
         [Test]
-        public void InvalidOriginUriThrowsOriginMismatchException2()
+        public void TokenOriginNotUriThrowsOriginMismatchException()
         {
-            var validator = new OriginValidator(new Uri("https://origin/test"), null);
             Assert.Throws<OriginMismatchException>(() =>
-                    validator.Validate(
-                        new AuthTokenValidatorData(new X509Certificate()) { Origin = "https://origin/test" }))
-                .WithMessage("Origin from the token does not match the configured origin");
+                new OriginValidator(new Uri("https://origin/test"), new Logger()).Validate(
+                    new AuthTokenValidatorData(new X509Certificate()) { Origin = "not-url" }));
         }
     }
 }

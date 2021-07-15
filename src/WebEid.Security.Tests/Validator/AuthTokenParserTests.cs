@@ -1,20 +1,21 @@
-namespace WebEID.Security.Tests.Validator
+namespace WebEid.Security.Tests.Validator
 {
+    using System;
     using Exceptions;
     using NUnit.Framework;
     using Security.Validator;
-    using Security.Validator.Validators;
     using TestUtils;
 
     [TestFixture]
     public class AuthTokenParserTests
     {
+        private readonly TimeSpan allowedClockSkew = TimeSpan.FromMinutes(3);
+
         [Test]
         public void PopulateDataFromClaimsFillsCorrectDataAndValidationDoesNotFailFromValidToken()
         {
-            var parser = new AuthTokenParser(Tokens.Signed, null);
-            var data = parser.ParseHeaderFromTokenStringAndValidateTokenSignature();
-            data.ValidateCertificatePurpose();
+            var parser = new AuthTokenParser(Tokens.SignedTest, this.allowedClockSkew, null);
+            var data = parser.ParseHeaderFromTokenString();
             parser.ParseClaims();
             parser.PopulateDataFromClaims(data);
             Assert.AreEqual("12345678123456781234567812345678", data.Nonce, "Nonce");
@@ -31,29 +32,44 @@ namespace WebEID.Security.Tests.Validator
         [Test]
         public void ParseHeaderFromTokenStringWithMissingX5CFieldThrowsTokenParseException()
         {
-            var parser = new AuthTokenParser(Tokens.X5CMissing, null);
-            Assert.Throws<TokenParseException>(() => parser.ParseHeaderFromTokenStringAndValidateTokenSignature());
+            var parser = new AuthTokenParser(Tokens.X5CMissing, this.allowedClockSkew, null);
+            Assert.Throws<TokenParseException>(() => parser.ParseHeaderFromTokenString());
         }
 
         [Test]
         public void ParseHeaderFromTokenStringWithIncorrectX5CValueThrowsTokenParseException()
         {
-            var parser = new AuthTokenParser(Tokens.X5CNotString, null);
-            Assert.Throws<TokenParseException>(() => parser.ParseHeaderFromTokenStringAndValidateTokenSignature());
+            var parser = new AuthTokenParser(Tokens.X5CNotString, this.allowedClockSkew, null);
+            Assert.Throws<TokenParseException>(() => parser.ParseHeaderFromTokenString());
         }
 
         [Test]
         public void ParseHeaderFromTokenStringWithIncorrectX5CListValueThrowsTokenParseException()
         {
-            var parser = new AuthTokenParser(Tokens.X5CNotArray, null);
-            Assert.Throws<TokenParseException>(() => parser.ParseHeaderFromTokenStringAndValidateTokenSignature());
+            var parser = new AuthTokenParser(Tokens.X5CNotArray, this.allowedClockSkew, null);
+            Assert.Throws<TokenParseException>(() => parser.ParseHeaderFromTokenString());
         }
 
         [Test]
         public void ParseHeaderFromTokenStringWithX5CEmptyValueThrowsTokenParseException()
         {
-            var parser = new AuthTokenParser(Tokens.X5CEmpty, null);
-            Assert.Throws<TokenParseException>(() => parser.ParseHeaderFromTokenStringAndValidateTokenSignature());
+            var parser = new AuthTokenParser(Tokens.X5CEmpty, this.allowedClockSkew, null);
+            Assert.Throws<TokenParseException>(() => parser.ParseHeaderFromTokenString());
+        }
+
+        [Test]
+        public void ValidateRsaTokenSignatureThrowsTokenExpiredException()
+        {
+            var parser = new AuthTokenParser(Tokens.TokenCertRsa, this.allowedClockSkew, null);
+            var validatorData = parser.ParseHeaderFromTokenString();
+            Assert.Throws<TokenExpiredException>(() => parser.ValidateTokenSignature(validatorData.SubjectCertificate));
+        }
+
+        [Test]
+        public void ParseHeaderFromTokenStringWithInvalidX5CCertificateThrowsTokenParseException()
+        {
+            var parser = new AuthTokenParser(Tokens.X5CInvalidCertificate, this.allowedClockSkew, null);
+            Assert.Throws<TokenParseException>(() => parser.ParseHeaderFromTokenString());
         }
     }
 }

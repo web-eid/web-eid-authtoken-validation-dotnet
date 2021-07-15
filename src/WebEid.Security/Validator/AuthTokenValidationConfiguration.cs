@@ -1,10 +1,13 @@
-namespace WebEID.Security.Validator
+namespace WebEid.Security.Validator
 {
     using System;
     using System.Collections.Generic;
+    using System.Collections.ObjectModel;
     using System.Linq;
     using System.Security.Cryptography.X509Certificates;
     using Cache;
+    using Ocsp;
+    using Ocsp.Service;
     using Util;
     using Validators;
 
@@ -12,19 +15,20 @@ namespace WebEID.Security.Validator
     {
         private string siteCertificateSha256Fingerprint;
 
-        public AuthTokenValidationConfiguration() { }
+        internal AuthTokenValidationConfiguration() { }
 
         private AuthTokenValidationConfiguration(AuthTokenValidationConfiguration other)
         {
             this.SiteOrigin = other.SiteOrigin;
             this.NonceCache = other.NonceCache;
-            this.TrustedCaCertificates = new List<X509Certificate>(other.TrustedCaCertificates);
+            this.TrustedCaCertificates = new List<X509Certificate2>(other.TrustedCaCertificates);
             this.IsUserCertificateRevocationCheckWithOcspEnabled = other.IsUserCertificateRevocationCheckWithOcspEnabled;
             this.OcspRequestTimeout = other.OcspRequestTimeout;
             this.AllowedClientClockSkew = other.AllowedClientClockSkew;
+            this.DesignatedOcspServiceConfiguration = other.DesignatedOcspServiceConfiguration;
             this.IsSiteCertificateFingerprintValidationEnabled = other.IsSiteCertificateFingerprintValidationEnabled;
             this.SiteCertificateSha256Fingerprint = other.SiteCertificateSha256Fingerprint;
-            this.DisallowedSubjectCertificatePolicies = new List<string>(other.DisallowedSubjectCertificatePolicies);
+            this.DisallowedSubjectCertificatePolicies = new ReadOnlyCollection<string>(other.DisallowedSubjectCertificatePolicies);
             this.NonceDisabledOcspUrls = new List<Uri>(other.NonceDisabledOcspUrls);
         }
 
@@ -32,7 +36,7 @@ namespace WebEID.Security.Validator
 
         public ICache<DateTime> NonceCache { get; set; }
 
-        public List<X509Certificate> TrustedCaCertificates { get; } = new List<X509Certificate>();
+        public List<X509Certificate2> TrustedCaCertificates { get; } = new List<X509Certificate2>();
 
         public bool IsUserCertificateRevocationCheckWithOcspEnabled { get; set; } = true;
 
@@ -41,6 +45,8 @@ namespace WebEID.Security.Validator
         public TimeSpan AllowedClientClockSkew { get; set; } = TimeSpan.FromMinutes(3);
 
         public bool IsSiteCertificateFingerprintValidationEnabled { get; private set; }
+
+        public DesignatedOcspServiceConfiguration DesignatedOcspServiceConfiguration { get; internal set; }
 
         public string SiteCertificateSha256Fingerprint
         {
@@ -52,16 +58,23 @@ namespace WebEID.Security.Validator
             }
         }
 
-        public List<string> DisallowedSubjectCertificatePolicies { get; } = new List<string>
-        {
-            SubjectCertificatePolicies.EsteidSk2015MobileIdPolicyV1,
-            SubjectCertificatePolicies.EsteidSk2015MobileIdPolicyV2,
-            SubjectCertificatePolicies.EsteidSk2015MobileIdPolicyV3,
-            SubjectCertificatePolicies.EsteidSk2015MobileIdPolicy
-        };
+        public IList<string> DisallowedSubjectCertificatePolicies { get; } =
+            new List<string>(new[]
+            {
+                SubjectCertificatePolicies.EsteidSk2015MobileIdPolicyV1,
+                SubjectCertificatePolicies.EsteidSk2015MobileIdPolicyV2,
+                SubjectCertificatePolicies.EsteidSk2015MobileIdPolicyV3,
+                SubjectCertificatePolicies.EsteidSk2015MobileIdPolicy
+            });
 
-        public List<Uri> NonceDisabledOcspUrls { get; } = new List<Uri> { OcspUrls.Esteid2015 };
+        // Disable OCSP nonce extension for EstEID 2015 cards by default.
+        public List<Uri> NonceDisabledOcspUrls { get; } = new List<Uri> { OcspUrls.AiaEsteid2015 };
 
+        /// <summary>
+        /// Checks that the configuration parameters are valid.
+        /// </summary>
+        /// <exception cref="ArgumentNullException">When required parameters are null</exception>
+        /// <exception cref="ArgumentException">When required parameters are null</exception>
         public void Validate()
         {
             RequireNonNull(this.SiteOrigin, "Origin URI");
@@ -116,6 +129,7 @@ namespace WebEID.Security.Validator
                        .IsSiteCertificateFingerprintValidationEnabled) &&
                    Enumerable.SequenceEqual(this.DisallowedSubjectCertificatePolicies,
                        other.DisallowedSubjectCertificatePolicies) &&
+                   Equals(this.DesignatedOcspServiceConfiguration, other.DesignatedOcspServiceConfiguration) &&
                    Enumerable.SequenceEqual(this.NonceDisabledOcspUrls, other.NonceDisabledOcspUrls);
         }
     }

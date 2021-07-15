@@ -1,6 +1,7 @@
-namespace WebEID.Security.Exceptions
+namespace WebEid.Security.Exceptions
 {
     using System;
+    using System.Diagnostics.CodeAnalysis;
     using System.Runtime.Serialization;
 
     /// <summary>
@@ -13,7 +14,7 @@ namespace WebEID.Security.Exceptions
         {
         }
 
-
+        [ExcludeFromCodeCoverage]
         protected NonceExpiredException(SerializationInfo info, StreamingContext context) : base(info, context) { }
     }
 }

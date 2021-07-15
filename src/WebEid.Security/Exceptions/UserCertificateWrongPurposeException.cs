@@ -1,6 +1,7 @@
-namespace WebEID.Security.Exceptions
+namespace WebEid.Security.Exceptions
 {
     using System;
+    using System.Diagnostics.CodeAnalysis;
     using System.Runtime.Serialization;
 
     /// <summary>
@@ -9,14 +10,11 @@ namespace WebEID.Security.Exceptions
     [Serializable]
     public class UserCertificateWrongPurposeException : TokenValidationException
     {
-        public UserCertificateWrongPurposeException() : this(null)
+        public UserCertificateWrongPurposeException() : base("User certificate is not meant to be used as an authentication certificate")
         {
         }
 
-        public UserCertificateWrongPurposeException(Exception innerException) : base("User certificate is not meant to be used as an authentication certificate", innerException)
-        {
-        }
-
+        [ExcludeFromCodeCoverage]
         protected UserCertificateWrongPurposeException(SerializationInfo info, StreamingContext context) : base(info, context) { }
     }
 }
