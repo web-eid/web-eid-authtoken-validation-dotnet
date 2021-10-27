@@ -20,7 +20,7 @@
     <None Remove="Resources\ocsp_response_with_2_responses.der" />
     <None Remove="Resources\TEST_of_ESTEID-SK_2015.cer" />
     <None Remove="Resources\TEST_of_ESTEID2018.cer" />
-    <None Remove="Resources\TEST_of_SK_OCSP_RESPONDER_2020.cer" />
+    <None Remove="Resources\TEST_of_ESTEID-SK_2018_AIA_OCSP_RESPONDER_202304.cer" />
   </ItemGroup>
 
   <ItemGroup>
@@ -33,7 +33,7 @@
     <EmbeddedResource Include="Resources\ocsp_response_with_2_responses.der" />
     <EmbeddedResource Include="Resources\TEST_of_ESTEID-SK_2015.cer" />
     <EmbeddedResource Include="Resources\TEST_of_ESTEID2018.cer" />
-    <EmbeddedResource Include="Resources\TEST_of_SK_OCSP_RESPONDER_2020.cer" />
+    <EmbeddedResource Include="Resources\TEST_of_ESTEID-SK_2018_AIA_OCSP_RESPONDER_202304.cer" />
   </ItemGroup>
 
   <ItemGroup>

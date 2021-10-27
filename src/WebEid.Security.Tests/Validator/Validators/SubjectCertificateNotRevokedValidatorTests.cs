@@ -181,6 +181,7 @@ namespace WebEid.Security.Tests.Validator.Validators
         }
 
         [Test]
+        [Ignore("A new designated test OCSP responder certificate was issued so the responder certificate in ocsp_response_unknown.der is no longer valid")]
         public void WhenOcspResponseUnknownThenThrows()
         {
             var ocspServiceProvider = OcspServiceMaker.GetDesignatedOcspServiceProvider("https://web-eid-test.free.beeceptor.com");

@@ -177,6 +177,7 @@ namespace WebEid.Security.Tests.Validator
         }
 
         [Test]
+        [Ignore("A new designated test OCSP responder certificate was issued whose validity period no longer overlaps with the revoked certificate")]
         public void WhenCertificateIsRevokedThenOcspCheckWithDesignatedServiceFailsAsync()
         {
             var authTokenValidator = AuthTokenValidators.GetAuthTokenValidatorWithDesignatedOcspCheck();

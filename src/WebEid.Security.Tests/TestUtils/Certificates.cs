@@ -24,7 +24,7 @@ namespace WebEid.Security.Tests.TestUtils
             var certificates = CertificateLoader.LoadCertificatesFromResources(
                 "TEST_of_ESTEID-SK_2015.cer",
                 "TEST_of_ESTEID2018.cer",
-                "TEST_of_SK_OCSP_RESPONDER_2020.cer");
+                "TEST_of_ESTEID-SK_2018_AIA_OCSP_RESPONDER_202304.cer");
             testEsteid2015Ca = certificates[0];
             testEsteid2018Ca = certificates[1];
             testSkOcspResponder2020 = certificates[2];
@@ -48,7 +48,7 @@ namespace WebEid.Security.Tests.TestUtils
             return testEsteid2015Ca;
         }
 
-        public static X509Certificate GetTestSkOcspResponder2020()
+        public static X509Certificate GetTestSkOcspResponder2023()
         {
             if (testSkOcspResponder2020 == null)
             {
