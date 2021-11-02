@@ -133,19 +133,6 @@ namespace WebEid.Security.Validator
         }
 
         /// <summary>
-        /// Sets the tolerated clock skew of the client computer when verifying the token expiration field <code>exp</code>.
-        /// This is an optional configuration parameter, the default is 3 minutes.
-        /// </summary>
-        /// <param name="allowedClockSkew">The tolerated clock skew of the client computer</param>
-        /// <returns>the builder instance for method chaining</returns>
-        public AuthTokenValidatorBuilder WithAllowedClientClockSkew(TimeSpan allowedClockSkew)
-        {
-            this.configuration.AllowedClientClockSkew = allowedClockSkew;
-            this.logger?.LogDebug("Allowed client clock skew set to {0} second(s)", this.configuration.AllowedClientClockSkew.TotalSeconds);
-            return this;
-        }
-
-        /// <summary>
         /// Sets the expected site certificate fingerprint, i.e. the SHA-256 fingerprint of the HTTPS certificate
         /// that the site is using, and turns on site certificate validation.
         /// </summary>

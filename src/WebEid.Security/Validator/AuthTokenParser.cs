@@ -20,7 +20,6 @@ namespace WebEid.Security.Validator
     public class AuthTokenParser
     {
         private readonly string authToken;
-        private readonly TimeSpan allowedClockSkew;
         private readonly ILogger logger;
         private IEnumerable<Claim> claims;
 
@@ -28,12 +27,10 @@ namespace WebEid.Security.Validator
         /// Creates an instance of AuthTokenParser
         /// </summary>
         /// <param name="authToken">the Web eID authentication token with signature</param>
-        /// <param name="allowedClockSkew">the tolerated client computer clock skew when verifying the token <code>exp</code>field</param>
         /// <param name="logger">logger instance</param>
-        public AuthTokenParser(string authToken, TimeSpan allowedClockSkew, ILogger logger)
+        public AuthTokenParser(string authToken, ILogger logger)
         {
             this.authToken = authToken;
-            this.allowedClockSkew = allowedClockSkew;
             this.logger = logger;
         }
 
@@ -81,7 +78,7 @@ namespace WebEid.Security.Validator
 
         internal void ValidateTokenSignature(X509Certificate certificate)
         {
-            ValidateTokenSignature(this.authToken, certificate, this.allowedClockSkew);
+            ValidateTokenSignature(this.authToken, certificate);
         }
 
         /// <summary>
@@ -91,8 +88,7 @@ namespace WebEid.Security.Validator
         /// <param name="certificate">User certificate from x5c field of JWT token</param>
         /// <param name="allowedClockSkew"></param>
         private static void ValidateTokenSignature(string authToken,
-            X509Certificate certificate,
-            TimeSpan allowedClockSkew)
+            X509Certificate certificate)
         {
             try
             {
@@ -102,18 +98,7 @@ namespace WebEid.Security.Validator
                 // Validate only issuer signing key
                 var validationParameters = new TokenValidationParameters()
                 {
-                    ClockSkew = allowedClockSkew,
-                    ValidateLifetime = true,
-                    LifetimeValidator = (notBefore, expires, securityToken, tokenValidationParameters) =>
-                    {
-                        var clonedParameters = tokenValidationParameters.Clone();
-                        clonedParameters.LifetimeValidator = null;
-                        Microsoft.IdentityModel.Tokens.Validators.ValidateLifetime(notBefore,
-                            expires,
-                            securityToken,
-                            clonedParameters);
-                        return true;
-                    },
+                    ValidateLifetime = false,
                     ValidateAudience = false,
                     ValidateActor = false,
                     ValidateTokenReplay = false,

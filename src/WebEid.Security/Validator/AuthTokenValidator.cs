@@ -73,7 +73,7 @@ namespace WebEid.Security.Validator
             try
             {
                 this.logger?.LogInformation("Starting token parsing and validation");
-                var authTokenParser = new AuthTokenParser(authToken, this.configuration.AllowedClientClockSkew, this.logger);
+                var authTokenParser = new AuthTokenParser(authToken, this.logger);
                 var actualTokenData = authTokenParser.ParseHeaderFromTokenString();
 
                 await this.simpleSubjectCertificateValidators.ExecuteFor(actualTokenData);

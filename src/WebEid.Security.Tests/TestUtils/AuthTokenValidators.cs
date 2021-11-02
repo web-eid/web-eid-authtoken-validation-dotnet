@@ -25,7 +25,6 @@ namespace WebEid.Security.Tests.TestUtils
         {
             return GetAuthTokenValidatorBuilder(url, cache, certificates)
                 // Assure that all builder methods are covered with tests.
-                .WithAllowedClientClockSkew(TimeSpan.FromMinutes(2))
                 .WithOcspRequestTimeout(TimeSpan.FromSeconds(1))
                 .WithNonceDisabledOcspUrls(new Uri("http://example.org"))
                 .WithoutUserCertificateRevocationCheckWithOcsp()
