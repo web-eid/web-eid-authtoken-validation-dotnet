@@ -24,7 +24,6 @@ namespace WebEid.Security.Validator
             this.TrustedCaCertificates = new List<X509Certificate2>(other.TrustedCaCertificates);
             this.IsUserCertificateRevocationCheckWithOcspEnabled = other.IsUserCertificateRevocationCheckWithOcspEnabled;
             this.OcspRequestTimeout = other.OcspRequestTimeout;
-            this.AllowedClientClockSkew = other.AllowedClientClockSkew;
             this.DesignatedOcspServiceConfiguration = other.DesignatedOcspServiceConfiguration;
             this.IsSiteCertificateFingerprintValidationEnabled = other.IsSiteCertificateFingerprintValidationEnabled;
             this.SiteCertificateSha256Fingerprint = other.SiteCertificateSha256Fingerprint;
@@ -41,8 +40,6 @@ namespace WebEid.Security.Validator
         public bool IsUserCertificateRevocationCheckWithOcspEnabled { get; set; } = true;
 
         public TimeSpan OcspRequestTimeout { get; set; } = TimeSpan.FromSeconds(5);
-
-        public TimeSpan AllowedClientClockSkew { get; set; } = TimeSpan.FromMinutes(3);
 
         public bool IsSiteCertificateFingerprintValidationEnabled { get; private set; }
 
@@ -88,7 +85,6 @@ namespace WebEid.Security.Validator
             }
 
             RequirePositiveDuration(this.OcspRequestTimeout, "OCSP request timeout");
-            RequirePositiveDuration(this.AllowedClientClockSkew, "Allowed client clock skew");
             if (this.IsSiteCertificateFingerprintValidationEnabled && this.siteCertificateSha256Fingerprint == null)
             {
                 throw new ArgumentException("Certificate fingerprint must not be null when site certificate fingerprint validation is enabled");
@@ -124,7 +120,6 @@ namespace WebEid.Security.Validator
                    this.IsUserCertificateRevocationCheckWithOcspEnabled.Equals(other
                        .IsUserCertificateRevocationCheckWithOcspEnabled) &&
                    this.OcspRequestTimeout.Equals(other.OcspRequestTimeout) &&
-                   this.AllowedClientClockSkew.Equals(other.AllowedClientClockSkew) &&
                    this.IsSiteCertificateFingerprintValidationEnabled.Equals(other
                        .IsSiteCertificateFingerprintValidationEnabled) &&
                    Enumerable.SequenceEqual(this.DisallowedSubjectCertificatePolicies,

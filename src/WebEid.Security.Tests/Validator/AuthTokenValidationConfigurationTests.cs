@@ -79,23 +79,6 @@ namespace WebEid.Security.Tests.Validator
         }
 
         [Test]
-        public void AuthTokenValidationConfigurationWithZeroAllowedClientClockSkewThrowsArgumentOutOfRangeException()
-        {
-            using (var cache = new MemoryCache<DateTime>())
-            {
-                var configuration = new AuthTokenValidationConfiguration
-                {
-                    SiteOrigin = new Uri("https://valid", UriKind.RelativeOrAbsolute),
-                    NonceCache = cache
-                };
-                configuration.TrustedCaCertificates.Add(new X509Certificate2());
-                configuration.AllowedClientClockSkew = TimeSpan.Zero;
-                Assert.Throws<ArgumentOutOfRangeException>(() => configuration.Validate())
-                    .WithMessage("Allowed client clock skew must be greater than zero (Parameter 'duration')");
-            }
-        }
-
-        [Test]
         public void AuthTokenValidationConfigurationWithCorrectDataDoesNotThrowException()
         {
             using (var cache = new MemoryCache<DateTime>())
@@ -122,7 +105,6 @@ namespace WebEid.Security.Tests.Validator
                     NonceCache = cache
                 };
                 configuration.OcspRequestTimeout = TimeSpan.FromMinutes(1);
-                configuration.AllowedClientClockSkew = TimeSpan.FromMinutes(1);
                 configuration.SiteCertificateSha256Fingerprint = "fingerprint";
                 configuration.TrustedCaCertificates.Add(new X509Certificate2(Certificates.GetTestEsteid2015Ca()));
                 configuration.TrustedCaCertificates.Add(new X509Certificate2(Certificates.GetTestEsteid2018Ca()));
