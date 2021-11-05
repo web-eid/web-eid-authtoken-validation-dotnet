@@ -1,60 +1,38 @@
 namespace WebEid.Security.Validator
 {
-    internal enum SignatureAlgorithm
+    using System;
+    using System.Collections.Generic;
+    using System.Collections.ObjectModel;
+    using System.Linq;
+    using Microsoft.IdentityModel.Tokens;
+
+    internal static class SignatureAlgorithm
     {
-        /// JWA name for <code>No digital signature or MAC performed</code>
-        None,
+        private static readonly ICollection<string> SupportedSigningAlgorithms = new Collection<string>
+        {
+            SecurityAlgorithms.None,
+            SecurityAlgorithms.EcdsaSha256,
+            SecurityAlgorithms.EcdsaSha384,
+            SecurityAlgorithms.EcdsaSha512,
+            SecurityAlgorithms.HmacSha256,
+            SecurityAlgorithms.HmacSha384,
+            SecurityAlgorithms.HmacSha512,
+            SecurityAlgorithms.RsaSha256,
+            SecurityAlgorithms.RsaSha384,
+            SecurityAlgorithms.RsaSha512,
+            SecurityAlgorithms.RsaSsaPssSha256,
+            SecurityAlgorithms.RsaSsaPssSha384,
+            SecurityAlgorithms.RsaSsaPssSha512
+        };
 
-        /// JWA algorithm name for <code>HMAC using SHA-256</code>
-        Hs256,
-
-        /// JWA algorithm name for <code>HMAC using SHA-384</code>
-        Hs384,
-
-        /// JWA algorithm name for <code>HMAC using SHA-512</code>
-        Hs512,
-
-        /// JWA algorithm name for <code>RSASSA-PKCS-v1_5 using SHA-256</code>
-        Rs256,
-
-        /// <summary>
-        /// JWA algorithm name for <code>RSASSA-PKCS-v1_5 using SHA-384</code>
-        /// </summary>
-        Rs384,
-
-        /// <summary>
-        /// JWA algorithm name for <code>RSASSA-PKCS-v1_5 using SHA-512</code>
-        /// </summary>
-        Rs512,
-
-        /// <summary>
-        /// JWA algorithm name for <code>ECDSA using P-256 and SHA-256</code>
-        /// </summary>
-        Es256,
-
-        /// <summary>
-        /// JWA algorithm name for <code>ECDSA using P-384 and SHA-384</code>
-        /// </summary>
-        Es384,
-
-        /// <summary>
-        /// JWA algorithm name for <code>ECDSA using P-521 and SHA-512</code>
-        /// </summary>
-        Es512,
-
-        /// <summary>
-        /// JWA algorithm name for <code>RSASSA-PSS using SHA-256 and MGF1 with SHA-256</code>.
-        /// </summary>
-        Ps256,
-
-        /// <summary>
-        /// JWA algorithm name for <code>RSASSA-PSS using SHA-384 and MGF1 with SHA-384</code>. 
-        /// </summary>
-        Ps384,
-
-        /// <summary>
-        /// JWA algorithm name for <code>RSASSA-PSS using SHA-512 and MGF1 with SHA-512</code>. 
-        /// </summary>
-        Ps512
+        public static void ValidateIfSupported(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name) ||
+                name.Equals(SecurityAlgorithms.None, StringComparison.InvariantCultureIgnoreCase) ||
+                !SupportedSigningAlgorithms.Any(alg => alg.Equals(name, StringComparison.InvariantCultureIgnoreCase)))
+            {
+                throw new NotSupportedException($"Unsupported signature algorithm '{name}'");
+            }
+        }
     }
 }

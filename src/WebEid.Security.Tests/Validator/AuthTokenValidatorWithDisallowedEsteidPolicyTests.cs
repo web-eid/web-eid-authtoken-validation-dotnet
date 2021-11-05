@@ -21,7 +21,9 @@ namespace WebEid.Security.Tests.Validator
         public void TestX5CDisallowedPolicyCertificate()
         {
             this.PutCorrectNonceToCache();
+#pragma warning disable CS0618 // is obsolete
             Assert.ThrowsAsync<UserCertificateDisallowedPolicyException>(async () => await this.validator.Validate(Tokens.SignedTest));
+#pragma warning restore CS0618
         }
     }
 }

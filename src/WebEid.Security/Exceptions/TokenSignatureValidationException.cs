@@ -10,7 +10,13 @@ namespace WebEid.Security.Exceptions
     [Serializable]
     public class TokenSignatureValidationException : TokenValidationException
     {
-        public TokenSignatureValidationException(Exception innerException) : base("Token signature validation has failed:", innerException)
+        public const string ErrorMessage = "Token signature validation has failed";
+
+        public TokenSignatureValidationException() : base(ErrorMessage)
+        {
+        }
+
+        public TokenSignatureValidationException(Exception innerException) : base(ErrorMessage, innerException)
         {
         }
 

@@ -4,7 +4,6 @@ namespace WebEid.Security.Tests.TestUtils
     using System.Security.Cryptography.X509Certificates;
     using Security.Cache;
     using Security.Validator;
-    using Util;
 
     public static class AuthTokenValidators
     {

@@ -11,7 +11,7 @@ namespace WebEid.Security.Tests.Validator
         [Test]
         public void PopulateDataFromClaimsFillsCorrectDataAndValidationDoesNotFailFromValidToken()
         {
-            var parser = new AuthTokenParser(Tokens.SignedTest, null);
+            var parser = new JwtAuthTokenParser(Tokens.SignedTest, null);
             var data = parser.ParseHeaderFromTokenString();
             parser.ParseClaims();
             parser.PopulateDataFromClaims(data);
@@ -29,35 +29,35 @@ namespace WebEid.Security.Tests.Validator
         [Test]
         public void ParseHeaderFromTokenStringWithMissingX5CFieldThrowsTokenParseException()
         {
-            var parser = new AuthTokenParser(Tokens.X5CMissing, null);
+            var parser = new JwtAuthTokenParser(Tokens.X5CMissing, null);
             Assert.Throws<TokenParseException>(() => parser.ParseHeaderFromTokenString());
         }
 
         [Test]
         public void ParseHeaderFromTokenStringWithIncorrectX5CValueThrowsTokenParseException()
         {
-            var parser = new AuthTokenParser(Tokens.X5CNotString, null);
+            var parser = new JwtAuthTokenParser(Tokens.X5CNotString, null);
             Assert.Throws<TokenParseException>(() => parser.ParseHeaderFromTokenString());
         }
 
         [Test]
         public void ParseHeaderFromTokenStringWithIncorrectX5CListValueThrowsTokenParseException()
         {
-            var parser = new AuthTokenParser(Tokens.X5CNotArray, null);
+            var parser = new JwtAuthTokenParser(Tokens.X5CNotArray, null);
             Assert.Throws<TokenParseException>(() => parser.ParseHeaderFromTokenString());
         }
 
         [Test]
         public void ParseHeaderFromTokenStringWithX5CEmptyValueThrowsTokenParseException()
         {
-            var parser = new AuthTokenParser(Tokens.X5CEmpty, null);
+            var parser = new JwtAuthTokenParser(Tokens.X5CEmpty, null);
             Assert.Throws<TokenParseException>(() => parser.ParseHeaderFromTokenString());
         }
 
         [Test]
         public void JwtWithoutDateFieldsDoesNotThrow()
         {
-            var parser = new AuthTokenParser(Tokens.MinimalFormat, null);
+            var parser = new JwtAuthTokenParser(Tokens.MinimalFormat, null);
             var validatorData = parser.ParseHeaderFromTokenString();
             Assert.DoesNotThrow(() => parser.ValidateTokenSignature(validatorData.SubjectCertificate));
         }
@@ -65,7 +65,7 @@ namespace WebEid.Security.Tests.Validator
         [Test]
         public void ParseHeaderFromTokenStringWithInvalidX5CCertificateThrowsTokenParseException()
         {
-            var parser = new AuthTokenParser(Tokens.X5CInvalidCertificate, null);
+            var parser = new JwtAuthTokenParser(Tokens.X5CInvalidCertificate, null);
             Assert.Throws<TokenParseException>(() => parser.ParseHeaderFromTokenString());
         }
     }
