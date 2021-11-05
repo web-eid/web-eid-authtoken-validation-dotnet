@@ -8,8 +8,11 @@ namespace WebEid.Security.Validator
     using Exceptions;
     using Microsoft.Extensions.Logging;
     using Microsoft.IdentityModel.Tokens;
+    using Newtonsoft.Json;
     using Ocsp;
     using Ocsp.Service;
+    using Token;
+    using Util;
     using Validators;
 
     public sealed class AuthTokenValidator : IAuthTokenValidator
@@ -59,43 +62,90 @@ namespace WebEid.Security.Validator
             CryptoProviderFactory.DefaultCacheSignatureProviders = false;
         }
 
-        public async Task<X509Certificate> Validate(string authToken)
+        [Obsolete("Use validate(string, string) instead.")]
+        public async Task<X509Certificate> Validate(string authTokenWithSignature)
         {
-            if (authToken == null || authToken.Length < TokenMinLength)
-            {
-                throw new TokenParseException("Auth token is null or too short");
-            }
-            if (authToken.Length > TokenMaxLength)
-            {
-                throw new TokenParseException("Auth token is too long");
-            }
-
+            ValidateTokenLength(authTokenWithSignature);
             try
             {
                 this.logger?.LogInformation("Starting token parsing and validation");
-                var authTokenParser = new AuthTokenParser(authToken, this.logger);
-                var actualTokenData = authTokenParser.ParseHeaderFromTokenString();
-
-                await this.simpleSubjectCertificateValidators.ExecuteFor(actualTokenData);
-
-                await this.GetCertTrustValidators().ExecuteFor(actualTokenData);
-
-                authTokenParser.ValidateTokenSignature(actualTokenData.SubjectCertificate);
-
-                authTokenParser.ParseClaims();
-                authTokenParser.PopulateDataFromClaims(actualTokenData);
-
-                await this.tokenBodyValidators.ExecuteFor(actualTokenData);
-
-                this.logger?.LogInformation("Token parsing and validation successful");
-
-                return actualTokenData.SubjectCertificate;
+                return await this.ValidateJwtAuthToken(authTokenWithSignature);
             }
             catch (Exception ex)
             {
                 this.logger?.LogWarning("Token parsing and validation was interrupted:", ex);
                 throw;
             }
+        }
+
+        public Task<X509Certificate> Validate(string authToken, string currentNonce)
+        {
+            ValidateTokenLength(authToken);
+            try
+            {
+                this.logger?.LogInformation("Starting token parsing and validation");
+                return this.ValidateWebEidAuthToken(authToken, currentNonce);
+            }
+            catch (Exception ex)
+            {
+                // Generally "log and rethrow" is an anti-pattern, but it fits with the surrounding logging style.
+                this.logger?.LogWarning("Token parsing and validation was interrupted:", ex);
+                throw;
+            }
+        }
+
+        private async Task<X509Certificate> ValidateWebEidAuthToken(string authToken, string currentNonce)
+        {
+            AuthTokenValidatorData authTokenValidatorData;
+            try
+            {
+                var token = JsonConvert.DeserializeObject<WebEidAuthToken>(authToken);
+                authTokenValidatorData = new AuthTokenValidatorData(X509CertificateExtensions.ParseCertificate(token.Certificate));
+
+                await this.simpleSubjectCertificateValidators.ExecuteFor(authTokenValidatorData);
+                await this.GetCertTrustValidators().ExecuteFor(authTokenValidatorData);
+
+                var publicKey = new X509Certificate2(authTokenValidatorData.SubjectCertificate).GetAsymmetricPublicKey()
+                    .CreateSecurityKeyWithoutCachingSignatureProviders();
+
+                // It is guaranteed that if the signature verification succeeds, then the origin, challenge
+                // and, if part of the signature, origin certificate have been implicitly and correctly verified
+                // without the need to implement any additional checks.
+                new WebEidAuthTokenSignatureValidator(this.configuration.SiteOrigin)
+                    .Validate(token.Algorithm,
+                        publicKey,
+                        token.Signature,
+                        currentNonce);
+
+                return authTokenValidatorData.SubjectCertificate;
+
+            }
+            catch (Exception ex)
+            {
+                throw new TokenParseException("Error parsing Web eID authentication token", ex);
+            }
+        }
+
+        [Obsolete("Use ValidateWebEidAuthToken instead.")]
+        private async Task<X509Certificate> ValidateJwtAuthToken(string authToken)
+        {
+            var authTokenParser = new JwtAuthTokenParser(authToken, this.logger);
+            var actualTokenData = authTokenParser.ParseHeaderFromTokenString();
+
+            await this.simpleSubjectCertificateValidators.ExecuteFor(actualTokenData);
+
+            await this.GetCertTrustValidators().ExecuteFor(actualTokenData);
+
+            authTokenParser.ValidateTokenSignature(actualTokenData.SubjectCertificate);
+
+            authTokenParser.ParseClaims();
+            authTokenParser.PopulateDataFromClaims(actualTokenData);
+
+            await this.tokenBodyValidators.ExecuteFor(actualTokenData);
+
+            this.logger?.LogInformation("Token parsing and validation successful");
+
+            return actualTokenData.SubjectCertificate;
         }
 
         /// <summary>
@@ -117,6 +167,18 @@ namespace WebEid.Security.Validator
                         this.ocspClient,
                         this.ocspServiceProvider,
                         this.logger));
+        }
+
+        private static void ValidateTokenLength(string authToken)
+        {
+            if (authToken == null || authToken.Length < TokenMinLength)
+            {
+                throw new TokenParseException("Auth token is null or too short");
+            }
+            if (authToken.Length > TokenMaxLength)
+            {
+                throw new TokenParseException("Auth token is too long");
+            }
         }
     }
 }

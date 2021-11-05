@@ -103,6 +103,19 @@ namespace WebEid.Security.Util
             }
         }
 
+        public static X509Certificate ParseCertificate(string certificateInBase64)
+        {
+            try
+            {
+                var certificateBytes = Convert.FromBase64String(certificateInBase64);
+                return new X509Certificate(certificateBytes);
+            }
+            catch (Exception ex)
+            {
+                throw new TokenParseException("x5c field must contain a valid certificate", ex);
+            }
+        }
+
         public static string GetSubjectCn(this X509Certificate certificate)
         {
             return certificate.GetSubjectCnFieldValue(X509Name.CN);

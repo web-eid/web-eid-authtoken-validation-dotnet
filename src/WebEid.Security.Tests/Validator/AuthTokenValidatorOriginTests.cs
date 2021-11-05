@@ -12,27 +12,35 @@ namespace WebEid.Security.Tests.Validator
         public void ValidateOriginMismatchFailure()
         {
             this.Validator = AuthTokenValidators.GetAuthTokenValidator("https://mismatch.ee", this.Cache);
+#pragma warning disable CS0618 // is obsolete
             Assert.ThrowsAsync<OriginMismatchException>(async () => await this.Validator.Validate(Tokens.SignedTest));
+#pragma warning restore CS0618
         }
 
         [Test]
         public void TestOriginMissing()
         {
+#pragma warning disable CS0618 // is obsolete
             Assert.ThrowsAsync<TokenParseException>(async () => await this.Validator.Validate(Tokens.OriginMissing))
                 .HasMessageStartingWith("aud field must be present in authentication token body and must be an array");
+#pragma warning restore CS0618
         }
 
         [Test]
         public void TestOriginEmpty()
         {
+#pragma warning disable CS0618 // is obsolete
             Assert.ThrowsAsync<TokenParseException>(async () => await this.Validator.Validate(Tokens.OriginEmpty))
                 .HasMessageStartingWith("origin from aud field must not be empty");
+#pragma warning restore CS0618
         }
 
         [Test]
         public void TestOriginNotString()
         {
+#pragma warning disable CS0618 // is obsolete
             Assert.ThrowsAsync<OriginMismatchException>(async () => await this.Validator.Validate(Tokens.OriginNotString));
+#pragma warning restore CS0618
         }
 
         [Test]
@@ -45,7 +53,9 @@ namespace WebEid.Security.Tests.Validator
         [Test]
         public void TestTokenOriginNotUrl()
         {
+#pragma warning disable CS0618 // is obsolete
             Assert.ThrowsAsync<OriginMismatchException>(async () => await this.Validator.Validate(Tokens.OriginNotUrl));
+#pragma warning restore CS0618
         }
 
         [Test]
@@ -60,7 +70,9 @@ namespace WebEid.Security.Tests.Validator
         public void TestTokenOriginExcessiveElements()
         {
             var validator = AuthTokenValidators.GetAuthTokenValidator("https://ria.ee", this.Cache);
+#pragma warning disable CS0618 // is obsolete
             Assert.ThrowsAsync<OriginMismatchException>(async () => await validator.Validate(Tokens.OriginUrlWithExcessiveElements));
+#pragma warning restore CS0618
         }
 
         [Test]
@@ -73,7 +85,9 @@ namespace WebEid.Security.Tests.Validator
         public void TestTokenOriginNotHttps()
         {
             var validator = AuthTokenValidators.GetAuthTokenValidator("https://ria.ee", this.Cache);
+#pragma warning disable CS0618 // is obsolete
             Assert.ThrowsAsync<OriginMismatchException>(async () => await validator.Validate(Tokens.OriginValidUrlNotHttps));
+#pragma warning restore CS0618
         }
 
         [Test]

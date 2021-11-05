@@ -19,13 +19,17 @@ namespace WebEid.Security.Tests.Validator
         [Test]
         public void TestTokenCertRsaExpired()
         {
+#pragma warning disable CS0618 // is obsolete
             Assert.ThrowsAsync<CertificateExpiredException>(async () => await this.validator.Validate(Tokens.TokenCertRsaExipred));
+#pragma warning restore CS0618
         }
 
         [Test]
         public void TestTokenCertEcdsaExpired()
         {
+#pragma warning disable CS0618 // is obsolete
             Assert.ThrowsAsync<CertificateExpiredException>(async () => await this.validator.Validate(Tokens.TokenCertEcdsaExipred));
+#pragma warning restore CS0618
         }
     }
 }

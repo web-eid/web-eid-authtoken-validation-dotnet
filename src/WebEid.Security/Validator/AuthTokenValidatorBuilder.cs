@@ -81,13 +81,15 @@ namespace WebEid.Security.Validator
 
         /// <summary>
         /// Turns off user certificate revocation check with OCSP.
+        /// Turning off user certificate revocation check with OCSP is dangerous and should be used only in exceptional circumstances.
         /// By default user certificate revocation check with OCSP is turned on.
         /// </summary>
         /// <returns>the builder instance for method chaining</returns>
         public AuthTokenValidatorBuilder WithoutUserCertificateRevocationCheckWithOcsp()
         {
             this.configuration.IsUserCertificateRevocationCheckWithOcspEnabled = false;
-            this.logger?.LogDebug("User certificate revocation check with OCSP is disabled");
+            this.logger?.LogDebug(
+                "User certificate revocation check with OCSP is disabled, you should turn off the revocation check only in exceptional circumstances");
             return this;
         }
 

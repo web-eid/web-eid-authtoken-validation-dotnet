@@ -13,7 +13,12 @@ namespace WebEid.Security.Exceptions
         public TokenParseException(string message) : base(message)
         {
         }
-        public TokenParseException(Exception innerException) : base("Error parsing token", innerException)
+
+        public TokenParseException(Exception innerException) : this("Error parsing token", innerException)
+        {
+        }
+
+        public TokenParseException(string message, Exception innerException) : base(message, innerException)
         {
         }
 

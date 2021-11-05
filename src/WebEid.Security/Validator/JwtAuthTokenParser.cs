@@ -3,12 +3,11 @@ namespace WebEid.Security.Validator
     using System;
     using System.Collections;
     using System.Collections.Generic;
-    using Exceptions;
     using System.IdentityModel.Tokens.Jwt;
     using System.Linq;
     using System.Security.Claims;
-    using System.Security.Cryptography;
     using System.Security.Cryptography.X509Certificates;
+    using Exceptions;
     using Microsoft.Extensions.Logging;
     using Microsoft.IdentityModel.Tokens;
     using Newtonsoft.Json.Linq;
@@ -17,7 +16,7 @@ namespace WebEid.Security.Validator
     /// <summary>
     /// Parses the Web eID authentication token using the System.IdentityModel.Tokens.Jwt library.
     /// </summary>
-    public class AuthTokenParser
+    public class JwtAuthTokenParser
     {
         private readonly string authToken;
         private readonly ILogger logger;
@@ -27,8 +26,9 @@ namespace WebEid.Security.Validator
         /// Creates an instance of AuthTokenParser
         /// </summary>
         /// <param name="authToken">the Web eID authentication token with signature</param>
+        /// <param name="allowedClockSkew">the tolerated client computer clock skew when verifying the token <code>exp</code> field</param>
         /// <param name="logger">logger instance</param>
-        public AuthTokenParser(string authToken, ILogger logger)
+        public JwtAuthTokenParser(string authToken, ILogger logger)
         {
             this.authToken = authToken;
             this.logger = logger;
@@ -45,7 +45,7 @@ namespace WebEid.Security.Validator
             {
                 var jwtHeader = ParseJwtHeaderFromTokenString(this.authToken);
 
-                this.logger?.LogTrace("JWT header: {}", jwtHeader);
+                this.logger?.LogTrace("JWT header: {0}", jwtHeader);
 
                 var subjectCertificateList = GetListFieldOrThrow(jwtHeader, "x5c");
 
@@ -55,14 +55,14 @@ namespace WebEid.Security.Validator
                     throw new TokenParseException("Certificate from x5c field must not be empty");
                 }
 
-                var signatureAlgorithm = GetStringFieldOrThrow(jwtHeader, "alg");
 
-                var subjectCertificate = ParseCertificate(subjectCertificateField);
+                var subjectCertificate = X509CertificateExtensions.ParseCertificate(subjectCertificateField);
 
                 this.logger?.LogTrace("Subject certificate: {}", subjectCertificateField);
 
                 // Validate signature algorithm name
-                signatureAlgorithm.ForName();
+                var signatureAlgorithm = GetStringFieldOrThrow(jwtHeader, "alg");
+                SignatureAlgorithm.ValidateIfSupported(signatureAlgorithm);
 
                 return new AuthTokenValidatorData(subjectCertificate);
             }
@@ -86,7 +86,6 @@ namespace WebEid.Security.Validator
         /// </summary>
         /// <param name="authToken">the Web eID authentication token with signature</param>
         /// <param name="certificate">User certificate from x5c field of JWT token</param>
-        /// <param name="allowedClockSkew"></param>
         private static void ValidateTokenSignature(string authToken,
             X509Certificate certificate)
         {
@@ -104,8 +103,7 @@ namespace WebEid.Security.Validator
                     ValidateTokenReplay = false,
                     ValidateIssuer = false,
                     ValidateIssuerSigningKey = false,
-                    IssuerSigningKey = publicKey.CreateSecurityKeyWithoutCachingSignatureProviders(),
-                    CryptoProviderFactory = new CryptoProviderFactory { CacheSignatureProviders = false }
+                    IssuerSigningKey = publicKey.CreateSecurityKeyWithoutCachingSignatureProviders()
                 };
 
                 new JwtSecurityTokenHandler().ValidateToken(authToken, validationParameters, out _);
@@ -294,19 +292,6 @@ namespace WebEid.Security.Validator
             catch
             {
                 throw new TokenParseException($"{claimType} field must be present and not empty in authentication token body");
-            }
-        }
-
-        private static X509Certificate ParseCertificate(string certificateInBase64)
-        {
-            try
-            {
-                var certificateBytes = Convert.FromBase64String(certificateInBase64);
-                return new X509Certificate(certificateBytes);
-            }
-            catch (CryptographicException)
-            {
-                throw new TokenParseException("x5c field must contain a valid certificate");
             }
         }
     }
