@@ -9,7 +9,6 @@ namespace WebEid.Security.Tests.Validator
     [TestFixture]
     public class AuthTokenValidatorNonceTests : AbstractTestWithValidator
     {
-
         [Test]
         public void ValidateIncorrectNonce()
         {

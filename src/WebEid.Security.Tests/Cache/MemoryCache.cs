@@ -9,20 +9,16 @@ namespace WebEid.Security.Tests.Cache
         private readonly MemoryCache cacheContent = new MemoryCache("test-cache");
         private readonly CacheItemPolicy cacheItemPolicy;
 
-        public MemoryCache() : this(DateTimeOffset.MaxValue) { }
+        public MemoryCache() : this(ObjectCache.NoSlidingExpiration) { }
 
-        public MemoryCache(TimeSpan cacheItemExpiration) : this(DateTimeOffset.Now.Add(cacheItemExpiration)) { }
-
-        public MemoryCache(DateTimeOffset cacheItemExpiration)
+        public MemoryCache(TimeSpan cacheItemExpiration)
         {
-            this.cacheItemPolicy = new CacheItemPolicy { AbsoluteExpiration = cacheItemExpiration };
+            this.cacheItemPolicy = new CacheItemPolicy { SlidingExpiration = cacheItemExpiration };
         }
 
         public T GetAndRemove(string key)
         {
-            var value = this.cacheContent.Get(key);
-            this.cacheContent.Remove(key);
-            return (T)(value ?? default(T));
+            return this.cacheContent.Contains(key) ? (T)this.cacheContent.Remove(key) : default;
         }
 
         public bool Contains(string key)
@@ -33,5 +29,6 @@ namespace WebEid.Security.Tests.Cache
         public void Put(string key, T value) => this.cacheContent.Add(key, value, this.cacheItemPolicy);
 
         public void Dispose() => this.cacheContent?.Dispose();
+
     }
 }
