@@ -45,7 +45,7 @@ namespace WebEid.Security.Validator.Validators
                 var certificate = DotNetUtilities.FromX509Certificate(actualTokenData.SubjectCertificate);
                 var ocspService = this.ocspServiceProvider.GetService(certificate);
 
-                if (ocspService.DoesSupportNonce)
+                if (!ocspService.DoesSupportNonce)
                 {
                     this.logger?.LogDebug("Disabling OCSP nonce extension");
                 }
