@@ -94,7 +94,7 @@ namespace WebEid.Security.Validator
             X509Certificate certificate,
             TimeSpan allowedClockSkew)
         {
-            using (var certificate2 = new X509Certificate2(certificate))
+            try
             {
                 var certificate2 = new X509Certificate2(certificate);
                 // Don't dispose the key, see: https://github.com/AzureAD/azure-activedirectory-identitymodel-extensions-for-dotnet/issues/1433
