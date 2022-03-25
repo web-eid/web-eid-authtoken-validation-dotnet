@@ -8,7 +8,7 @@ namespace WebEid.Security.Exceptions
     /// Thrown when user certificate revocation check with OCSP fails.
     /// </summary>
     [Serializable]
-    public class UserCertificateOcspCheckFailedException : TokenValidationException
+    public class UserCertificateOcspCheckFailedException : AuthTokenException
     {
         public UserCertificateOcspCheckFailedException(Exception innerException) : base(
             "User certificate revocation check has failed",

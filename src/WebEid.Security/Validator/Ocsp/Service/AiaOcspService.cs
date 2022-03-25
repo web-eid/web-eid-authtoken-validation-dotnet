@@ -31,11 +31,12 @@ namespace WebEid.Security.Validator.Ocsp.Service
 
         private Uri GetOcspAiaUrlFromCertificate(Org.BouncyCastle.X509.X509Certificate certificate)
         {
-            if (certificate == null) { throw new ArgumentNullException(nameof(certificate)); }
+            if (certificate == null)
+            { throw new ArgumentNullException(nameof(certificate)); }
 
             return certificate.GetOcspUri() ??
-                   throw new UserCertificateRevocationCheckFailedException(
-                       "Getting the AIA OCSP responder field from the certificate failed");
+                   throw new UserCertificateOcspCheckFailedException("Getting the AIA OCSP responder field " +
+                                                                     "from the certificate failed");
         }
 
         public void ValidateResponderCertificate(Org.BouncyCastle.X509.X509Certificate responderCertificate, DateTime producedAt)
@@ -48,11 +49,7 @@ namespace WebEid.Security.Validator.Ocsp.Service
                 new X509Certificate2(DotNetUtilities.ToX509Certificate(responderCertificate))
                     .ValidateIsSignedByTrustedCa(this.trustedCaCertificates);
             }
-            catch (CertificateNotTrustedException)
-            {
-                throw;
-            }
-            catch (Exception ex)
+            catch (Exception ex) when (!(ex is CertificateNotTrustedException))
             {
                 throw new OcspCertificateException("Invalid certificate", ex);
             }

@@ -8,7 +8,7 @@ namespace WebEid.Security.Exceptions
     /// Thrown when user certificate parsing fails.
     /// </summary>
     [Serializable]
-    public class UserCertificateParseException : TokenValidationException
+    public class UserCertificateParseException : AuthTokenException
     {
         public UserCertificateParseException(Exception innerException) : base("Error parsing certificate", innerException)
         {

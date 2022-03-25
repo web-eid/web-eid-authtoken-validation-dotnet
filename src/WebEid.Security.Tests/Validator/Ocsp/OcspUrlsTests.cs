@@ -13,16 +13,16 @@ namespace WebEid.Security.Tests.Validator.Ocsp
         [Test]
         public void WhenExtensionValueIsNullThenReturnsNull()
         {
-            var mockCertificate = new Moq.Mock<X509Certificate>();
-            mockCertificate.Setup(x => x.GetExtensionValue(It.IsAny<DerObjectIdentifier>())).Returns(() => null);
+            var mockCertificate = new Mock<X509Certificate>();
+            _ = mockCertificate.Setup(x => x.GetExtensionValue(It.IsAny<DerObjectIdentifier>())).Returns(() => null);
             Assert.That(OcspUrls.GetOcspUri(mockCertificate.Object), Is.Null);
         }
 
         [Test]
         public void WhenExtensionValueIsInvalidThenReturnsNull()
         {
-            var mockCertificate = new Moq.Mock<X509Certificate>();
-            mockCertificate.Setup(x => x.GetExtensionValue(It.IsAny<DerObjectIdentifier>()))
+            var mockCertificate = new Mock<X509Certificate>();
+            _ = mockCertificate.Setup(x => x.GetExtensionValue(It.IsAny<DerObjectIdentifier>()))
                 .Returns(() => new DerOctetString(ToByteArray(new sbyte[] { 1, 2, 3 })));
             Assert.That(OcspUrls.GetOcspUri(mockCertificate.Object), Is.Null);
         }

@@ -9,7 +9,7 @@ namespace WebEid.Security.Tests.Validator.Ocsp
     [TestFixture]
     public class OcspServiceProviderTests
     {
-        private static readonly DateTime CheckMoment = new DateTime(2021, 08, 1);
+        private static readonly DateTime CheckMoment = new(2021, 08, 1);
 
         [Test]
         public void WhenDesignatedOcspServiceConfigurationProvidedThenCreatesDesignatedOcspService()

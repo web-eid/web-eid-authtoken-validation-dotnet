@@ -4,9 +4,7 @@ namespace WebEid.Security.Util
 
     public static class TimespanExtensions
     {
-        public static bool IsNegativeOrZero(this TimeSpan timeSpan)
-        {
-            return timeSpan.CompareTo(TimeSpan.Zero) <= 0;
-        }
+        public static bool IsNegativeOrZero(this TimeSpan timeSpan) =>
+            timeSpan.CompareTo(TimeSpan.Zero) <= 0;
     }
 }

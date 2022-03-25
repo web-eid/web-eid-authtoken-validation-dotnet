@@ -12,15 +12,13 @@ namespace WebEid.Security.Tests.Validator.Ocsp
     public class OcspRequestBuiderTests
     {
         [Test]
-        public void BuildWithoutCertificateIdThrowsException()
-        {
+        public void BuildWithoutCertificateIdThrowsException() =>
             Assert.Throws<ArgumentNullException>(() => new OcspRequestBuilder().Build());
-        }
 
         [Test]
         public void BuildWithOcspNonceAddsNonceToRequest()
         {
-            var certificate = DotNetUtilities.FromX509Certificate(CertificateLoader.LoadCertificateFromResource("ESTEID2018.cer"));
+            var certificate = DotNetUtilities.FromX509Certificate(Certificates.CertificateLoader.LoadCertificateFromResource("ESTEID2018.cer"));
             var certificateId = new CertificateID(CertificateID.HashSha1, certificate, certificate.SerialNumber);
 
             var request = new OcspRequestBuilder()

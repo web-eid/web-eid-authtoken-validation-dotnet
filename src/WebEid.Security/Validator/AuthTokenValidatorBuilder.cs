@@ -3,7 +3,6 @@ namespace WebEid.Security.Validator
     using System;
     using System.Linq;
     using System.Security.Cryptography.X509Certificates;
-    using Cache;
     using Microsoft.Extensions.Logging;
     using Ocsp.Service;
     using Util;
@@ -13,10 +12,7 @@ namespace WebEid.Security.Validator
         private readonly ILogger logger;
         private readonly AuthTokenValidationConfiguration configuration = new AuthTokenValidationConfiguration();
 
-        public AuthTokenValidatorBuilder(ILogger logger = null)
-        {
-            this.logger = logger;
-        }
+        public AuthTokenValidatorBuilder(ILogger logger = null) => this.logger = logger;
 
         /// <summary>
         /// Sets the expected site origin, i.e. the domain that the application is running on.
@@ -29,19 +25,6 @@ namespace WebEid.Security.Validator
         {
             this.configuration.SiteOrigin = origin;
             this.logger?.LogDebug("Origin set to {0}", this.configuration.SiteOrigin);
-            return this;
-        }
-
-        /// <summary>
-        /// Provides access to the nonce cache that was used during nonce generation for storing
-        /// nonce expiration times.
-        /// Nonce cache is a mandatory configuration parameter.
-        /// </summary>
-        /// <param name="cache">nonce cache</param>
-        /// <returns>the builder instance for method chaining</returns>
-        public AuthTokenValidatorBuilder WithNonceCache(ICache<DateTime> cache)
-        {
-            this.configuration.NonceCache = cache;
             return this;
         }
 
@@ -131,19 +114,6 @@ namespace WebEid.Security.Validator
         {
             this.configuration.DesignatedOcspServiceConfiguration = serviceConfiguration;
             this.logger?.LogDebug("Using designated OCSP service configuration");
-            return this;
-        }
-
-        /// <summary>
-        /// Sets the expected site certificate fingerprint, i.e. the SHA-256 fingerprint of the HTTPS certificate
-        /// that the site is using, and turns on site certificate validation.
-        /// </summary>
-        /// <param name="certificateSha256Fingerprint">SHA-256 fingerprint of the HTTPS certificate that the site is using</param>
-        /// <returns>the builder instance for method chaining</returns>
-        public AuthTokenValidatorBuilder WithSiteCertificateSha256Fingerprint(string certificateSha256Fingerprint)
-        {
-            this.configuration.SiteCertificateSha256Fingerprint = certificateSha256Fingerprint;
-            this.logger?.LogDebug("Certificate fingerprint validation is enabled, fingerprint is {0}", certificateSha256Fingerprint);
             return this;
         }
 
