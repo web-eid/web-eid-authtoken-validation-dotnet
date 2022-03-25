@@ -1,22 +1,22 @@
 namespace WebEid.Security.Validator
 {
-    using System;
     using System.Security.Cryptography.X509Certificates;
     using System.Threading.Tasks;
     using Exceptions;
     using Util;
+    using WebEid.Security.AuthToken;
 
     public interface IAuthTokenValidator
     {
+        const string CURRENT_TOKEN_FORMAT_VERSION = "web-eid:1";
+
         /// <summary>
-        /// Validates the Web eID OpenID X509 ID Token authentication token signed by the subject and returns
-        /// the subject certificate that can be used for retrieving information about the subject.
+        /// Parses the Web eID authentication token signed by the subject.
         /// </summary>
-        /// <param name="authTokenWithSignature">the Web eID authentication token, in OpenID X509 ID Token format, with signature</param>
-        /// <returns>validated subject certificate</returns>
-        /// <exception cref="TokenValidationException">When validation fails</exception>
-        [Obsolete("Use validate(string, string) instead.")]
-        Task<X509Certificate> Validate(string authTokenWithSignature);
+        /// <param name="authToken">the Web eID authentication token string, in Web eID JSON format</param>
+        /// <returns>the Web eID authentication token</returns>
+        /// <exception cref="AuthTokenException">When parsing fails</exception>
+        WebEidAuthToken Parse(string authToken);
 
         /// <summary>
         /// Validates the Web eID authentication token signed by the subject and returns
@@ -25,9 +25,9 @@ namespace WebEid.Security.Validator
         /// information from the certificate.
         /// </summary>
         /// <param name="authToken">the Web eID authentication token, in Web eID custom format</param>
-        /// <param name="currentNonce"></param>
+        /// <param name="currentChallengeNonce"></param>
         /// <returns>validated subject certificate</returns>
-        /// <exception cref="TokenValidationException">When validation fails</exception>
-        Task<X509Certificate> Validate(string authToken, string currentNonce);
+        /// <exception cref="AuthTokenException">When validation fails</exception>
+        Task<X509Certificate2> Validate(WebEidAuthToken authToken, string currentChallengeNonce);
     }
 }

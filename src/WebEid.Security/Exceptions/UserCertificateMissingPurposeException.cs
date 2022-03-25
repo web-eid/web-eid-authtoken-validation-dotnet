@@ -8,7 +8,7 @@ namespace WebEid.Security.Exceptions
     /// Thrown when the user certificate purpose field is missing or empty.
     /// </summary>
     [Serializable]
-    public class UserCertificateMissingPurposeException : TokenValidationException
+    public class UserCertificateMissingPurposeException : AuthTokenException
     {
         public UserCertificateMissingPurposeException() : this(null)
         {

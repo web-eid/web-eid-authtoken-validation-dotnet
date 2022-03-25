@@ -6,10 +6,7 @@ namespace WebEid.Security.Tests
 
     public class Logger : ILogger
     {
-        public Logger()
-        {
-            this.Logs = new List<string>();
-        }
+        public Logger() => this.Logs = new List<string>();
 
         public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
         {

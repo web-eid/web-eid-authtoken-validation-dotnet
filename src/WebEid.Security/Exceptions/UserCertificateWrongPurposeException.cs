@@ -8,7 +8,7 @@ namespace WebEid.Security.Exceptions
     /// Thrown when the user certificate purpose is not client authentication.
     /// </summary>
     [Serializable]
-    public class UserCertificateWrongPurposeException : TokenValidationException
+    public class UserCertificateWrongPurposeException : AuthTokenException
     {
         public UserCertificateWrongPurposeException() : base("User certificate is not meant to be used as an authentication certificate")
         {

@@ -8,7 +8,7 @@ namespace WebEid.Security.Exceptions
     /// Thrown when the OCSP certificate validation fails.
     /// </summary>
     [Serializable]
-    public class OcspCertificateException : TokenValidationException
+    public class OcspCertificateException : AuthTokenException
     {
         public OcspCertificateException(string message) : base(message)
         {

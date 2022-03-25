@@ -9,7 +9,7 @@ namespace WebEid.Security.Exceptions
     /// Thrown when the given certificate is not signed by a trusted CA.
     /// </summary>
     [Serializable]
-    public class CertificateNotTrustedException : TokenValidationException
+    public class CertificateNotTrustedException : AuthTokenException
     {
         public CertificateNotTrustedException(X509Certificate2 certificate) :
             base($"Certificate {certificate.Subject} is not trusted")

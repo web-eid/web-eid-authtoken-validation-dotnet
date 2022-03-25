@@ -1,8 +1,0 @@
-<Fakes xmlns="http://schemas.microsoft.com/fakes/2011/" Diagnostic="true">
-    <Assembly Name="System.Runtime" Version="5.0.0.0"/>
-    <StubGeneration Disable="true"/>
-    <ShimGeneration>
-        <Clear/>
-        <Add FullName="System.DateTime"/>
-    </ShimGeneration>
-</Fakes>

@@ -20,10 +20,8 @@ namespace WebEid.Security.Util
         /// <param name="certificate">Certificate to validate</param>
         /// <param name="dateTime">DateTime moment when the certificate is checked to be valid</param>
         /// <param name="subject">Subject of the certificate</param>
-        public static void ValidateCertificateExpiry(this X509Certificate2 certificate, DateTime dateTime, string subject)
-        {
+        public static void ValidateCertificateExpiry(this X509Certificate2 certificate, DateTime dateTime, string subject) =>
             DotNetUtilities.FromX509Certificate(certificate).ValidateCertificateExpiry(dateTime, subject);
-        }
 
         /// <summary>
         /// Checks whether the certificate was valid on the given date.
@@ -56,7 +54,7 @@ namespace WebEid.Security.Util
                     RevocationMode = X509RevocationMode.NoCheck,
                     RevocationFlag = X509RevocationFlag.ExcludeRoot,
                     VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority,
-                    VerificationTime = DateTime.UtcNow,
+                    VerificationTime = DateTimeProvider.UtcNow,
                     UrlRetrievalTimeout = TimeSpan.Zero
                 }
             };
@@ -93,53 +91,39 @@ namespace WebEid.Security.Util
 
                 return chainElement.Certificate;
             }
-            catch (CertificateNotTrustedException)
-            {
-                throw;
-            }
-            catch (Exception ex)
+            catch (Exception ex) when (!(ex is CertificateNotTrustedException))
             {
                 throw new CertificateNotTrustedException(certificate, ex);
             }
         }
 
-        public static X509Certificate ParseCertificate(string certificateInBase64)
+        public static X509Certificate2 ParseCertificate(string certificateInBase64, string fieldName)
         {
             try
             {
                 var certificateBytes = Convert.FromBase64String(certificateInBase64);
-                return new X509Certificate(certificateBytes);
+                return new X509Certificate2(certificateBytes);
             }
             catch (Exception ex)
             {
-                throw new TokenParseException("x5c field must contain a valid certificate", ex);
+                throw new AuthTokenParseException($"'{fieldName}' field must contain a valid certificate", ex);
             }
         }
 
-        public static string GetSubjectCn(this X509Certificate certificate)
-        {
-            return certificate.GetSubjectCnFieldValue(X509Name.CN);
-        }
+        public static string GetSubjectCn(this X509Certificate certificate) =>
+            certificate.GetSubjectCnFieldValue(X509Name.CN);
 
-        public static string GetSubjectIdCode(this X509Certificate certificate)
-        {
-            return certificate.GetSubjectCnFieldValue(X509Name.SerialNumber);
-        }
+        public static string GetSubjectIdCode(this X509Certificate certificate) =>
+            certificate.GetSubjectCnFieldValue(X509Name.SerialNumber);
 
-        public static string GetSubjectGivenName(this X509Certificate certificate)
-        {
-            return certificate.GetSubjectCnFieldValue(X509Name.GivenName);
-        }
+        public static string GetSubjectGivenName(this X509Certificate certificate) =>
+            certificate.GetSubjectCnFieldValue(X509Name.GivenName);
 
-        public static string GetSubjectSurname(this X509Certificate certificate)
-        {
-            return certificate.GetSubjectCnFieldValue(X509Name.Surname);
-        }
+        public static string GetSubjectSurname(this X509Certificate certificate) =>
+            certificate.GetSubjectCnFieldValue(X509Name.Surname);
 
-        public static string GetSubjectCountryCode(this X509Certificate certificate)
-        {
-            return certificate.GetSubjectCnFieldValue(X509Name.C);
-        }
+        public static string GetSubjectCountryCode(this X509Certificate certificate) =>
+            certificate.GetSubjectCnFieldValue(X509Name.C);
 
         private static string GetSubjectCnFieldValue(this X509Certificate certificate, DerObjectIdentifier oid)
         {
@@ -147,10 +131,8 @@ namespace WebEid.Security.Util
             return bcCertificate.SubjectDN.GetValueList(oid)[0].ToString();
         }
 
-        public static AsymmetricAlgorithm GetAsymmetricPublicKey(this X509Certificate2 certificate2)
-        {
-            return certificate2.GetECDsaPublicKey() ?? (AsymmetricAlgorithm)certificate2.GetRSAPublicKey();
-        }
+        public static AsymmetricAlgorithm GetAsymmetricPublicKey(this X509Certificate2 certificate2) =>
+            certificate2.GetECDsaPublicKey() ?? (AsymmetricAlgorithm)certificate2.GetRSAPublicKey();
 
         public static SecurityKey CreateSecurityKeyWithoutCachingSignatureProviders(this AsymmetricAlgorithm asymmetricAlgorithm)
         {

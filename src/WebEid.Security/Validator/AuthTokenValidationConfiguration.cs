@@ -5,35 +5,26 @@ namespace WebEid.Security.Validator
     using System.Collections.ObjectModel;
     using System.Linq;
     using System.Security.Cryptography.X509Certificates;
-    using Cache;
     using Ocsp;
     using Ocsp.Service;
     using Util;
-    using Validators;
 
     public sealed class AuthTokenValidationConfiguration : IEquatable<AuthTokenValidationConfiguration>
     {
-        private string siteCertificateSha256Fingerprint;
-
         internal AuthTokenValidationConfiguration() { }
 
         private AuthTokenValidationConfiguration(AuthTokenValidationConfiguration other)
         {
             this.SiteOrigin = other.SiteOrigin;
-            this.NonceCache = other.NonceCache;
             this.TrustedCaCertificates = new List<X509Certificate2>(other.TrustedCaCertificates);
             this.IsUserCertificateRevocationCheckWithOcspEnabled = other.IsUserCertificateRevocationCheckWithOcspEnabled;
             this.OcspRequestTimeout = other.OcspRequestTimeout;
             this.DesignatedOcspServiceConfiguration = other.DesignatedOcspServiceConfiguration;
-            this.IsSiteCertificateFingerprintValidationEnabled = other.IsSiteCertificateFingerprintValidationEnabled;
-            this.SiteCertificateSha256Fingerprint = other.SiteCertificateSha256Fingerprint;
             this.DisallowedSubjectCertificatePolicies = new ReadOnlyCollection<string>(other.DisallowedSubjectCertificatePolicies);
             this.NonceDisabledOcspUrls = new List<Uri>(other.NonceDisabledOcspUrls);
         }
 
         public Uri SiteOrigin { get; set; }
-
-        public ICache<DateTime> NonceCache { get; set; }
 
         public List<X509Certificate2> TrustedCaCertificates { get; } = new List<X509Certificate2>();
 
@@ -41,19 +32,7 @@ namespace WebEid.Security.Validator
 
         public TimeSpan OcspRequestTimeout { get; set; } = TimeSpan.FromSeconds(5);
 
-        public bool IsSiteCertificateFingerprintValidationEnabled { get; private set; }
-
         public DesignatedOcspServiceConfiguration DesignatedOcspServiceConfiguration { get; internal set; }
-
-        public string SiteCertificateSha256Fingerprint
-        {
-            get => this.siteCertificateSha256Fingerprint;
-            set
-            {
-                this.IsSiteCertificateFingerprintValidationEnabled = true;
-                this.siteCertificateSha256Fingerprint = value;
-            }
-        }
 
         public IList<string> DisallowedSubjectCertificatePolicies { get; } =
             new List<string>(new[]
@@ -67,65 +46,64 @@ namespace WebEid.Security.Validator
         // Disable OCSP nonce extension for EstEID 2015 cards by default.
         public List<Uri> NonceDisabledOcspUrls { get; } = new List<Uri> { OcspUrls.AiaEsteid2015 };
 
+
+        private static void Validate(Uri siteOrigin, List<X509Certificate2> trustedCaCertificates, TimeSpan ocspRequestTimeout)
+        {
+            if (siteOrigin == null)
+            { throw new ArgumentNullException(nameof(siteOrigin)); }
+            ValidateIsOriginURL(siteOrigin);
+
+            if (!trustedCaCertificates.Any())
+            { throw new ArgumentException("At least one trusted certificate authority must be provided"); }
+            if (ocspRequestTimeout.IsNegativeOrZero())
+            {
+                throw new ArgumentOutOfRangeException(nameof(ocspRequestTimeout),
+                      "OCSP request timeout must be greater than zero");
+            }
+        }
+
         /// <summary>
         /// Checks that the configuration parameters are valid.
         /// </summary>
         /// <exception cref="ArgumentNullException">When required parameters are null</exception>
         /// <exception cref="ArgumentException">When required parameters are null</exception>
-        public void Validate()
+        public void Validate() => Validate(this.SiteOrigin, this.TrustedCaCertificates, this.OcspRequestTimeout);
+
+        /// <summary>
+        /// Validates that the given URI is an origin URL as defined in <a href="https://developer.mozilla.org/en-US/docs/Web/API/Location/origin">MDN</a>,
+        /// in the form of <code> <scheme> "://" <hostname> [ ":" <port> ]</code>.
+        // Throws IllegalArgumentException when the URI is not in the form of origin URL
+        /// </summary>
+        /// <param name="uri">URI with origin URL</param>
+        private static void ValidateIsOriginURL(Uri uri)
         {
-            RequireNonNull(this.SiteOrigin, "Origin URI");
-            OriginValidator.ValidateIsOriginURL(this.SiteOrigin);
-
-            RequireNonNull(this.NonceCache, "Nonce cache");
-
-            if (!this.TrustedCaCertificates.Any())
+            try
             {
-                throw new ArgumentException("At least one trusted certificate authority must be provided");
+                // 1. Verify that the URI can be converted to absolute URL.
+                if (!uri.IsAbsoluteUri)
+                { throw new ArgumentException("Provided URI is not a valid URL"); }
+                // 2. Verify that the URI contains only HTTPS scheme, host and optional port components.
+                if (!new Uri($"https://{uri.Host}:{uri.Port}").Equals(uri))
+                { throw new ArgumentException("Origin URI must only contain the HTTPS scheme, host and optional port component"); }
             }
-
-            RequirePositiveDuration(this.OcspRequestTimeout, "OCSP request timeout");
-            if (this.IsSiteCertificateFingerprintValidationEnabled && this.siteCertificateSha256Fingerprint == null)
+            catch (InvalidOperationException e)
             {
-                throw new ArgumentException("Certificate fingerprint must not be null when site certificate fingerprint validation is enabled");
-            }
-        }
-
-        private static void RequireNonNull(object argument, string fieldName)
-        {
-            if (argument == null)
-            {
-                throw new ArgumentNullException(fieldName);
+                throw new ArgumentException("Provided URI is not a valid URL", e);
             }
         }
 
-        private static void RequirePositiveDuration(TimeSpan duration, string fieldName)
-        {
-            if (duration.IsNegativeOrZero())
-            {
-                throw new ArgumentOutOfRangeException(nameof(duration), $"{fieldName} must be greater than zero");
-            }
-        }
+        public AuthTokenValidationConfiguration Copy() =>
+            new AuthTokenValidationConfiguration(this);
 
-        public AuthTokenValidationConfiguration Copy()
-        {
-            return new AuthTokenValidationConfiguration(this);
-        }
-
-        public bool Equals(AuthTokenValidationConfiguration other)
-        {
-            return this.SiteOrigin.Equals(other.SiteOrigin) &&
-                   this.NonceCache.Equals(other.NonceCache) &&
+        public bool Equals(AuthTokenValidationConfiguration other) =>
+            this.SiteOrigin.Equals(other.SiteOrigin) &&
                    Enumerable.SequenceEqual(this.TrustedCaCertificates, other.TrustedCaCertificates) &&
                    this.IsUserCertificateRevocationCheckWithOcspEnabled.Equals(other
                        .IsUserCertificateRevocationCheckWithOcspEnabled) &&
                    this.OcspRequestTimeout.Equals(other.OcspRequestTimeout) &&
-                   this.IsSiteCertificateFingerprintValidationEnabled.Equals(other
-                       .IsSiteCertificateFingerprintValidationEnabled) &&
                    Enumerable.SequenceEqual(this.DisallowedSubjectCertificatePolicies,
                        other.DisallowedSubjectCertificatePolicies) &&
                    Equals(this.DesignatedOcspServiceConfiguration, other.DesignatedOcspServiceConfiguration) &&
                    Enumerable.SequenceEqual(this.NonceDisabledOcspUrls, other.NonceDisabledOcspUrls);
-        }
     }
 }

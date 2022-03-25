@@ -8,7 +8,7 @@ namespace WebEid.Security.Exceptions
     /// Thrown when the user certificate has been revoked.
     /// </summary>
     [Serializable]
-    public class UserCertificateRevokedException : TokenValidationException
+    public class UserCertificateRevokedException : AuthTokenException
     {
         public UserCertificateRevokedException() : base("User certificate has been revoked")
         {

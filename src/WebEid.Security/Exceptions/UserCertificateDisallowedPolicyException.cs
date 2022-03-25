@@ -8,7 +8,7 @@ namespace WebEid.Security.Exceptions
     /// Thrown when any of the configured disallowed policies is present in the user certificate.
     /// </summary>
     [Serializable]
-    public class UserCertificateDisallowedPolicyException : TokenValidationException
+    public class UserCertificateDisallowedPolicyException : AuthTokenException
     {
         public UserCertificateDisallowedPolicyException() : base("Disallowed user certificate policy")
         {
