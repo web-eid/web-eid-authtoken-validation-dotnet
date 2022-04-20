@@ -1,3 +1,4 @@
+
 # web-eid-authtoken-validation-dotnet
 
 ![European Regional Development Fund](https://raw.githubusercontent.com/open-eid/DigiDoc4-Client/master/client/images/EL_Regionaalarengu_Fond.png)
@@ -20,69 +21,63 @@ To install the package, you can use the Package Manager Console.
 
 When you install a package, NuGet records the dependency in either your project file or a `packages.config` file (depending on the project format).
 
-## 2. Add cache support
+## 2. Configure the challenge nonce store
 
-The validation library needs a cache for storing issued challenge nonces. 
-For this purpose the generic `ICache` interface is provided. 
-We use [MemoryCache](https://docs.microsoft.com/en-us/dotnet/api/system.runtime.caching.memorycache) as implementation.
-Implement the cache as follows:
+The validation library needs a store for saving the issued challenge nonces. As it must be guaranteed that the authentication token is received from the same browser to which the corresponding challenge nonce was issued, using a session-backed challenge nonce store is the most natural choice.
+
+Implement the session-backed challenge nonce store as follows:
 ```cs
 using System;
 using System.Runtime.Caching;
 using WebEid.Security.Cache;
 
-internal sealed class MemoryCache<T> : ICache<T>
+public class SessionBackedChallengeNonceStore : IChallengeNonceStore
 {
-    private readonly MemoryCache cacheContent = new MemoryCache("test-cache");
-    private readonly CacheItemPolicy cacheItemPolicy;
+    [ThreadStatic]
+    private static HttpContext httpContext;
 
-    public MemoryCache() : this(ObjectCache.NoSlidingExpiration) { }
+    private const string ChallengeNonceKey = "challenge-nonce";
 
-    private MemoryCache(TimeSpan cacheItemExpiration)
+    public static void SetContext(HttpContext context)
     {
-        this.cacheItemPolicy = new CacheItemPolicy { SlidingExpiration = cacheItemExpiration };
+        httpContext = context;
     }
 
-    public T GetAndRemove(string key)
+    public void Put(ChallengeNonce challengeNonce)
     {
-        return this.cacheContent.Contains(key) ? (T)this.cacheContent.Remove(key) : default;
+        httpContext.Session.SetString(ChallengeNonceKey, challengeNonce.Base64EncodedNonce);
     }
 
-    public bool Contains(string key)
+    public ChallengeNonce GetAndRemoveImpl()
     {
-        return this.cacheContent.Contains(key);
+        var base64EncodedNonce = httpContext.Session.GetString(ChallengeNonceKey);
+        if (!string.IsNullOrWhiteSpace(base64EncodedNonce))
+        {
+            httpContext.Session.Remove(ChallengeNonceKey);
+            return new ChallengeNonce(base64EncodedNonce, DateTime.Now.AddMinutes(3));
+        }
+        return null;
     }
-
-    public void Put(string key, T value) => this.cacheContent.Add(key, value, this.cacheItemPolicy);
-
-    public void Dispose() => this.cacheContent?.Dispose();
 }
 ```
-Then create singleton instance of nonce cache:
+To access session data we need to initialize session static httpContext in controller method of ASP.NET application:
 ```cs
-using System;
-using WebEid.Security.Cache;
-...
-    public static ICache<DateTime> SingletonNonceCache = new MemoryCache<DateTime>();
-...
+SessionBackedChallengeNonceStore.SetContext(HttpContext);
 ```
 
 ## 3. Configure the nonce generator
 
-The validation library needs to generate authentication challenge nonces and store them in the cache for later validation. Overview of nonce usage is provided in the [Web eID system architecture document](https://github.com/web-eid/web-eid-system-architecture-doc#authentication-1). The nonce generator will be used in the REST endpoint that issues challenges; it is thread-safe and should be scoped as a singleton.
+The validation library needs to generate authentication challenge nonces and store them for later validation in the challenge nonce store. Overview of challenge nonce usage is provided in the  [Web eID system architecture document](https://github.com/web-eid/web-eid-system-architecture-doc#authentication-1). The challenge nonce generator will be used in the REST endpoint that issues challenges; it is thread-safe and should be scoped as a singleton.
 
-Configure the nonce generator as follows:
+Configure the challenge nonce generator in ASP.NET Startup class as follows:
 
 ```cs
-using WebEid.Security.Cache;
-using WebEid.Security.Nonce;
-...
-using (var rndGenerator = RNGCryptoServiceProvider.Create())
+public void ConfigureServices(IServiceCollection services)
 {
-    new NonceGeneratorBuilder()
-        .WithNonceCache(SingletonNonceCache)
-        .WithSecureRandom(rndGenerator)
-        .Build();
+...
+    services.AddSingleton(RNGCryptoServiceProvider.Create());
+    services.AddSingleton<IChallengeNonceStore, SessionBackedChallengeNonceStore>();
+    services.AddSingleton<IChallengeNonceGenerator, ChallengeNonceGenerator>();
 ...
 }
 ```
@@ -173,19 +168,23 @@ using WebEid.Security.Nonce;
 [Route("auth")]
 public class ChallengeController : ControllerBase
 {
-    private INonceGenerator nonceGenerator;
+    private readonly IChallengeNonceGenerator challengeNonceGenerator;
 
-    public ChallengeController(INonceGenerator nonceGenerator)
+    public ChallengeController(IChallengeNonceGenerator challengeNonceGenerator)
     {
-        this.nonceGenerator = nonceGenerator;
+        this.challengeNonceGenerator = challengeNonceGenerator;
     }
 
     [HttpGet]
     [Route("challenge")]
     public ChallengeDto GetChallenge()
     {
-        // a simple DTO with a single 'Nonce' field
-        return new ChallengeDto { Nonce = nonceGenerator.GenerateAndStoreNonce() };
+        SessionBackedChallengeNonceStore.SetContext(HttpContext);
+        var challenge = new ChallengeDto
+        {
+            Nonce = challengeNonceGenerator.GenerateAndStoreNonce(TimeSpan.FromMinutes(5)).Base64EncodedNonce
+        };
+        return challenge;
     }
 }
 ```
@@ -232,20 +231,24 @@ public class AuthController : ControllerBase
 {
     private readonly IAuthTokenValidator authTokenValidator;
 
-    public AuthController(IAuthTokenValidator authTokenValidator)
+    public AuthController(IAuthTokenValidator authTokenValidator, IChallengeNonceStore challengeNonceStore)
     {
         this.authTokenValidator = authTokenValidator;
+        this.challengeNonceStore = challengeNonceStore;
     }
 
     [HttpPost]
+	[ValidateAntiForgeryToken]
     [Route("login")]
     public async Task Login([FromBody] AuthenticateRequestDto authToken)
     {
-        var certificate = await this.authTokenValidator.Validate(authToken.AuthToken);
+        var certificate = await this.authTokenValidator.Validate(authToken.AuthToken, this.challengeNonceStore.GetAndRemove().Base64EncodedNonce);
         var claims = new List<Claim>
         {
             new Claim(ClaimTypes.GivenName, certificate.GetSubjectGivenName()),
-            new Claim(ClaimTypes.Surname, certificate.GetSubjectSurname())          };
+            new Claim(ClaimTypes.Surname, certificate.GetSubjectSurname()),
+            new Claim(ClaimTypes.NameIdentifier, certificate.GetSubjectIdCode())
+        };
 
         var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
 
@@ -349,10 +352,7 @@ Extended configuration example:
 ```cs  
 AuthTokenValidator validator = new AuthTokenValidatorBuilder(logger)
     .WithSiteOrigin("https://example.org")
-    .WithNonceCache(NonceCache)
-    .WithSecureRandom(RandomNumberGenerator)
     .WithTrustedCertificateAuthorities(TrustedCertificateAuthorities)
-    .WithSiteCertificateSha256Fingerprint("urn:cert:sha-256:cert-hash-hex")
     .WithoutUserCertificateRevocationCheckWithOcsp()
     .WithAllowedClientClockSkew(TimeSpan.FromMinutes(3))
     .WithDisallowedCertificatePolicies("1.2.3")
@@ -362,9 +362,9 @@ AuthTokenValidator validator = new AuthTokenValidatorBuilder(logger)
 
 ### Certificates' *Authority Information Access* (AIA) extension
 
-It is assumed that the AIA extension that contains the certificates’ OCSP service location, is part of both the user and CA certificates. The AIA OCSP URL will be used to check the certificate revocation status with OCSP.
+Unless a designated OCSP responder service is in use, it is required that the AIA extension that contains the certificate’s OCSP responder access location is present in the user certificate. The AIA OCSP URL will be used to check the certificate revocation status with OCSP.
 
-**Note that there may be legal limitations to using AIA URLs during signing** as the services behind these URLs provide different security and SLA guarantees than dedicated OCSP services. For digital signing, OCSP responder certificate validation is additionally needed. Using AIA URLs during authentication is sufficient, however.
+Note that there may be limitations to using AIA URLs as the services behind these URLs provide different security and SLA guarantees than dedicated OCSP responder services. In case you need a SLA guarantee, use a designated OCSP responder service.
 
 ## Logging
 
@@ -385,7 +385,13 @@ AuthTokenValidator validator = new AuthTokenValidatorBuilder(logger)
 
 The `Validate()` method of `AuthTokenValidator` returns the validated user certificate object if validation is successful or throws an exception if validation fails. All exceptions that can occur during validation derive from `TokenValidationException`, the list of available exceptions is available [here](src/WebEid.Security/Exceptions). Each exception file contains a documentation comment under which conditions the exception is thrown.
 
-# Nonce generation
+## Stateful and stateless authentication
+
+In the code examples above we use the classical stateful ASP.NET session cookie-based authentication mechanism, where a cookie that contains the user session ID is set during successful login and session data is stored at sever side. Cookie-based authentication must be protected against cross-site request forgery (CSRF) attacks and extra measures must be taken to secure the cookies by serving them only over HTTPS and setting the  _HttpOnly_,  _Secure_  and  _SameSite_  attributes.
+
+A common alternative to stateful authentication is stateless authentication with JSON Web Tokens (JWT) or secure cookie sessions where the session data resides at the client side browser and is either signed or encrypted. Secure cookie sessions are described in  [RFC 6896](https://datatracker.ietf.org/doc/html/rfc6896)  and in the following  [article about secure cookie-based Spring Security sessions](https://www.innoq.com/en/blog/cookie-based-spring-security-session/). Usage of both an anonymous session and a cache is required to store the challenge nonce and the time it was issued before the user is authenticated. The anonymous session must be used for protection against  [forged login attacks](https://en.wikipedia.org/wiki/Cross-site_request_forgery#Forging_login_requests)  by guaranteeing that the authentication token is received from the same browser to which the corresponding challenge nonce was issued. The cache must be used for protection against replay attacks by guaranteeing that each authentication token can be used exactly once.
+
+# Challenge Nonce generation
 The authentication protocol requires support for generating challenge nonces,  large random numbers that can be used only once, and storing them for later use during token validation. The validation library uses the *System.Security.Cryptography.RandomNumberGenerator* API as the secure random source and provides *WebEid.Security.Cache.ICache* interface for storing issued challenge nonces. 
 
 The authentication protocol requires a REST endpoint that issues challenge nonces as described in section *[6. Add a REST endpoint for issuing challenge nonces](#6-add-a-rest-endpoint-for-issuing-challenge-nonces)*.
@@ -401,22 +407,7 @@ The nonce cache instance is used to store the nonce expiry time using the nonce 
 The nonce generator configuration and construction is described in more detail in section *[3. Configure the nonce generator](#3-configure-the-nonce-generator)*. Once the generator object has been constructed, it can be used for generating nonces as follows:
 
 ```cs
-string nonce = nonceGenerator.GenerateAndStoreNonce();  
+string nonce = nonceGenerator.GenerateAndStoreNonce(TimeSpan ttl);  
 ```
 
-The `GenerateAndStoreNonce()` method both generates the nonce and stores it in the cache.
-
-## Extended configuration  
-The following additional configuration options are available in `NonceGeneratorBuilder`:
-
-- `WithNonceTtl(TimeSpan duration)` – overrides the default nonce time-to-live duration. When the time-to-live passes, the nonce is considered to be expired. Default nonce time-to-live is 5 minutes.
-- `WithSecureRandom(RandomNumberGenerator)` - allows to specify a custom `RandomNumberGenerator` instance.
-
-Extended configuration example:  
-```cs  
-NonceGenerator generator = new NonceGeneratorBuilder()  
-    .WithNonceCache(cache)
-    .WithNonceTtl(TimeSpan.FromMinutes(5))
-    .WithSecureRandom(customRandomNumberGenerator)  
-    .Build();
-```
+The `GenerateAndStoreNonce(TimeSpan ttl)` method both generates the nonce and stores it in the cache. Ttl parameter defines challenge nonce time-to-live duration. When the time-to-live passes, the nonce is considered to be expired.
