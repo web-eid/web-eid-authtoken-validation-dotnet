@@ -282,23 +282,16 @@ When using standard [ASP.NET cookie authentication](https://docs.microsoft.com/e
 
 # Table of contents
 
-- [Quickstart](#quickstart)
-  - [1. Add the library to your project](#1-add-the-library-to-your-project)
-  - [2. Add cache support](#2-add-cache-support)
-  - [3. Configure the nonce generator](#3-configure-the-nonce-generator)
-  - [4. Add trusted certificate authority certificates](#4-add-trusted-certificate-authority-certificates)
-  - [5. Configure the authentication token validator](#5-configure-the-authentication-token-validator)
-  - [6. Add a REST endpoint for issuing challenge nonces](#6-add-a-rest-endpoint-for-issuing-challenge-nonces)
-  - [7. Implement authentication](#7-implement-authentication)
-- [Introduction](#introduction)
-- [Authentication token validation](#authentication-token-validation)
-  - [Basic usage](#basic-usage)
-  - [Extended configuration](#extended-configuration)
-    - [Certificates' *Authority Information Access* (AIA) extension](#certificates-authority-information-access-aia-extension)
-  - [Possible validation errors](#possible-validation-errors)
-- [Nonce generation](#nonce-generation)
-  - [Basic usage](#basic-usage-1)
-  - [Extended configuration](#extended-configuration-1)
+* [Introduction](#introduction)
+* [Authentication token validation](#authentication-token-validation)
+  * [Basic usage](#basic-usage)
+  * [Extended configuration](#extended-configuration)
+    * [Certificates' Authority Information Access (AIA) extension](#certificates-authority-information-access-aia-extension)
+  * [Logging](#logging)
+  * [Possible validation errors](#possible-validation-errors)
+  * [Stateful and stateless authentication](#stateful-and-stateless-authentication)
+* [Challenge nonce generation](#challenge-nonce-generation)
+  * [Basic usage](#basic-usage-1)
 
 # Introduction
 
