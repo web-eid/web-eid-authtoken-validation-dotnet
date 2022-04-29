@@ -48,7 +48,7 @@ namespace WebEid.Security.Tests.Validator
             {
                 SiteOrigin = new Uri("https://valid", UriKind.RelativeOrAbsolute),
             };
-            configuration.TrustedCaCertificates.Add(new X509Certificate2());
+            configuration.TrustedCaCertificates.Add(new X509Certificate2(Array.Empty<byte>()));
             configuration.OcspRequestTimeout = TimeSpan.Zero;
             Assert.Throws<ArgumentOutOfRangeException>(() => configuration.Validate())
                 .WithMessage("OCSP request timeout must be greater than zero (Parameter 'ocspRequestTimeout')");
@@ -61,7 +61,7 @@ namespace WebEid.Security.Tests.Validator
             {
                 SiteOrigin = new Uri("https://valid", UriKind.RelativeOrAbsolute),
             };
-            configuration.TrustedCaCertificates.Add(new X509Certificate2());
+            configuration.TrustedCaCertificates.Add(new X509Certificate2(Array.Empty<byte>()));
             Assert.DoesNotThrow(() => configuration.Validate());
         }
 

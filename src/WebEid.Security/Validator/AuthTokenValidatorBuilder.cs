@@ -36,9 +36,9 @@ namespace WebEid.Security.Validator
         /// </summary>
         /// <param name="certificates">trusted intermediate Certificate Authority certificates</param>
         /// <returns>the builder instance for method chaining</returns>
-        public AuthTokenValidatorBuilder WithTrustedCertificateAuthorities(params X509Certificate[] certificates)
+        public AuthTokenValidatorBuilder WithTrustedCertificateAuthorities(params X509Certificate2[] certificates)
         {
-            this.configuration.TrustedCaCertificates.AddRange(certificates.Select(c => new X509Certificate2(c)));
+            this.configuration.TrustedCaCertificates.AddRange(certificates);
             this.logger?.LogDebug("Trusted intermediate certificate authorities set to {0}",
                 this.configuration.TrustedCaCertificates.Select(c => c.GetSubjectCn()));
             return this;

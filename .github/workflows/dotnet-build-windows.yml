@@ -12,12 +12,12 @@ jobs:
       - name: Setup dotnet
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: 5.0.x # SDK Version to use.
+          dotnet-version: 6.0.x # SDK Version to use.
           
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v1.0.2
         with:
-          vs-version: 16.10 # Visual Studio Version to use.
+          vs-version: 17.1 # Visual Studio Version to use.
 
       - name: Setup VSTest
         uses: darenm/Setup-VSTest@v1
@@ -37,4 +37,4 @@ jobs:
         run: msbuild src/WebEid.Security.sln /t:Build /p:Configuration=Release
 
       - name: Test
-        run: vstest.console.exe src/WebEid.Security.Tests/bin/Release/net5.0/WebEID.Security.Tests.dll
+        run: vstest.console.exe src/WebEid.Security.Tests/bin/Release/net6.0/WebEID.Security.Tests.dll
