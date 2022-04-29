@@ -15,7 +15,7 @@ namespace WebEid.Security.Tests.TestUtils
         public static IAuthTokenValidator GetAuthTokenValidator(string url) =>
             GetAuthTokenValidator(url, GetCaCertificates());
 
-        public static IAuthTokenValidator GetAuthTokenValidator(string url, params X509Certificate[] certificates) =>
+        public static IAuthTokenValidator GetAuthTokenValidator(string url, params X509Certificate2[] certificates) =>
             GetAuthTokenValidatorBuilder(url, certificates)
                 // Assure that all builder methods are covered with tests.
                 .WithOcspRequestTimeout(TimeSpan.FromSeconds(1))
@@ -41,12 +41,12 @@ namespace WebEid.Security.Tests.TestUtils
                 .WithDisallowedCertificatePolicies(EstIdemiaPolicy)
                 .Build();
 
-        private static AuthTokenValidatorBuilder GetAuthTokenValidatorBuilder(string uri, X509Certificate[] certificates) =>
+        private static AuthTokenValidatorBuilder GetAuthTokenValidatorBuilder(string uri, X509Certificate2[] certificates) =>
             new AuthTokenValidatorBuilder()
                 .WithSiteOrigin(new Uri(uri))
                 .WithTrustedCertificateAuthorities(certificates);
 
-        private static X509Certificate[] GetCaCertificates() =>
+        private static X509Certificate2[] GetCaCertificates() =>
             Certificates.CertificateLoader.LoadCertificatesFromResources("TEST_of_ESTEID2018.cer");
     }
 }

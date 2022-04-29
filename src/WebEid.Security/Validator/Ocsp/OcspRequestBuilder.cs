@@ -59,7 +59,7 @@ namespace WebEid.Security.Validator.Ocsp
         {
             this.Nonce = new byte[8];
 
-            using (var rndGenerator = RNGCryptoServiceProvider.Create())
+            using (var rndGenerator = RandomNumberGenerator.Create())
             {
                 rndGenerator.GetBytes(this.Nonce);
             }
