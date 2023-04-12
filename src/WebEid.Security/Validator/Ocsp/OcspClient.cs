@@ -11,6 +11,7 @@ namespace WebEid.Security.Validator.Ocsp
 
     internal sealed class OcspClient : IOcspClient
     {
+        private readonly HttpClientHandler httpClientHandler;
         private readonly HttpClient httpClient;
         private readonly ILogger logger;
 
@@ -20,11 +21,8 @@ namespace WebEid.Security.Validator.Ocsp
 
         public OcspClient(TimeSpan ocspRequestTimeout, ILogger logger = null)
         {
-            this.httpClient =
-                new HttpClient(new HttpClientHandler { AutomaticDecompression = DecompressionMethods.GZip })
-                {
-                    Timeout = ocspRequestTimeout
-                };
+            this.httpClientHandler = new HttpClientHandler { AutomaticDecompression = DecompressionMethods.GZip };
+            this.httpClient = new HttpClient(this.httpClientHandler) { Timeout = ocspRequestTimeout };
             this.logger = logger;
         }
 
@@ -61,6 +59,7 @@ namespace WebEid.Security.Validator.Ocsp
         public void Dispose()
         {
             this.httpClient?.Dispose();
+            this.httpClientHandler?.Dispose();
         }
     }
 }

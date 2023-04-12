@@ -36,7 +36,7 @@ namespace WebEid.Security.Tests.TestUtils
 
         private static DesignatedOcspServiceConfiguration GetDesignatedOcspServiceConfiguration(bool doesSupportNonce, string ocspServiceAccessLocation) => new(
                 new Uri(ocspServiceAccessLocation),
-                DotNetUtilities.FromX509Certificate(Certificates.GetTestSkOcspResponder2020()),
+                DotNetUtilities.FromX509Certificate(Certificates.GetTestSkOcspResponder2023()),
                 TrustedCaCertificates.Select(c => DotNetUtilities.FromX509Certificate(c)).ToList(),
                 doesSupportNonce);
     }

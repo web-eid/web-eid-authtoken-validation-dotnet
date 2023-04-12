@@ -34,14 +34,13 @@ namespace WebEid.Security.Validator.CertValidators
             try
             {
                 var cert = DotNetUtilities.FromX509Certificate(subjectCertificate);
-                var certificatePolicies =
-                    CertificatePolicies.GetInstance(cert.GetExtensionValue(X509Extensions.CertificatePolicies)
-                        .GetOctets());
-                if (certificatePolicies.GetPolicyInformation()
+                var extensionValue = cert?.GetExtensionValue(X509Extensions.CertificatePolicies);
+                var certificatePolicies = CertificatePolicies.GetInstance(extensionValue?.GetOctets());
+                if (certificatePolicies?.GetPolicyInformation()
                     .Any(policy =>
                         this.disallowedSubjectCertificatePolicies
                         .Any(disallowedPolicy =>
-                            disallowedPolicy.Value == policy.PolicyIdentifier.Id)))
+                            disallowedPolicy.Value == policy.PolicyIdentifier.Id)) ?? false)
                 {
                     throw new UserCertificateDisallowedPolicyException();
                 }

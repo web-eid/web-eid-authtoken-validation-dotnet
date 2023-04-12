@@ -9,7 +9,7 @@ namespace WebEid.Security.Tests.Validator.Ocsp
     [TestFixture]
     public class OcspServiceProviderTests
     {
-        private static readonly DateTime CheckMoment = new(2021, 08, 1);
+        private static readonly DateTime CheckMoment = new(2023, 04, 9);
 
         [Test]
         public void WhenDesignatedOcspServiceConfigurationProvidedThenCreatesDesignatedOcspService()
@@ -20,7 +20,7 @@ namespace WebEid.Security.Tests.Validator.Ocsp
             Assert.That(service.DoesSupportNonce, Is.True);
             Assert.DoesNotThrow(() =>
                 service.ValidateResponderCertificate(
-                    DotNetUtilities.FromX509Certificate(Certificates.GetTestSkOcspResponder2020()),
+                    DotNetUtilities.FromX509Certificate(Certificates.GetTestSkOcspResponder2023()),
                     CheckMoment));
             Assert.Throws<OcspCertificateException>(() =>
                     service.ValidateResponderCertificate(

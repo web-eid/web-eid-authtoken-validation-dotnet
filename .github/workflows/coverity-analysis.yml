@@ -1,0 +1,60 @@
+name: Coverity code analysis
+
+on:
+  push:
+    branches: [ 'coverity_scan' ]
+  pull_request:
+    # The branches below must be a subset of the branches above
+    branches: [ 'coverity_scan' ]
+
+jobs:
+  build:
+    name: Run Coverity tests
+    if: github.repository == 'web-eid/web-eid-authtoken-validation-dotnet'
+    runs-on: ubuntu-latest
+
+    env:
+      TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}
+      PROJECTNAME: 'web-eid/web-eid-authtoken-validation-dotnet'
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 6.0.x # SDK Version to use.
+
+      - name: Cache Nuget packages
+        uses: actions/cache@v2
+        with:
+          path: ~/.nuget/packages
+          # Look to see if there is a cache hit for the corresponding requirements file
+          key: ${{ runner.os }}-nuget-${{ secrets.CACHE_VERSION }}-${{ hashFiles('**/packages.lock.json') }}
+          restore-keys: ${{ runner.os }}-nuget-${{ secrets.CACHE_VERSION }}
+
+      - name: Install dependencies
+        run: dotnet restore src/WebEid.Security.sln
+
+      - name: Download Coverity Build Tool
+        run: |
+          curl --silent --data "token=$TOKEN&project=$PROJECTNAME" -o cov-analysis-linux64.tar.gz https://scan.coverity.com/download/cxx/linux64
+          mkdir cov-analysis-linux64
+          tar xzf cov-analysis-linux64.tar.gz --strip 1 -C cov-analysis-linux64
+
+      - name: Build
+        run: |
+          export PATH=$PWD/cov-analysis-linux64/bin:$PATH
+          cov-build --dir cov-int dotnet build --configuration Release --no-restore src/WebEid.Security.sln
+
+      - name: Submit the result to Coverity Scan
+        run: |
+          tar czvf upload.tgz cov-int
+          curl --silent \
+            --form project=$PROJECTNAME \
+            --form token=$TOKEN \
+            --form email=eid-teenusehaldus@ria.ee \
+            --form file=@upload.tgz \
+            --form version=master \
+            --form description="Github Actions CI build" \
+            https://scan.coverity.com/builds?project=$PROJECTNAME
