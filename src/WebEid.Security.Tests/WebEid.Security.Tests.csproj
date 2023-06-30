@@ -10,6 +10,18 @@
     <RootNamespace>WebEid.Security.Tests</RootNamespace>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <NoWarn>1701;1702;VSSpell001;VSSpell002</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <NoWarn>1701;1702;VSSpell001;VSSpell002</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Nonce\InMemoryChallengeNonceStore.cs" />
+  </ItemGroup>
+
   <ItemGroup>
     <None Remove="Resources\ESTEID2018.cer" />
     <None Remove="Resources\Karl-Kristjan-Joeorg.cer" />

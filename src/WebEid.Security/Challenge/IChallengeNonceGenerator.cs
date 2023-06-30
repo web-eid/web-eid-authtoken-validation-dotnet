@@ -3,7 +3,7 @@ namespace WebEid.Security.Challenge
     using System;
 
     /// <summary>
-    /// Generates challenge nonces, cryptographically strong random bytestrings that must be used only once.
+    /// Generates challenge nonces, cryptographically strong random byte-strings that must be used only once.
     /// </summary>
     public interface IChallengeNonceGenerator
     {
