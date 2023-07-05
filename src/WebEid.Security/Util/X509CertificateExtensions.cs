@@ -11,6 +11,7 @@ namespace WebEid.Security.Util
     using Org.BouncyCastle.Asn1;
     using Org.BouncyCastle.Asn1.X509;
     using Org.BouncyCastle.Security;
+    using Org.BouncyCastle.Security.Certificates;
 
     public static class X509CertificateExtensions
     {
@@ -37,11 +38,11 @@ namespace WebEid.Security.Util
             }
             catch (Org.BouncyCastle.Security.Certificates.CertificateNotYetValidException e)
             {
-                throw new CertificateNotYetValidException(subject, e);
+                throw new Exceptions.CertificateNotYetValidException(subject, e);
             }
             catch (Org.BouncyCastle.Security.Certificates.CertificateExpiredException e)
             {
-                throw new CertificateExpiredException(subject, e);
+                throw new Exceptions.CertificateExpiredException(subject, e);
             }
         }
 
@@ -111,24 +112,32 @@ namespace WebEid.Security.Util
         }
 
         public static string GetSubjectCn(this X509Certificate certificate) =>
-            certificate.GetSubjectCnFieldValue(X509Name.CN);
+            certificate.GetSubjectFieldValue(X509Name.CN);
 
         public static string GetSubjectIdCode(this X509Certificate certificate) =>
-            certificate.GetSubjectCnFieldValue(X509Name.SerialNumber);
+            certificate.GetSubjectFieldValue(X509Name.SerialNumber);
 
         public static string GetSubjectGivenName(this X509Certificate certificate) =>
-            certificate.GetSubjectCnFieldValue(X509Name.GivenName);
+            certificate.GetSubjectFieldValue(X509Name.GivenName);
 
         public static string GetSubjectSurname(this X509Certificate certificate) =>
-            certificate.GetSubjectCnFieldValue(X509Name.Surname);
+            certificate.GetSubjectFieldValue(X509Name.Surname);
 
         public static string GetSubjectCountryCode(this X509Certificate certificate) =>
-            certificate.GetSubjectCnFieldValue(X509Name.C);
+            certificate.GetSubjectFieldValue(X509Name.C);
 
-        private static string GetSubjectCnFieldValue(this X509Certificate certificate, DerObjectIdentifier oid)
+        private static string GetSubjectFieldValue(this X509Certificate certificate, DerObjectIdentifier oid)
         {
             var bcCertificate = DotNetUtilities.FromX509Certificate(certificate);
-            return bcCertificate.SubjectDN.GetValueList(oid)[0].ToString();
+            var valueList = bcCertificate.SubjectDN.GetValueList(oid);
+            if (valueList.Count == 0 || valueList[0] is null)
+            {
+                throw new Exceptions.CertificateEncodingException(oid.ToString());
+            }
+            else
+            {
+                return valueList[0].ToString();
+            }
         }
 
         public static AsymmetricAlgorithm GetAsymmetricPublicKey(this X509Certificate2 certificate2) =>
