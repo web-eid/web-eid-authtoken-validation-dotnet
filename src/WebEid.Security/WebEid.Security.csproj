@@ -7,9 +7,11 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <RootNamespace>WebEid.Security</RootNamespace>
     <AssemblyName>WebEid.Security</AssemblyName>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <PublisherName>RIA</PublisherName>
     <Authors>RIA</Authors>
-    <Copyright>RIA</Copyright>
+    <Copyright>Copyright © Republic of Estonia Information System Authority 2023</Copyright>
+    <Version>1.1.1</Version>
   </PropertyGroup>
 
   <ItemGroup>
