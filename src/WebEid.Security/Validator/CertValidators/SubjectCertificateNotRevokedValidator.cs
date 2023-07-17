@@ -129,14 +129,36 @@ namespace WebEid.Security.Validator.CertValidators
             // We assume that the responder includes its certificate in the certs field of the response
             // that helps us to verify it. According to RFC 2560 this field is optional, but including it
             // is standard practice.
+            // There may be multiple responder certificates, but at least one must be presented.
             var responseCertificates = basicResponse.GetCerts();
-            if (responseCertificates.Length != 1)
+            if (responseCertificates.Length < 1)
             {
-                throw new UserCertificateOcspCheckFailedException(
-                    $"OCSP response must contain one responder certificate, received {responseCertificates.Length} certificates instead");
+                throw new UserCertificateOcspCheckFailedException("OCSP response must contain the responder certificate, but none was provided");
             }
-            var responderCert = basicResponse.GetCerts()[0];
-            OcspResponseValidator.ValidateResponseSignature(basicResponse, responderCert);
+
+            // Validate responder certificates. At least one must be valid.
+            Org.BouncyCastle.X509.X509Certificate responderCert = null;
+            Exception lastValidationException = null;
+            foreach (var cert in responseCertificates)
+            {
+                try
+                {
+                    OcspResponseValidator.ValidateResponseSignature(basicResponse, cert);
+                    responderCert = cert;
+                    lastValidationException = null;
+                    break;
+                }
+                catch (UserCertificateOcspCheckFailedException ex)
+                {
+                    lastValidationException = ex;
+                }
+            }
+
+            // If validation of all certificates failed, throw the last validation exception.
+            if (lastValidationException != null)
+            {
+                throw lastValidationException;
+            }
 
             //   3. The identity of the signer matches the intended recipient of the
             //      request.
