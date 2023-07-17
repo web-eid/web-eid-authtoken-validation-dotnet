@@ -67,7 +67,7 @@ namespace WebEid.Security.Validator.Ocsp.Service
                 responderCertificate.ValidateCertificateExpiry(producedAt, "AIA OCSP responder");
                 // Trusted certificates validity has been already verified in ValidateCertificateExpiry().
                 OcspResponseValidator.ValidateHasSigningExtension(responderCertificate);
-                new X509Certificate2(DotNetUtilities.ToX509Certificate(responderCertificate))
+                _ = new X509Certificate2(DotNetUtilities.ToX509Certificate(responderCertificate))
                     .ValidateIsSignedByTrustedCa(this.trustedCaCertificates);
             }
             catch (Exception ex) when (!(ex is CertificateNotTrustedException))
