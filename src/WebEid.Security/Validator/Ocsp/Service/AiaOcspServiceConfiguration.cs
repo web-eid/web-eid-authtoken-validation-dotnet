@@ -19,7 +19,7 @@ namespace WebEid.Security.Validator.Ocsp.Service
         public List<X509Certificate2> TrustedCaCertificates { get; }
         public bool Equals(AiaOcspServiceConfiguration other)
         {
-            if (ReferenceEquals(null, other))
+            if (other is null)
             {
                 return false;
             }
