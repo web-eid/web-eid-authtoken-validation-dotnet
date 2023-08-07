@@ -41,6 +41,7 @@ namespace WebEid.Security.Tests.Validator.Validators
         }
 
         [Test]
+        [Ignore("As new designated test OCSP responder certificates are issued more frequently now, it is no longer feasible to keep the certificates up to date")]
         public void WhenValidDesignatedOcspResponderConfigurationThenSucceeds()
         {
             var ocspServiceProvider = OcspServiceMaker.GetDesignatedOcspServiceProvider();
@@ -50,6 +51,7 @@ namespace WebEid.Security.Tests.Validator.Validators
         }
 
         [Test]
+        [Ignore("As new designated test OCSP responder certificates are issued more frequently now, it is no longer feasible to keep the certificates up to date")]
         public void WhenValidOcspNonceDisabledConfigurationThenSucceeds()
         {
             var ocspServiceProvider = OcspServiceMaker.GetDesignatedOcspServiceProvider(false);
