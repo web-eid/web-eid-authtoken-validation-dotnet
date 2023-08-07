@@ -1,6 +1,6 @@
 name: SonarCloud code analysis
 
-on: [push, pull_request]
+on: [push]
 
 jobs:
   analyze:
