@@ -140,7 +140,6 @@ namespace WebEid.Security.Validator.CertValidators
             // Thus, the chain doesn't require validation, only the responder certificate does.
             var responderCert = basicResponse.GetCerts()[0];
             OcspResponseValidator.ValidateResponseSignature(basicResponse, responderCert);
-            }
 
             //   3. The identity of the signer matches the intended recipient of the
             //      request.
