@@ -134,6 +134,7 @@ namespace WebEid.Security.Validator.CertValidators
             if (responseCertificates.Length < 1)
             {
                 throw new UserCertificateOcspCheckFailedException("OCSP response must contain the responder certificate, but none was provided");
+            }
             // The first certificate is the responder certificate. Any subsequent certificates, if provided, represent the
             // certificate chain, which we already possess via the configured trusted CA certificates.
             // Thus, the chain doesn't require validation, only the responder certificate does.
