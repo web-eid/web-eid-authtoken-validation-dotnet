@@ -134,30 +134,11 @@ namespace WebEid.Security.Validator.CertValidators
             if (responseCertificates.Length < 1)
             {
                 throw new UserCertificateOcspCheckFailedException("OCSP response must contain the responder certificate, but none was provided");
-            }
-
-            // Validate responder certificates. At least one must be valid.
-            Org.BouncyCastle.X509.X509Certificate responderCert = null;
-            Exception lastValidationException = null;
-            foreach (var cert in responseCertificates)
-            {
-                try
-                {
-                    OcspResponseValidator.ValidateResponseSignature(basicResponse, cert);
-                    responderCert = cert;
-                    lastValidationException = null;
-                    break;
-                }
-                catch (UserCertificateOcspCheckFailedException ex)
-                {
-                    lastValidationException = ex;
-                }
-            }
-
-            // If validation of all certificates failed, throw the last validation exception.
-            if (lastValidationException != null)
-            {
-                throw lastValidationException;
+            // The first certificate is the responder certificate. Any subsequent certificates, if provided, represent the
+            // certificate chain, which we already possess via the configured trusted CA certificates.
+            // Thus, the chain doesn't require validation, only the responder certificate does.
+            var responderCert = basicResponse.GetCerts()[0];
+            OcspResponseValidator.ValidateResponseSignature(basicResponse, responderCert);
             }
 
             //   3. The identity of the signer matches the intended recipient of the
