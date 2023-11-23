@@ -94,7 +94,7 @@ namespace WebEid.Security.Validator.Ocsp
 
         private void AddNonce(OcspReqGenerator builder)
         {
-            this.Nonce = new byte[8];
+            this.Nonce = new byte[32];
 
             using (var rndGenerator = RandomNumberGenerator.Create())
             {
