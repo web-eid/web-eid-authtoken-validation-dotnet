@@ -8,23 +8,41 @@ More information about the Web eID project is available on the project [website]
 
 # Quickstart
 
-Complete the steps below to add support for secure authentication with eID cards to your ASP.NET Core web application back end. Instructions for the front end are available [here](https://github.com/web-eid/web-eid.js).
+Complete the steps below to add support for secure authentication with eID cards to your ASP.NET Core web application backend. Instructions for the frontend are available [here](https://github.com/web-eid/web-eid.js).
 
 See full example [here](https://github.com/web-eid/web-eid-asp-dotnet-example).
 
 ## 1. Add the library to your project
 
-To install the package, you can use the Package Manager Console. 
+### When using Visual Studio
 
-1.  Select the **Tools** > **NuGet Package Manager** > **Package Manager Console** menu command.
-2.  Once the console opens, check that the **Default project** drop-down list shows the project into which you want to install the package. If you have a single project in the solution, it is already selected.
-3.  Enter the following commands:
+1. Configure Web eID GitLab package repository as a NuGet package source.  
+   In MS Visual Studio, go to the **Tools** > **NuGet Package Manager** > **Package Manager Settings** menu command. Select **Package Sources** and add a new source. Name it _Web eID GitLab_ and set the _Source_ URL to `https://gitlab.com/api/v4/projects/35362906/packages/nuget/index.json`.
+
+2. Install the `WebEid.Security` NuGet package.  
+   You can install the package either from the GUI or the Package Manager Console.
+
+  - From GUI:  
+    Right-click the project in the Solution Explorer where you want to install the Web eID dependency. Select **Manage NuGet Packages**. Choose the _Web eID GitLab_ package source you added earlier from the _Package source_ dropdown. Then, install the `WebEid.Security` package.
+     
+
+  - From Package Manager Console:  
+    Run the following command:
     ```
-    Add-Source -Name "Web eID GitLab" -Source "https://gitlab.com/api/v4/projects/35362906/packages/nuget/index.json"
     Install-Package WebEid.Security
     ```
 
-When you install a package, NuGet records the dependency in either your project file or a `packages.config` file (depending on the project format).
+### When using `dotnet` CLI
+
+In case you prefer using command line tools, you can add the package using the `dotnet` CLI with the following command:
+
+```
+dotnet add package WebEid.Security --source https://gitlab.com/api/v4/projects/35362906/packages/nuget/index.json
+```
+
+**Note:** When you install a package, NuGet records the dependency in either your project file or a `packages.config` file, depending on the selected package management format (`Packages.config` or `PackageReference`).
+
+For more detailed information on different methods of installing NuGet packages, refer to [Microsoft's official documentation](https://learn.microsoft.com/en-us/nuget/consume-packages/overview-and-workflow#ways-to-install-a-nuget-package).
 
 ## 2. Configure the challenge nonce store
 
@@ -306,7 +324,7 @@ The authentication token validation process consists of two stages:
 - First, **user certificate validation**: the validator parses the token and extracts the user certificate from the *unverifiedCertificate* field. Then it checks the certificate expiration, purpose and policies. Next it checks that the certificate is signed by a trusted CA and checks the certificate status with OCSP.
 - Second, **token signature validation**: the validator validates that the token signature was created using the provided user certificate by reconstructing the signed data `hash(origin)+hash(challenge)` and using the public key from the certificate to verify the signature in the `signature` field. If the signature verification succeeds, then the origin and challenge nonce have been implicitly and correctly verified without the need to implement any additional security checks.
 
-The website back end must lookup the challenge nonce from its local store using an identifier specific to the browser session, to guarantee that the authentication token was received from the same browser to which the corresponding challenge nonce was issued. The website back end must guarantee that the challenge nonce lifetime is limited and that its expiration is checked, and that it can be used only once by removing it from the store during validation.
+The website backend must lookup the challenge nonce from its local store using an identifier specific to the browser session, to guarantee that the authentication token was received from the same browser to which the corresponding challenge nonce was issued. The website backend must guarantee that the challenge nonce lifetime is limited and that its expiration is checked, and that it can be used only once by removing it from the store during validation.
 
 ## Basic usage
 
