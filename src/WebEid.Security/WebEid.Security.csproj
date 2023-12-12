@@ -12,6 +12,7 @@
     <Authors>RIA</Authors>
     <Copyright>Copyright © Republic of Estonia Information System Authority 2023</Copyright>
     <Version>1.1.0</Version>
+    <FileVersion>1.1.2.1</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,6 +24,14 @@
 
   <PropertyGroup>
     <LangVersion>8.0</LangVersion>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <NoWarn>1701;1702;VSSpell001;VSSpell002</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <NoWarn>1701;1702;VSSpell001;VSSpell002</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
