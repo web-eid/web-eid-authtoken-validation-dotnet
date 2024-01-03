@@ -87,7 +87,8 @@ namespace WebEid.Security.Validator.Ocsp
 
             IDictionary extensions = new Hashtable
             {
-                { OcspObjectIdentifiers.PkixOcspNonce, new X509Extension(false, new DerOctetString(this.Nonce)) }
+                { OcspObjectIdentifiers.PkixOcspNonce,
+                    new X509Extension(false, new DerOctetString(new DerOctetString(this.Nonce))) }
             };
             builder.SetRequestExtensions(new X509Extensions(extensions));
         }
