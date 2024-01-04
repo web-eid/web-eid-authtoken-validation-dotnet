@@ -26,7 +26,6 @@ namespace WebEid.Security.Validator
     using System.Collections.ObjectModel;
     using System.Linq;
     using System.Security.Cryptography.X509Certificates;
-    using Ocsp;
     using Ocsp.Service;
     using Util;
 
@@ -65,7 +64,7 @@ namespace WebEid.Security.Validator
             });
 
         // Disable OCSP nonce extension for EstEID 2015 cards by default.
-        public List<Uri> NonceDisabledOcspUrls { get; } = new List<Uri> { OcspUrls.AiaEsteid2015 };
+        public List<Uri> NonceDisabledOcspUrls { get; } = new List<Uri> { };
 
 
         private static void Validate(Uri siteOrigin, List<X509Certificate2> trustedCaCertificates, TimeSpan ocspRequestTimeout)

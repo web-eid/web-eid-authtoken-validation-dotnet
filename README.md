@@ -147,7 +147,7 @@ internal class FileReader
     }
 }
 ```
-Then copy the trusted certificates, for example `ESTEID-SK_2015.cer` and `ESTEID2018.cer`, to `Certificates` and load the certificates as follows:
+Then copy the trusted certificates, for example `ESTEID2018.cer`, to `Certificates` and load the certificates as follows:
 
 ```cs
 ...
@@ -362,7 +362,7 @@ The following additional configuration options are available in `AuthTokenValida
 - `WithDesignatedOcspServiceConfiguration(DesignatedOcspServiceConfiguration serviceConfiguration)` – activates the provided designated OCSP responder service configuration for user certificate revocation check with OCSP. The designated service is only used for checking the status of the certificates whose issuers are supported by the service, for other certificates the default AIA extension service access location will be used. See configuration examples in tests.
 - `WithOcspRequestTimeout(TimeSpan ocspRequestTimeout)` – sets both the connection and response timeout of user certificate revocation check OCSP requests. Default is 5 seconds.
 - `WithDisallowedCertificatePolicies(params string[] policies)` – adds the given policies to the list of disallowed user certificate policies. In order for the user certificate to be considered valid, it must not contain any policies present in this list. Contains the Estonian Mobile-ID policies by default as it must not be possible to authenticate with a Mobile-ID certificate when an eID smart card is expected.
-- `WithNonceDisabledOcspUrls(params Uri[] urls)` – adds the given URLs to the list of OCSP URLs for which the nonce protocol extension will be disabled. Some OCSP services don't support the nonce extension. Contains the ESTEID-2015 OCSP URL by default.
+- `WithNonceDisabledOcspUrls(params Uri[] urls)` – adds the given URLs to the list of OCSP URLs for which the nonce protocol extension will be disabled. Some OCSP services don't support the nonce extension.
 
 Extended configuration example:  
 

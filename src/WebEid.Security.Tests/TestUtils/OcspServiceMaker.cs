@@ -49,7 +49,7 @@ namespace WebEid.Security.Tests.TestUtils
 
         public static OcspServiceProvider GetDesignatedOcspServiceProvider(string ocspServiceAccessLocation) => new(GetDesignatedOcspServiceConfiguration(true, ocspServiceAccessLocation), GetAiaOcspServiceConfiguration());
 
-        private static AiaOcspServiceConfiguration GetAiaOcspServiceConfiguration() => new(new List<Uri> { OcspUrls.AiaEsteid2015, TestEsteid2015 }, TrustedCaCertificates);
+        private static AiaOcspServiceConfiguration GetAiaOcspServiceConfiguration() => new(new List<Uri> { TestEsteid2015 }, TrustedCaCertificates);
 
         public static DesignatedOcspServiceConfiguration GetDesignatedOcspServiceConfiguration() => GetDesignatedOcspServiceConfiguration(true, TestOcspAccessLocation);
 
@@ -58,7 +58,7 @@ namespace WebEid.Security.Tests.TestUtils
         private static DesignatedOcspServiceConfiguration GetDesignatedOcspServiceConfiguration(bool doesSupportNonce, string ocspServiceAccessLocation) => new(
                 new Uri(ocspServiceAccessLocation),
                 DotNetUtilities.FromX509Certificate(Certificates.GetTestSkOcspResponder2020()),
-                TrustedCaCertificates.Select(c => DotNetUtilities.FromX509Certificate(c)).ToList(),
+                TrustedCaCertificates.Select(DotNetUtilities.FromX509Certificate).ToList(),
                 doesSupportNonce);
     }
 }
