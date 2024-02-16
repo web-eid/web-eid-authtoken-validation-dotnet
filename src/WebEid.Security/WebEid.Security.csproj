@@ -10,7 +10,7 @@
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <PublisherName>RIA</PublisherName>
     <Authors>RIA</Authors>
-    <Copyright>Copyright © Republic of Estonia Information System Authority 2023</Copyright>
+    <Copyright>Copyright © Republic of Estonia Information System Authority 2023-2024</Copyright>
     <Version>1.1.0</Version>
   </PropertyGroup>
 
