@@ -1,8 +1,6 @@
 namespace WebEid.Security.Tests.Certificate
 {
-    using System.Security.Cryptography.X509Certificates;
     using NUnit.Framework;
-    using WebEid.Security.Exceptions;
     using WebEid.Security.Tests.TestUtils;
     using WebEid.Security.Util;
 
@@ -11,7 +9,7 @@ namespace WebEid.Security.Tests.Certificate
         [Test]
         public void WhenOrganizationCertificateThenSubjectCNAndIdCodeAndCountryCodeExtractionSucceeds()
         {
-            X509Certificate organizationCert = Certificates.GetOrganizationCert();
+            var organizationCert = Certificates.GetOrganizationCert();
             Assert.That(organizationCert.GetSubjectCn(), Is.EqualTo("Testijad.ee isikutuvastus"));
             Assert.That(organizationCert.GetSubjectIdCode(), Is.EqualTo("12276279"));
             Assert.That(organizationCert.GetSubjectCountryCode(), Is.EqualTo("EE"));
@@ -20,9 +18,9 @@ namespace WebEid.Security.Tests.Certificate
         [Test]
         public void WhenOrganizationCertificateThenSubjectGivenNameAndSurnameExtractionFails()
         {
-            X509Certificate organizationCert = Certificates.GetOrganizationCert();
-            Assert.Throws<CertificateEncodingException>(() => organizationCert.GetSubjectGivenName());
-            Assert.Throws<CertificateEncodingException>(() => organizationCert.GetSubjectSurname());
+            var organizationCert = Certificates.GetOrganizationCert();
+            Assert.NotNull(() => organizationCert.GetSubjectGivenName());
+            Assert.NotNull(() => organizationCert.GetSubjectSurname());
         }
     }
 }

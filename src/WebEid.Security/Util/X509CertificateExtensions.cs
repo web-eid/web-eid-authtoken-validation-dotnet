@@ -32,7 +32,6 @@ namespace WebEid.Security.Util
     using Org.BouncyCastle.Asn1;
     using Org.BouncyCastle.Asn1.X509;
     using Org.BouncyCastle.Security;
-    using Org.BouncyCastle.Security.Certificates;
 
     public static class X509CertificateExtensions
     {
@@ -151,14 +150,7 @@ namespace WebEid.Security.Util
         {
             var bcCertificate = DotNetUtilities.FromX509Certificate(certificate);
             var valueList = bcCertificate.SubjectDN.GetValueList(oid);
-            if (valueList.Count == 0 || valueList[0] is null)
-            {
-                throw new Exceptions.CertificateEncodingException(oid.ToString());
-            }
-            else
-            {
-                return valueList[0].ToString();
-            }
+            return valueList.Count == 0 ? null : string.Join(' ', valueList.Cast<object>().Select(i => i.ToString()));
         }
 
         public static AsymmetricAlgorithm GetAsymmetricPublicKey(this X509Certificate2 certificate2) =>
