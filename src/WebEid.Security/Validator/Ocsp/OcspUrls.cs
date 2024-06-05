@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2020-2023 Estonian Information System Authority
+ * Copyright © 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -29,10 +29,6 @@ namespace WebEid.Security.Validator.Ocsp
 
     public static class OcspUrls
     {
-#pragma warning disable S1075 // URIs should not be hardcoded
-        public static readonly Uri AiaEsteid2015 = new Uri("http://aia.sk.ee/esteid2015"); //NOSONAR
-#pragma warning restore S1075 // URIs should not be hardcoded
-
         /// <summary>
         /// Returns the OCSP responder <see cref="Uri">Uri</see> or null if it doesn't have one.
         /// </summary>

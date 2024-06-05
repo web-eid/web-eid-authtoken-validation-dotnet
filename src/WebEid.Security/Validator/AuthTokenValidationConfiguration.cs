@@ -1,5 +1,5 @@
-﻿/*
- * Copyright © 2020-2023 Estonian Information System Authority
+/*
+ * Copyright © 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,6 @@ namespace WebEid.Security.Validator
     using System.Collections.ObjectModel;
     using System.Linq;
     using System.Security.Cryptography.X509Certificates;
-    using Ocsp;
     using Ocsp.Service;
     using Util;
 
@@ -65,7 +64,7 @@ namespace WebEid.Security.Validator
             });
 
         // Disable OCSP nonce extension for EstEID 2015 cards by default.
-        public List<Uri> NonceDisabledOcspUrls { get; } = new List<Uri> { OcspUrls.AiaEsteid2015 };
+        public List<Uri> NonceDisabledOcspUrls { get; } = new List<Uri> { };
 
 
         private static void Validate(Uri siteOrigin, List<X509Certificate2> trustedCaCertificates, TimeSpan ocspRequestTimeout)
@@ -92,10 +91,10 @@ namespace WebEid.Security.Validator
 
         /// <summary>
         /// Validates that the given URI is an origin URL as defined in <a href="https://developer.mozilla.org/en-US/docs/Web/API/Location/origin">MDN</a>,
-        /// in the form of <code> <scheme> "://" <hostname> [ ":" <port> ]</code>.
-        // Throws IllegalArgumentException when the URI is not in the form of origin URL
+        /// in the form of <![CDATA[<code> <scheme> "://" <hostname> [ ":" <port> ]</code>]]>.
         /// </summary>
         /// <param name="uri">URI with origin URL</param>
+        /// <exception cref="ArgumentException">When the URI is not in the form of origin URL</exception>
         private static void ValidateIsOriginURL(Uri uri)
         {
             try

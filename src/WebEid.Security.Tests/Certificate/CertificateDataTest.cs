@@ -18,11 +18,11 @@ namespace WebEid.Security.Tests.Certificate
         }
 
         [Test]
-        public void WhenOrganizationCertificateThenSubjectGivenNameAndSurnameExtractionFails()
+        public void WhenOrganizationCertificateThenSubjectGivenNameAndSurnameAreNull()
         {
             X509Certificate organizationCert = Certificates.GetOrganizationCert();
-            Assert.Throws<CertificateEncodingException>(() => organizationCert.GetSubjectGivenName());
-            Assert.Throws<CertificateEncodingException>(() => organizationCert.GetSubjectSurname());
+            Assert.That(organizationCert.GetSubjectGivenName(), Is.Null);
+            Assert.That(organizationCert.GetSubjectSurname(), Is.Null);
         }
     }
 }

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2020-2023 Estonian Information System Authority
+ * Copyright © 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -49,7 +49,7 @@ namespace WebEid.Security.Tests.TestUtils
 
         public static OcspServiceProvider GetDesignatedOcspServiceProvider(string ocspServiceAccessLocation) => new(GetDesignatedOcspServiceConfiguration(true, ocspServiceAccessLocation), GetAiaOcspServiceConfiguration());
 
-        private static AiaOcspServiceConfiguration GetAiaOcspServiceConfiguration() => new(new List<Uri> { OcspUrls.AiaEsteid2015, TestEsteid2015 }, TrustedCaCertificates);
+        private static AiaOcspServiceConfiguration GetAiaOcspServiceConfiguration() => new(new List<Uri> { TestEsteid2015 }, TrustedCaCertificates);
 
         public static DesignatedOcspServiceConfiguration GetDesignatedOcspServiceConfiguration() => GetDesignatedOcspServiceConfiguration(true, TestOcspAccessLocation);
 
@@ -58,7 +58,7 @@ namespace WebEid.Security.Tests.TestUtils
         private static DesignatedOcspServiceConfiguration GetDesignatedOcspServiceConfiguration(bool doesSupportNonce, string ocspServiceAccessLocation) => new(
                 new Uri(ocspServiceAccessLocation),
                 DotNetUtilities.FromX509Certificate(Certificates.GetTestSkOcspResponder2020()),
-                TrustedCaCertificates.Select(c => DotNetUtilities.FromX509Certificate(c)).ToList(),
+                TrustedCaCertificates.Select(DotNetUtilities.FromX509Certificate).ToList(),
                 doesSupportNonce);
     }
 }
