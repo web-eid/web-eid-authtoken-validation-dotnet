@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright © 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -24,10 +24,13 @@ namespace WebEid.Security.Challenge
     using System;
 
     /// <summary>
-    /// Generates challenge nonces, cryptographically strong random bytestrings that must be used only once.
+    /// Generates challenge nonces, cryptographically strong random byte-strings that must be used only once.
     /// </summary>
     public interface IChallengeNonceGenerator
     {
+        /// <summary>
+        /// Challenge Nonce length in bytes.
+        /// </summary>
         const int NonceLength = 32;
 
         /// <summary>
