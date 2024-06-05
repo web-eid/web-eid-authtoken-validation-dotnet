@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright © 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -151,14 +151,7 @@ namespace WebEid.Security.Util
         {
             var bcCertificate = DotNetUtilities.FromX509Certificate(certificate);
             var valueList = bcCertificate.SubjectDN.GetValueList(oid);
-            if (valueList.Count == 0 || valueList[0] is null)
-            {
-                throw new Exceptions.CertificateEncodingException(oid.ToString());
-            }
-            else
-            {
-                return valueList[0].ToString();
-            }
+            return valueList.Count == 0 ? null : string.Join(' ', valueList.Cast<object>().Select(i => i.ToString()));
         }
 
         public static AsymmetricAlgorithm GetAsymmetricPublicKey(this X509Certificate2 certificate2) =>

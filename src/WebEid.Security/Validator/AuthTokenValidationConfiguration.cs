@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright © 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -91,10 +91,10 @@ namespace WebEid.Security.Validator
 
         /// <summary>
         /// Validates that the given URI is an origin URL as defined in <a href="https://developer.mozilla.org/en-US/docs/Web/API/Location/origin">MDN</a>,
-        /// in the form of <code> <scheme> "://" <hostname> [ ":" <port> ]</code>.
-        // Throws IllegalArgumentException when the URI is not in the form of origin URL
+        /// in the form of <![CDATA[<code> <scheme> "://" <hostname> [ ":" <port> ]</code>]]>.
         /// </summary>
         /// <param name="uri">URI with origin URL</param>
+        /// <exception cref="ArgumentException">When the URI is not in the form of origin URL</exception>
         private static void ValidateIsOriginURL(Uri uri)
         {
             try
