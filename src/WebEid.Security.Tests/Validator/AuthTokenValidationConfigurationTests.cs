@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright © 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -106,7 +106,7 @@ namespace WebEid.Security.Tests.Validator
                 });
 
             var copyOfConfiguration = configuration.Copy();
-            Assert.AreEqual(configuration, copyOfConfiguration);
+            Assert.That(configuration, Is.EqualTo(copyOfConfiguration));
         }
     }
 }

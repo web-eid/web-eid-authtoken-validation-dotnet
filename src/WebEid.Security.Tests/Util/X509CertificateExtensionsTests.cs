@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright © 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -40,23 +40,23 @@ namespace WebEid.Security.Tests.Util
 
         [Test]
         public void GetSubjectIdCodeReturnsCorrectValue() =>
-            Assert.AreEqual("PNOEE-38001085718", this.certificate.GetSubjectIdCode());
+            Assert.That("PNOEE-38001085718", Is.EqualTo(this.certificate.GetSubjectIdCode()));
 
         [Test]
         public void GetSubjectCnReturnsCorrectValue() =>
-            Assert.AreEqual("JÕEORG,JAAK-KRISTJAN,38001085718", this.certificate.GetSubjectCn());
+            Assert.That("JÕEORG,JAAK-KRISTJAN,38001085718", Is.EqualTo(this.certificate.GetSubjectCn()));
 
         [Test]
         public void GetSubjectGivenNameReturnsCorrectValue() =>
-            Assert.AreEqual("JAAK-KRISTJAN", this.certificate.GetSubjectGivenName());
+            Assert.That("JAAK-KRISTJAN", Is.EqualTo(this.certificate.GetSubjectGivenName()));
 
         [Test]
         public void GetSubjectSurnameReturnsCorrectValue() =>
-            Assert.AreEqual("JÕEORG", this.certificate.GetSubjectSurname());
+            Assert.That("JÕEORG", Is.EqualTo(this.certificate.GetSubjectSurname()));
 
         [Test]
         public void GetSubjectCountryCodeReturnsCorrectValue() =>
-            Assert.AreEqual("EE", this.certificate.GetSubjectCountryCode());
+            Assert.That("EE", Is.EqualTo(this.certificate.GetSubjectCountryCode()));
 
         [Test]
         public void ValidateBcNotYetValidCertificateExpiryThrowsException() =>
