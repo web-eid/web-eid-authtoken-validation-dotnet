@@ -223,10 +223,11 @@ namespace WebEid.Security.Tests.Validator.Validators
                 new OcspClientMock(Certificates.ResourceReader.ReadFromResource("ocsp_response_unknown.der")));
             var ex = Assert.ThrowsAsync<UserCertificateOcspCheckFailedException>(() =>
                     validator.Validate(this.esteid2018Cert));
-            Assert.IsInstanceOf<CertificateNotTrustedException>(ex.InnerException);
-            StringAssert.StartsWith(
-                    "Certificate E=pki@sk.ee, CN=TEST of SK OCSP RESPONDER 2020, OU=OCSP, O=AS Sertifitseerimiskeskus, C=EE is not trusted",
-                    ex.InnerException.Message);
+            Assert.That(ex.InnerException, Is.TypeOf<CertificateNotTrustedException>());
+            Assert.That(ex.InnerException.Message,
+                Does.StartWith(
+                    "Certificate E=pki@sk.ee, CN=TEST of SK OCSP RESPONDER 2020, OU=OCSP, O=AS Sertifitseerimiskeskus, C=EE is not trusted"
+                    ));
         }
 
 
