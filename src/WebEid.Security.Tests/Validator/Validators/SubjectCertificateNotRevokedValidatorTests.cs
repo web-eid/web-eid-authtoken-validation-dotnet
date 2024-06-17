@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright © 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -224,7 +224,7 @@ namespace WebEid.Security.Tests.Validator.Validators
             Assert.ThrowsAsync<UserCertificateOcspCheckFailedException>(() =>
                     validator.Validate(this.esteid2018Cert)).InnerException.IsInstanceOf<CertificateNotTrustedException>()
                 .WithMessage(
-                    "Certificate E=pki@sk.ee, CN=TEST of SK OCSP RESPONDER 2020, OU=OCSP, O=AS Sertifitseerimiskeskus, C=EE is not trusted");
+                    "Certificate E=pki@sk.ee, CN=TEST of SK OCSP RESPONDER 2020, OU=OCSP, O=AS Sertifitseerimiskeskus, C=EE is not trusted: A certificate chain could not be built to a trusted root authority. (PartialChain)\r\nA required certificate is not within its validity period when verifying against the current system clock or the timestamp in the signed file. (NotTimeValid)");
         }
 
 

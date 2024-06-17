@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright © 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -46,7 +46,7 @@ namespace WebEid.Security.Tests.Validator.Ocsp
                 .WithCertificateId(certificateId)
                 .EnableOcspNonce(true).Build();
 
-            Assert.IsNotNull(request.RequestExtensions.GetExtension(OcspObjectIdentifiers.PkixOcspNonce));
+            Assert.That(request.RequestExtensions.GetExtension(OcspObjectIdentifiers.PkixOcspNonce), Is.Not.Null);
         }
     }
 }
