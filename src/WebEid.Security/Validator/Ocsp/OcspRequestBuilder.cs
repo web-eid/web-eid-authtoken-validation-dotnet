@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright © 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -29,19 +29,35 @@ namespace WebEid.Security.Validator.Ocsp
     using Org.BouncyCastle.Asn1.X509;
     using Org.BouncyCastle.Ocsp;
 
+    /// <summary>
+    /// Builder class for creating OCSP (Online Certificate Status Protocol) requests.
+    /// </summary>
     public class OcspRequestBuilder
     {
         private bool ocspNonceEnabled = true;
         private CertificateID certificateId;
 
+        /// <summary>
+        /// The nonce value for the OCSP request.
+        /// </summary>
         public byte[] Nonce { get; private set; }
 
+        /// <summary>
+        /// Sets the certificate ID for the OCSP request.
+        /// </summary>
+        /// <param name="certificateId">The certificate ID.</param>
+        /// <returns>The builder instance.</returns>
         public OcspRequestBuilder WithCertificateId(CertificateID certificateId)
         {
             this.certificateId = certificateId;
             return this;
         }
 
+        /// <summary>
+        /// Enables or disables the inclusion of OCSP nonce in the request.
+        /// </summary>
+        /// <param name="enable">True to enable OCSP nonce, false to disable.</param>
+        /// <returns>The builder instance.</returns>
         public OcspRequestBuilder EnableOcspNonce(bool enable)
         {
             this.ocspNonceEnabled = enable;
@@ -52,7 +68,7 @@ namespace WebEid.Security.Validator.Ocsp
         /// The returned <see cref="OcspReq"/> is not re-usable/cacheable! It contains a one-time nonce
         /// and responders will reject subsequent requests that have the same nonce value.
         /// </summary>
-        /// <returns>An instance of OcspReq object</returns>
+        /// <returns>An instance of <see cref="OcspReq"/> object</returns>
         public OcspReq Build()
         {
             ValidateParameters(this.certificateId);
