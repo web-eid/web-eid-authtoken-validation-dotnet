@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright © 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -34,6 +34,7 @@ namespace WebEid.Security.Tests.Validator.Validators
     using Org.BouncyCastle.Ocsp;
     using Security.Validator.Ocsp;
     using TestUtils;
+    using WebEid.Security.Util;
     using WebEid.Security.Validator.CertValidators;
 
     [TestFixture]
@@ -43,6 +44,8 @@ namespace WebEid.Security.Tests.Validator.Validators
         private SubjectCertificateTrustedValidator trustedValidator;
         private X509Certificate2 esteid2018Cert;
 
+        private DateTimeProvider dateTimeProvider;
+
         public SubjectCertificateNotRevokedValidatorTests() => this.ocspClient = new OcspClient(TimeSpan.FromSeconds(5));
 
         [SetUp]
@@ -51,6 +54,7 @@ namespace WebEid.Security.Tests.Validator.Validators
             this.trustedValidator = new SubjectCertificateTrustedValidator(null, null);
             SetSubjectCertificateIssuerCertificate(this.trustedValidator);
             this.esteid2018Cert = Certificates.GetJaakKristjanEsteid2018Cert();
+            this.dateTimeProvider = DateTimeProvider.OverrideUtcNow(new DateTime(2021, 3, 1));
         }
 
         [Test]

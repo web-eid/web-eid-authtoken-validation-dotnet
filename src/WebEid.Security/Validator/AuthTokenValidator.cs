@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright © 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -55,7 +55,6 @@ namespace WebEid.Security.Validator
             this.authTokenSignatureValidator = new AuthTokenSignatureValidator(configuration.SiteOrigin);
 
             this.simpleSubjectCertificateValidators = SubjectCertificateValidatorBatch.CreateFrom(
-                new SubjectCertificateExpiryValidator(configuration.TrustedCaCertificates, this.logger),
                 new SubjectCertificatePurposeValidator(this.logger),
                 new SubjectCertificatePolicyValidator(configuration.DisallowedSubjectCertificatePolicies
                     .Select(policy => new Oid(policy))

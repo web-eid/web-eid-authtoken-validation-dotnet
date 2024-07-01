@@ -69,6 +69,8 @@ namespace WebEid.Security.Util
 
         public static X509Certificate2 ValidateIsSignedByTrustedCa(this X509Certificate2 certificate, ICollection<X509Certificate2> trustedCaCertificates)
         {
+            ValidateCertificateExpiry(certificate, DateTimeProvider.UtcNow, "User");
+
             var chain = new X509Chain
             {
                 ChainPolicy =
@@ -80,6 +82,7 @@ namespace WebEid.Security.Util
                     UrlRetrievalTimeout = TimeSpan.Zero
                 }
             };
+
             foreach (var cert in trustedCaCertificates)
             {
                 chain.ChainPolicy.ExtraStore.Add(cert);
