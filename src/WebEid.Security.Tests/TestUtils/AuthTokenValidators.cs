@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright © 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -56,6 +56,12 @@ namespace WebEid.Security.Tests.TestUtils
         public static IAuthTokenValidator GetAuthTokenValidatorWithWrongTrustedCa() =>
             GetAuthTokenValidator(TokenOriginUrl,
                 Certificates.CertificateLoader.LoadCertificatesFromResources("ESTEID2018.cer"));
+
+        public static IAuthTokenValidator GetAuthTokenValidatorWthJuly2024ExpiredUnrelatedTrustedCA() =>
+            GetAuthTokenValidatorBuilder(TokenOriginUrl,
+                Certificates.CertificateLoader
+                .LoadCertificatesFromResources("TEST_of_ESTEID2018.cer", "TEST_of_SK_OCSP_RESPONDER_2020.cer"))
+                .Build();
 
         public static IAuthTokenValidator GetAuthTokenValidatorWithDisallowedEsteidPolicy() =>
             GetAuthTokenValidatorBuilder(TokenOriginUrl, GetCaCertificates())
