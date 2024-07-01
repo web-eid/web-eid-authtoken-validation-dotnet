@@ -57,6 +57,12 @@ namespace WebEid.Security.Tests.TestUtils
             GetAuthTokenValidator(TokenOriginUrl,
                 Certificates.CertificateLoader.LoadCertificatesFromResources("ESTEID2018.cer"));
 
+        public static IAuthTokenValidator GetAuthTokenValidatorWthJuly2024ExpiredUnrelatedTrustedCA() =>
+            GetAuthTokenValidatorBuilder(TokenOriginUrl,
+                Certificates.CertificateLoader
+                .LoadCertificatesFromResources("TEST_of_ESTEID2018.cer", "TEST_of_SK_OCSP_RESPONDER_2020.cer"))
+                .Build();
+
         public static IAuthTokenValidator GetAuthTokenValidatorWithDisallowedEsteidPolicy() =>
             GetAuthTokenValidatorBuilder(TokenOriginUrl, GetCaCertificates())
                 .WithDisallowedCertificatePolicies(EstIdemiaPolicy)

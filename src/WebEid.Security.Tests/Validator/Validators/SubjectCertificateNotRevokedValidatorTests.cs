@@ -57,6 +57,7 @@ namespace WebEid.Security.Tests.Validator.Validators
             SetSubjectCertificateIssuerCertificate(this.trustedValidator);
             this.esteid2018Cert = Certificates.GetJaakKristjanEsteid2018Cert();
             this.configuration = new AuthTokenValidationConfiguration();
+            this.dateTimeProvider = DateTimeProvider.OverrideUtcNow(new DateTime(2021, 3, 1));
         }
 
         [Test]
