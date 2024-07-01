@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright © 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -27,6 +27,9 @@ namespace WebEid.Security.Validator.Ocsp
     using Org.BouncyCastle.Asn1;
     using Org.BouncyCastle.Asn1.X509;
 
+    /// <summary>
+    /// Provides methods for extracting OCSP responder URIs from X.509 certificates.
+    /// </summary>
     public static class OcspUrls
     {
         /// <summary>

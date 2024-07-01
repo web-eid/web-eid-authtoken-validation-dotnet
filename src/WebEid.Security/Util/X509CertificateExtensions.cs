@@ -32,8 +32,10 @@ namespace WebEid.Security.Util
     using Org.BouncyCastle.Asn1;
     using Org.BouncyCastle.Asn1.X509;
     using Org.BouncyCastle.Security;
-    using Org.BouncyCastle.Security.Certificates;
 
+    /// <summary>
+    /// Provides extension methods for <see cref="X509Certificate2"/> and <see cref="X509Certificate"/>.
+    /// </summary>
     public static class X509CertificateExtensions
     {
         /// <summary>
@@ -59,14 +61,23 @@ namespace WebEid.Security.Util
             }
             catch (Org.BouncyCastle.Security.Certificates.CertificateNotYetValidException e)
             {
-                throw new Exceptions.CertificateNotYetValidException(subject, e);
+                throw new CertificateNotYetValidException(subject, e);
             }
             catch (Org.BouncyCastle.Security.Certificates.CertificateExpiredException e)
             {
-                throw new Exceptions.CertificateExpiredException(subject, e);
+                throw new CertificateExpiredException(subject, e);
             }
         }
 
+        /// <summary>
+        /// Validates whether the given certificate is valid and signed by a trusted certificate authority (CA).
+        /// </summary>
+        /// <param name="certificate">The certificate to validate.</param>
+        /// <param name="trustedCaCertificates">A collection of trusted CA certificates.</param>
+        /// <returns>The validated certificate if it is signed by a trusted CA.</returns>
+        /// <exception cref="CertificateNotTrustedException">If the certificate is not signed by a trusted CA or if any other error occurs.</exception>
+        /// <exception cref="CertificateNotYetValidException">when a CA certificate in the chain or the user certificate is not yet valid</exception>
+        /// <exception cref="CertificateExpiredException">when a CA certificate in the chain or the user certificate is expired</exception>
         public static X509Certificate2 ValidateIsValidAndSignedByTrustedCa(this X509Certificate2 certificate, ICollection<X509Certificate2> trustedCaCertificates)
         {
             ValidateCertificateExpiry(certificate, DateTimeProvider.UtcNow, "User");
@@ -124,6 +135,13 @@ namespace WebEid.Security.Util
             }
         }
 
+        /// <summary>
+        /// Parses a base64-encoded certificate and returns an <see cref="X509Certificate2"/> instance.
+        /// </summary>
+        /// <param name="certificateInBase64">The base64-encoded certificate.</param>
+        /// <param name="fieldName">The name of the field containing the certificate.</param>
+        /// <returns>An <see cref="X509Certificate2"/> instance.</returns>
+        /// <exception cref="AuthTokenParseException">Thrown when parsing fails.</exception>
         public static X509Certificate2 ParseCertificate(string certificateInBase64, string fieldName)
         {
             try
@@ -137,18 +155,33 @@ namespace WebEid.Security.Util
             }
         }
 
+        /// <summary>
+        /// Gets the Common Name (CN) from the certificate's subject.
+        /// </summary>
         public static string GetSubjectCn(this X509Certificate certificate) =>
             certificate.GetSubjectFieldValue(X509Name.CN);
 
+        /// <summary>
+        /// Gets the Serial Number from the certificate's subject.
+        /// </summary>
         public static string GetSubjectIdCode(this X509Certificate certificate) =>
             certificate.GetSubjectFieldValue(X509Name.SerialNumber);
 
+        /// <summary>
+        /// Gets the Given Name from the certificate's subject.
+        /// </summary>
         public static string GetSubjectGivenName(this X509Certificate certificate) =>
             certificate.GetSubjectFieldValue(X509Name.GivenName);
 
+        /// <summary>
+        /// Gets the Surname from the certificate's subject.
+        /// </summary>
         public static string GetSubjectSurname(this X509Certificate certificate) =>
             certificate.GetSubjectFieldValue(X509Name.Surname);
 
+        /// <summary>
+        /// Gets the Country code from the certificate's subject.
+        /// </summary>
         public static string GetSubjectCountryCode(this X509Certificate certificate) =>
             certificate.GetSubjectFieldValue(X509Name.C);
 
@@ -159,9 +192,15 @@ namespace WebEid.Security.Util
             return valueList.Count == 0 ? null : string.Join(' ', valueList.Cast<object>().Select(i => i.ToString()));
         }
 
+        /// <summary>
+        /// Gets the asymmetric public key from the certificate.
+        /// </summary>
         public static AsymmetricAlgorithm GetAsymmetricPublicKey(this X509Certificate2 certificate2) =>
             certificate2.GetECDsaPublicKey() ?? (AsymmetricAlgorithm)certificate2.GetRSAPublicKey();
 
+        /// <summary>
+        /// Creates a <see cref="SecurityKey"/> from the asymmetric algorithm without caching signature providers.
+        /// </summary>
         public static SecurityKey CreateSecurityKeyWithoutCachingSignatureProviders(this AsymmetricAlgorithm asymmetricAlgorithm)
         {
             if (asymmetricAlgorithm is ECDsa ecDsa)

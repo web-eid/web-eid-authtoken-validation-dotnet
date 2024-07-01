@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright © 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -23,10 +23,26 @@ namespace WebEid.Security.Validator.Ocsp.Service
 {
     using System;
 
+    /// <summary>
+    /// Represents an OCSP (Online Certificate Status Protocol) service.
+    /// </summary>
     public interface IOcspService
     {
+        /// <summary>
+        /// Gets a value indicating whether the service supports including a nonce in requests.
+        /// </summary>
         bool DoesSupportNonce { get; }
+
+        /// <summary>
+        /// Gets the access location (URI) of the OCSP service.
+        /// </summary>
         Uri AccessLocation { get; }
+
+        /// <summary>
+        /// Validates the responder certificate and its produced timestamp.
+        /// </summary>
+        /// <param name="responderCertificate">The responder's X.509 certificate.</param>
+        /// <param name="producedAt">The timestamp when the OCSP response was produced.</param>
         void ValidateResponderCertificate(Org.BouncyCastle.X509.X509Certificate responderCertificate, DateTime producedAt);
     }
 }
