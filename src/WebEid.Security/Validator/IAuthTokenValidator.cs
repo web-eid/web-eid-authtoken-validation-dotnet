@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright © 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -27,8 +27,14 @@ namespace WebEid.Security.Validator
     using Util;
     using WebEid.Security.AuthToken;
 
+    /// <summary>
+    /// Interface for validating Web eID authentication tokens.
+    /// </summary>
     public interface IAuthTokenValidator
     {
+        /// <summary>
+        /// The current token format version
+        /// </summary>
         const string CURRENT_TOKEN_FORMAT_VERSION = "web-eid:1";
 
         /// <summary>

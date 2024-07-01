@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright © 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -26,23 +26,41 @@ namespace WebEid.Security.Exceptions
     using System.Runtime.Serialization;
 
     /// <summary>
-    /// Thrown when authentication token parsing fails.
+    /// Represents an exception thrown when authentication token parsing fails in the Web eID system.
     /// </summary>
     [Serializable]
     public class AuthTokenParseException : AuthTokenException
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AuthTokenParseException"/> class with the specified error message.
+        /// </summary>
+        /// <param name="message">The error message.</param>
         public AuthTokenParseException(string message) : base(message)
         {
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AuthTokenParseException"/> class with the specified inner exception.
+        /// </summary>
+        /// <param name="innerException">The inner exception.</param>
         public AuthTokenParseException(Exception innerException) : this("Error parsing token", innerException)
         {
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AuthTokenParseException"/> class with the specified error message and inner exception.
+        /// </summary>
+        /// <param name="message">The error message.</param>
+        /// <param name="innerException">The inner exception.</param>
         public AuthTokenParseException(string message, Exception innerException) : base(message, innerException)
         {
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AuthTokenParseException"/> class from serialized data.
+        /// </summary>
+        /// <param name="info">The <see cref="SerializationInfo"/> that holds the serialized object data.</param>
+        /// <param name="context">The <see cref="StreamingContext"/> that contains contextual information about the source or destination.</param>
         [ExcludeFromCodeCoverage]
         protected AuthTokenParseException(SerializationInfo info, StreamingContext context) : base(info, context) { }
     }

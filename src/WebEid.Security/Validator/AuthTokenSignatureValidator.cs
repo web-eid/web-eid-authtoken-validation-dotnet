@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright © 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -30,6 +30,9 @@ namespace WebEid.Security.Validator
     using Exceptions;
     using Microsoft.IdentityModel.Tokens;
 
+    /// <summary>
+    /// Provides functionality for validating the signature of an authentication token (JWT) using a specified algorithm and a public key.
+    /// </summary>
     public class AuthTokenSignatureValidator
     {
         private static readonly ICollection<string> SupportedSigningAlgorithms = new Collection<string>
@@ -47,9 +50,20 @@ namespace WebEid.Security.Validator
 
         private readonly byte[] originBytes;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AuthTokenSignatureValidator"/> class.
+        /// </summary>
+        /// <param name="siteOrigin">The site origin (as a Uri).</param>
         public AuthTokenSignatureValidator(Uri siteOrigin) =>
             this.originBytes = Encoding.UTF8.GetBytes(siteOrigin.OriginalString);
 
+        /// <summary>
+        /// Validates the signature of an authentication token.
+        /// </summary>
+        /// <param name="algorithm">The signing algorithm used for the token.</param>
+        /// <param name="publicKey">The public key used for signature verification.</param>
+        /// <param name="tokenSignature">The base64-encoded signature from the token.</param>
+        /// <param name="currentNonce">The current nonce value.</param>
         public void Validate(string algorithm, SecurityKey publicKey, string tokenSignature, string currentNonce)
         {
             if (string.IsNullOrEmpty(currentNonce))
@@ -104,7 +118,7 @@ namespace WebEid.Security.Validator
         {
             var hashAlgorithmName = "SHA" + algorithmName[^3..];
             var hashAlgorithm = HashAlgorithm.Create(hashAlgorithmName);
-            if (hashAlgorithm == null) // Should not happen as ValidateIfAlgorithmIsSupported() should assure correct algorith name.
+            if (hashAlgorithm == null) // Should not happen as ValidateIfAlgorithmIsSupported() should assure correct algorithm name.
             { throw new NotSupportedException($"Unsupported hash algorithm '{hashAlgorithmName}'"); }
             return hashAlgorithm;
         }

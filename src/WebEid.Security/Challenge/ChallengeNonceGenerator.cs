@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright © 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -25,16 +25,20 @@ namespace WebEid.Security.Challenge
     using System.Security.Cryptography;
     using Util;
 
+    /// <summary>
+    /// Generates and stores cryptographic nonces for the Web eID system.
+    /// </summary>
     public sealed class ChallengeNonceGenerator : IChallengeNonceGenerator
     {
         private readonly IChallengeNonceStore store;
         private readonly RandomNumberGenerator randomNumberGenerator;
 
         /// <summary>
-        /// Initializes a new instance of NonceGenerator
+        /// Initializes a new instance of the <see cref="ChallengeNonceGenerator"/> class.
         /// </summary>
+        /// <param name="randomNumberGenerator">The source of random bytes for generating nonces.</param>
         /// <param name="store">The store where generated nonce values will be stored.</param>
-        /// <param name="randomNumberGenerator">The source of random bytes for the nonce.</param>
+        /// <exception cref="ArgumentNullException">Thrown when either randomNumberGenerator or store is null.</exception>
         public ChallengeNonceGenerator(RandomNumberGenerator randomNumberGenerator, IChallengeNonceStore store)
         {
             this.randomNumberGenerator = randomNumberGenerator ?? throw new ArgumentNullException(nameof(randomNumberGenerator), "Secure random generator must not be null");
@@ -43,16 +47,18 @@ namespace WebEid.Security.Challenge
 
         /// <summary>
         /// Generates a cryptographic nonce, a large random number that can be used only once,
-        /// and stores it in a ChallengeNonceStore.
+        /// and stores it in the specified ChallengeNonceStore.
         /// </summary>
-        /// <param name="ttl">Challenge nonce time-to-live duration. When the time-to-live passes, the nonce is considered to be expired.</param>
-        /// <returns>a ChallengeNonce that contains the Base64-encoded nonce and its expiry time</returns>
+        /// <param name="ttl">The time-to-live duration for the nonce. When the time-to-live passes, the nonce is considered expired.</param>
+        /// <returns>A ChallengeNonce that contains the Base64-encoded nonce and its expiry time.</returns>
+        /// <exception cref="ArgumentOutOfRangeException">Thrown when the provided ttl is negative or zero.</exception>
         public ChallengeNonce GenerateAndStoreNonce(TimeSpan ttl)
         {
             if (ttl.IsNegativeOrZero())
             {
                 throw new ArgumentOutOfRangeException(nameof(ttl), "Nonce time-to-live duration must be greater than zero");
             }
+
             var nonceBytes = new byte[IChallengeNonceGenerator.NonceLength];
             this.randomNumberGenerator.GetBytes(nonceBytes);
             var base64StringNonce = Convert.ToBase64String(nonceBytes);

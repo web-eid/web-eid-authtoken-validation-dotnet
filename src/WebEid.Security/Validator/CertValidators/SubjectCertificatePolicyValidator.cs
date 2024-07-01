@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright © 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -49,7 +49,7 @@ namespace WebEid.Security.Validator.CertValidators
         /// </summary>
         /// <param name="subjectCertificate">the user certificate.</param>
         /// <exception cref="UserCertificateDisallowedPolicyException">when user certificate policy does not match the configured policies.</exception>
-        /// <exception cref="UserCertificateInvalidPolicyException">when user certificate policy is invalid.</exception>
+        /// <exception cref="UserCertificateParseException">when user certificate policy is invalid.</exception>
         public Task Validate(X509Certificate2 subjectCertificate)
         {
             try

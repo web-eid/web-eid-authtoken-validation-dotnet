@@ -29,6 +29,9 @@ namespace WebEid.Security.Validator
     using Ocsp.Service;
     using Util;
 
+    /// <summary>
+    /// Represents the configuration for validating authentication tokens (JWTs) in the Web eID system.
+    /// </summary>
     public sealed class AuthTokenValidationConfiguration : IEquatable<AuthTokenValidationConfiguration>
     {
         internal AuthTokenValidationConfiguration() { }
@@ -46,19 +49,46 @@ namespace WebEid.Security.Validator
             this.NonceDisabledOcspUrls = new List<Uri>(other.NonceDisabledOcspUrls);
         }
 
+        /// <summary>
+        /// The site origin (as a Uri).
+        /// </summary>
         public Uri SiteOrigin { get; set; }
 
+        /// <summary>
+        /// The list of trusted CA certificates.
+        /// </summary>
         public List<X509Certificate2> TrustedCaCertificates { get; } = new List<X509Certificate2>();
 
+        /// <summary>
+        /// A value indicating whether user certificate revocation check with OCSP is enabled.
+        /// By default the revocation check is enabled.
+        /// </summary>
         public bool IsUserCertificateRevocationCheckWithOcspEnabled { get; set; } = true;
 
+        /// <summary>
+        /// The OCSP request timeout.
+        /// </summary>
         public TimeSpan OcspRequestTimeout { get; set; } = TimeSpan.FromSeconds(5);
+
+        /// <summary>
+        /// Maximum allowed time skew for the OCSP response
+        /// </summary>
         public TimeSpan AllowedOcspResponseTimeSkew { get; set; } = TimeSpan.FromMinutes(15);
+
+        /// <summary>
+        /// Maximum OCSP response ThisUpdate age.
+        /// </summary>
         public TimeSpan MaxOcspResponseThisUpdateAge { get; set; } = TimeSpan.FromMinutes(2);
 
 
+        /// <summary>
+        /// The designated OCSP service configuration.
+        /// </summary>
         public DesignatedOcspServiceConfiguration DesignatedOcspServiceConfiguration { get; internal set; }
 
+        /// <summary>
+        /// The list of disallowed subject certificate policies.
+        /// </summary>
         public IList<string> DisallowedSubjectCertificatePolicies { get; } =
             new List<string>(new[]
             {
@@ -68,7 +98,10 @@ namespace WebEid.Security.Validator
                 SubjectCertificatePolicies.EsteidSk2015MobileIdPolicy
             });
 
-        // Disable OCSP nonce extension for EstEID 2015 cards by default.
+        /// <summary>
+        /// The list of OCSP URLs where the nonce extension is disabled.
+        /// Disable OCSP nonce extension for EstEID 2015 cards by default.
+        /// </summary>
         public List<Uri> NonceDisabledOcspUrls { get; } = new List<Uri> { };
 
 
@@ -128,9 +161,14 @@ namespace WebEid.Security.Validator
             }
         }
 
+        /// <summary>
+        /// Creates a copy of the current <see cref="AuthTokenValidationConfiguration"/>.
+        /// </summary>
+        /// <returns>A new instance with the same configuration as the original.</returns>
         public AuthTokenValidationConfiguration Copy() =>
             new AuthTokenValidationConfiguration(this);
 
+        /// <inheritdoc/>
         public bool Equals(AuthTokenValidationConfiguration other) =>
             this.SiteOrigin.Equals(other.SiteOrigin) &&
                    Enumerable.SequenceEqual(this.TrustedCaCertificates, other.TrustedCaCertificates) &&

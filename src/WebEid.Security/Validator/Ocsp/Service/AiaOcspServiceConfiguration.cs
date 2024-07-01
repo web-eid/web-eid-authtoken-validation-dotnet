@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright © 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -26,8 +26,16 @@ namespace WebEid.Security.Validator.Ocsp.Service
     using System.Linq;
     using System.Security.Cryptography.X509Certificates;
 
+    /// <summary>
+    /// Represents the configuration for an AIA (Authority Information Access) OCSP service.
+    /// </summary>
     public sealed class AiaOcspServiceConfiguration : IEquatable<AiaOcspServiceConfiguration>
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AiaOcspServiceConfiguration"/> class.
+        /// </summary>
+        /// <param name="nonceDisabledOcspUrls">List of OCSP responder URLs where nonce is disabled.</param>
+        /// <param name="trustedCaCertificates">List of trusted CA certificates.</param>
         public AiaOcspServiceConfiguration(List<Uri> nonceDisabledOcspUrls, List<X509Certificate2> trustedCaCertificates)
         {
             this.NonceDisabledOcspUrls =
@@ -36,8 +44,21 @@ namespace WebEid.Security.Validator.Ocsp.Service
                 trustedCaCertificates ?? throw new ArgumentNullException(nameof(trustedCaCertificates));
         }
 
+        /// <summary>
+        /// Gets the list of OCSP responder URLs where nonce is disabled.
+        /// </summary>
         public List<Uri> NonceDisabledOcspUrls { get; }
+
+        /// <summary>
+        /// Gets the list of trusted CA certificates.
+        /// </summary>
         public List<X509Certificate2> TrustedCaCertificates { get; }
+
+        /// <summary>
+        /// Determines whether the current instance is equal to another <see cref="AiaOcspServiceConfiguration"/>.
+        /// </summary>
+        /// <param name="other">The other <see cref="AiaOcspServiceConfiguration"/> to compare.</param>
+        /// <returns>True if equal, false otherwise.</returns>
         public bool Equals(AiaOcspServiceConfiguration other)
         {
             if (other is null)
@@ -54,8 +75,10 @@ namespace WebEid.Security.Validator.Ocsp.Service
                    Enumerable.SequenceEqual(this.TrustedCaCertificates, other.TrustedCaCertificates);
         }
 
+        /// <inheritdoc/>
         public override bool Equals(object obj) => ReferenceEquals(this, obj) || obj is AiaOcspServiceConfiguration other && Equals(other);
 
+        /// <inheritdoc/>
         public override int GetHashCode()
         {
             unchecked
@@ -65,8 +88,14 @@ namespace WebEid.Security.Validator.Ocsp.Service
             }
         }
 
+        /// <summary>
+        /// Determines whether two <see cref="AiaOcspServiceConfiguration"/> instances are equal.
+        /// </summary>
         public static bool operator ==(AiaOcspServiceConfiguration left, AiaOcspServiceConfiguration right) => Equals(left, right);
 
+        /// <summary>
+        /// Determines whether two <see cref="AiaOcspServiceConfiguration"/> instances are not equal.
+        /// </summary>
         public static bool operator !=(AiaOcspServiceConfiguration left, AiaOcspServiceConfiguration right) => !Equals(left, right);
     }
 }

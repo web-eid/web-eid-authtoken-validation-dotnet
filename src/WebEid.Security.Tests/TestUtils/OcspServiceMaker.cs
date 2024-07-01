@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright © 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -37,8 +37,8 @@ namespace WebEid.Security.Tests.TestUtils
 
         static OcspServiceMaker() => TrustedCaCertificates = new List<X509Certificate2>
             {
-                new X509Certificate2(Certificates.GetTestEsteid2015Ca()),
-                new X509Certificate2(Certificates.GetTestEsteid2018Ca())
+                new(Certificates.GetTestEsteid2015Ca()),
+                new(Certificates.GetTestEsteid2018Ca())
             };
 
         public static OcspServiceProvider GetAiaOcspServiceProvider() => new(null, GetAiaOcspServiceConfiguration());
