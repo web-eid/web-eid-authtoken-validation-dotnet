@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright © 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -192,6 +192,8 @@ namespace WebEid.Security.Validator
                     new SubjectCertificateNotRevokedValidator(certTrustedValidator,
                         this.ocspClient,
                         this.ocspServiceProvider,
+                        this.configuration.AllowedOcspResponseTimeSkew,
+                        this.configuration.MaxOcspResponseThisUpdateAge,
                         this.logger));
         }
     }

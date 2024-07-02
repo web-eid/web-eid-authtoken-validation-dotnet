@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright © 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -41,15 +41,22 @@ namespace WebEid.Security.Validator.CertValidators
         private readonly OcspServiceProvider ocspServiceProvider;
         private readonly ILogger logger;
 
+        private readonly TimeSpan allowedOcspTimeSkew;
+        private readonly TimeSpan maxOcspResponseThisUpdateAge;
+
         public SubjectCertificateNotRevokedValidator(SubjectCertificateTrustedValidator trustValidator,
             IOcspClient ocspClient,
             OcspServiceProvider ocspServiceProvider,
+            TimeSpan allowedOcspTimeSkew,
+            TimeSpan maxOcspResponseThisUpdateAge,
             ILogger logger = null)
         {
             this.trustValidator = trustValidator;
             this.ocspClient = ocspClient;
             this.ocspServiceProvider = ocspServiceProvider;
             this.logger = logger;
+            this.allowedOcspTimeSkew = allowedOcspTimeSkew;
+            this.maxOcspResponseThisUpdateAge = maxOcspResponseThisUpdateAge;
         }
 
         /// <summary>
@@ -157,7 +164,7 @@ namespace WebEid.Security.Validator.CertValidators
             //      be available about the status of the certificate (nextUpdate) is
             //      greater than the current time.
 
-            OcspResponseValidator.ValidateCertificateStatusUpdateTime(certStatusResponse, producedAt);
+            OcspResponseValidator.ValidateCertificateStatusUpdateTime(certStatusResponse, allowedOcspTimeSkew, maxOcspResponseThisUpdateAge);
 
             // Now we can accept the signed response as valid and validate the certificate status.
             OcspResponseValidator.ValidateOcspResponseStatus(certStatusResponse);

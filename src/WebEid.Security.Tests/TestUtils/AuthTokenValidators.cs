@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright © 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -61,6 +61,9 @@ namespace WebEid.Security.Tests.TestUtils
             GetAuthTokenValidatorBuilder(TokenOriginUrl, GetCaCertificates())
                 .WithDisallowedCertificatePolicies(EstIdemiaPolicy)
                 .Build();
+
+        public static AuthTokenValidatorBuilder GetDefaultAuthTokenValidatorBuilder() =>
+            GetAuthTokenValidatorBuilder(TokenOriginUrl, GetCaCertificates());
 
         private static AuthTokenValidatorBuilder GetAuthTokenValidatorBuilder(string uri, X509Certificate2[] certificates) =>
             new AuthTokenValidatorBuilder()
