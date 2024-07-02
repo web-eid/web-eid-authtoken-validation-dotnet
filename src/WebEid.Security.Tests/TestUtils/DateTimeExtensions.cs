@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright © 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -22,6 +22,7 @@
 namespace WebEid.Security.Tests.TestUtils
 {
     using System;
+    using Org.BouncyCastle.Asn1;
 
     internal static class DateTimeExtensions
     {
@@ -29,5 +30,7 @@ namespace WebEid.Security.Tests.TestUtils
         {
             return dt.AddTicks(-dt.Ticks % TimeSpan.TicksPerSecond);
         }
+
+        internal static DerGeneralizedTime ToDerGenTime(this DateTime dateTime) => new(dateTime);
     }
 }

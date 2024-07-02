@@ -39,6 +39,8 @@ namespace WebEid.Security.Validator
             this.TrustedCaCertificates = new List<X509Certificate2>(other.TrustedCaCertificates);
             this.IsUserCertificateRevocationCheckWithOcspEnabled = other.IsUserCertificateRevocationCheckWithOcspEnabled;
             this.OcspRequestTimeout = other.OcspRequestTimeout;
+            this.AllowedOcspResponseTimeSkew = other.AllowedOcspResponseTimeSkew;
+            this.MaxOcspResponseThisUpdateAge = other.MaxOcspResponseThisUpdateAge;
             this.DesignatedOcspServiceConfiguration = other.DesignatedOcspServiceConfiguration;
             this.DisallowedSubjectCertificatePolicies = new ReadOnlyCollection<string>(other.DisallowedSubjectCertificatePolicies);
             this.NonceDisabledOcspUrls = new List<Uri>(other.NonceDisabledOcspUrls);
@@ -51,6 +53,9 @@ namespace WebEid.Security.Validator
         public bool IsUserCertificateRevocationCheckWithOcspEnabled { get; set; } = true;
 
         public TimeSpan OcspRequestTimeout { get; set; } = TimeSpan.FromSeconds(5);
+        public TimeSpan AllowedOcspResponseTimeSkew { get; set; } = TimeSpan.FromMinutes(15);
+        public TimeSpan MaxOcspResponseThisUpdateAge { get; set; } = TimeSpan.FromMinutes(2);
+
 
         public DesignatedOcspServiceConfiguration DesignatedOcspServiceConfiguration { get; internal set; }
 
@@ -67,18 +72,16 @@ namespace WebEid.Security.Validator
         public List<Uri> NonceDisabledOcspUrls { get; } = new List<Uri> { };
 
 
-        private static void Validate(Uri siteOrigin, List<X509Certificate2> trustedCaCertificates, TimeSpan ocspRequestTimeout)
+        private static void RequirePositiveTimeSpan(TimeSpan timeSpan, string fieldName)
         {
-            if (siteOrigin == null)
-            { throw new ArgumentNullException(nameof(siteOrigin)); }
-            ValidateIsOriginURL(siteOrigin);
-
-            if (!trustedCaCertificates.Any())
-            { throw new ArgumentException("At least one trusted certificate authority must be provided"); }
-            if (ocspRequestTimeout.IsNegativeOrZero())
+            if (timeSpan == null)
             {
-                throw new ArgumentOutOfRangeException(nameof(ocspRequestTimeout),
-                      "OCSP request timeout must be greater than zero");
+                throw new ArgumentNullException($"{fieldName} must not be null");
+            }
+
+            if (timeSpan.IsNegativeOrZero())
+            {
+                throw new ArgumentOutOfRangeException(nameof(timeSpan), $"{fieldName} must be greater than zero");
             }
         }
 
@@ -87,8 +90,21 @@ namespace WebEid.Security.Validator
         /// </summary>
         /// <exception cref="ArgumentNullException">When required parameters are null</exception>
         /// <exception cref="ArgumentException">When required parameters are null</exception>
-        public void Validate() => Validate(this.SiteOrigin, this.TrustedCaCertificates, this.OcspRequestTimeout);
+        public void Validate()
+        {
+            if (this.SiteOrigin == null)
+            { throw new ArgumentNullException(nameof(this.SiteOrigin)); }
+            ValidateIsOriginURL(this.SiteOrigin);
 
+            if (!this.TrustedCaCertificates.Any())
+            { throw new ArgumentException("At least one trusted certificate authority must be provided"); }
+
+            RequirePositiveTimeSpan(this.OcspRequestTimeout, "OCSP request timeout");
+            RequirePositiveTimeSpan(this.AllowedOcspResponseTimeSkew, "Allowed OCSP response time-skew");
+            RequirePositiveTimeSpan(this.MaxOcspResponseThisUpdateAge, "Max OCSP response thisUpdate age");
+        }
+
+        
         /// <summary>
         /// Validates that the given URI is an origin URL as defined in <a href="https://developer.mozilla.org/en-US/docs/Web/API/Location/origin">MDN</a>,
         /// in the form of <![CDATA[<code> <scheme> "://" <hostname> [ ":" <port> ]</code>]]>.

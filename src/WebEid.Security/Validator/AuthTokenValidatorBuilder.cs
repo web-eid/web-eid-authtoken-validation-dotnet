@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright © 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -107,6 +107,36 @@ namespace WebEid.Security.Validator
         {
             this.configuration.OcspRequestTimeout = ocspRequestTimeout;
             this.logger?.LogDebug("OCSP request timeout set to {0}.", ocspRequestTimeout);
+            return this;
+        }
+
+        /// <summary>
+        /// Sets the allowed time skew for OCSP response's thisUpdate and nextUpdate times.
+        /// This parameter is used to allow discrepancies between the system clock and the OCSP responder's clock,
+        /// which may occur due to clock drift, network delays or revocation updates that are not published in real time.
+        /// This is an optional configuration parameter, the default is 15 minutes.
+        /// The relatively long default is specifically chosen to account for one particular OCSP responder that used
+        /// CRLs for authoritative revocation info, these CRLs were updated every 15 minutes.
+        /// </summary>
+        /// <param name="allowedTimeSkew">The allowed time skew</param>
+        /// <returns>the builder instance for method chaining</returns>
+        public AuthTokenValidatorBuilder WithAllowedOcspResponseTimeSkew(TimeSpan allowedTimeSkew)
+        {
+            this.configuration.AllowedOcspResponseTimeSkew = allowedTimeSkew;
+            this.logger?.LogDebug("Allowed OCSP response time skew set to {0}.", allowedTimeSkew);
+            return this;
+        }
+
+        /// <summary>
+        /// Sets the maximum age of the OCSP response's thisUpdate time before it is considered too old.
+        /// This is an optional configuration parameter, the default is 2 minutes.
+        /// </summary>
+        /// <param name="maxThisUpdateAge">The maximum age of the OCSP response's thisUpdate time</param>
+        /// <returns>the builder instance for method chaining</returns>
+        public AuthTokenValidatorBuilder WithMaxOcspResponseThisUpdateAge(TimeSpan maxThisUpdateAge)
+        {
+            this.configuration.MaxOcspResponseThisUpdateAge = maxThisUpdateAge;
+            this.logger?.LogDebug("Maximum OCSP response thisUpdate age set to {0}.", maxThisUpdateAge);
             return this;
         }
 
