@@ -39,7 +39,7 @@ namespace WebEid.Security.Tests.Validator
         {
             var configuration = new AuthTokenValidationConfiguration();
             Assert.Throws<ArgumentNullException>(() => configuration.Validate())
-                .WithMessage("Value cannot be null. (Parameter 'siteOrigin')");
+                .WithMessage("Value cannot be null. (Parameter 'SiteOrigin')");
         }
 
         [Test]
@@ -72,7 +72,34 @@ namespace WebEid.Security.Tests.Validator
             configuration.TrustedCaCertificates.Add(new X509Certificate2(Array.Empty<byte>()));
             configuration.OcspRequestTimeout = TimeSpan.Zero;
             Assert.Throws<ArgumentOutOfRangeException>(() => configuration.Validate())
-                .WithMessage("OCSP request timeout must be greater than zero (Parameter 'ocspRequestTimeout')");
+                .WithMessage("OCSP request timeout must be greater than zero (Parameter 'timeSpan')");
+        }
+
+        [Test]
+        public void WhenInvalidOcspResponseTimeSkewThenValidationFails()
+        {
+            var builderWithInvalidOcspResponseTimeSkew =
+                AuthTokenValidators.GetDefaultAuthTokenValidatorBuilder().WithAllowedOcspResponseTimeSkew(TimeSpan.FromMinutes(-1));
+            Assert.Throws<ArgumentOutOfRangeException>(() => builderWithInvalidOcspResponseTimeSkew.Build())
+                .HasMessageStartingWith("Allowed OCSP response time-skew must be greater than zero");
+        }
+
+        [Test]
+        public void WhenInvalidMaxOcspResponseThisUpdateAgeThenValidationFails()
+        {
+            var builderWithInvalidMaxOcspResponseThisUpdateAge =
+                AuthTokenValidators.GetDefaultAuthTokenValidatorBuilder().WithMaxOcspResponseThisUpdateAge(TimeSpan.Zero);
+            Assert.Throws<ArgumentOutOfRangeException>(() => builderWithInvalidMaxOcspResponseThisUpdateAge.Build())
+                .HasMessageStartingWith("Max OCSP response thisUpdate age must be greater than zero");
+        }
+
+        [Test]
+        public void WhenInvalidOcspResponseTimeoutThenValidationFails()
+        {
+            var builderWithInvalidOcspResponseTimeout =
+                AuthTokenValidators.GetDefaultAuthTokenValidatorBuilder().WithOcspRequestTimeout(TimeSpan.FromMinutes(-1));
+            Assert.Throws<ArgumentOutOfRangeException>(() => builderWithInvalidOcspResponseTimeout.Build())
+                .HasMessageStartingWith("OCSP request timeout must be greater than zero");
         }
 
         [Test]

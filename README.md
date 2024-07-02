@@ -363,7 +363,8 @@ The following additional configuration options are available in `AuthTokenValida
 - `WithOcspRequestTimeout(TimeSpan ocspRequestTimeout)` – sets both the connection and response timeout of user certificate revocation check OCSP requests. Default is 5 seconds.
 - `WithDisallowedCertificatePolicies(params string[] policies)` – adds the given policies to the list of disallowed user certificate policies. In order for the user certificate to be considered valid, it must not contain any policies present in this list. Contains the Estonian Mobile-ID policies by default as it must not be possible to authenticate with a Mobile-ID certificate when an eID smart card is expected.
 - `WithNonceDisabledOcspUrls(params Uri[] urls)` – adds the given URLs to the list of OCSP URLs for which the nonce protocol extension will be disabled. Some OCSP services don't support the nonce extension.
-
+- `WithAllowedOcspResponseTimeSkew(TimeSpan allowedTimeSkew)` - sets the allowed time skew for OCSP response's `thisUpdate` and `nextUpdate` times to allow discrepancies between the system clock and the OCSP responder's clock or revocation updates that are not published in real time. The default allowed time skew is 15 minutes. The relatively long default is specifically chosen to account for one particular OCSP responder that used CRLs for authoritative revocation info, these CRLs were updated every 15 minutes.
+- `WithMaxOcspResponseThisUpdateAge(TimeSpan maxThisUpdateAge)` - sets the maximum age for the OCSP response's `thisUpdate` time before it is considered too old to rely on. The default maximum age is 2 minutes.
 Extended configuration example:  
 
 ```cs  

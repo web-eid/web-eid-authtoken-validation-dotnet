@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright © 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -28,6 +28,7 @@ namespace WebEid.Security.Validator.Ocsp
     using Org.BouncyCastle.Security.Certificates;
     using Org.BouncyCastle.Utilities.Date;
     using Org.BouncyCastle.X509;
+    using WebEid.Security.Util;
 
     internal static class OcspResponseValidator
     {
@@ -36,8 +37,7 @@ namespace WebEid.Security.Validator.Ocsp
         /// https://oidref.com/1.3.6.1.5.5.7.3.9
         /// </summary>
         private const string OidOcspSigning = "1.3.6.1.5.5.7.3.9";
-
-        private static readonly TimeSpan AllowedTimeSkew = TimeSpan.FromMinutes(15);
+        private const string ErrorPrefix = "Certificate status update time check failed: ";
 
         public static void ValidateHasSigningExtension(X509Certificate certificate)
         {
@@ -64,16 +64,7 @@ namespace WebEid.Security.Validator.Ocsp
             }
         }
 
-        public static void ValidateCertificateStatusUpdateTime(SingleResp certStatusResponse, DateTime producedAt)
-        {
-            ValidateCertificateStatusUpdateTime(certStatusResponse.ThisUpdate,
-                certStatusResponse.NextUpdate?.Value,
-                producedAt);
-        }
-
-        internal static void ValidateCertificateStatusUpdateTime(DateTime validFrom,
-            DateTime? validTo,
-            DateTime producedAt)
+        public static void ValidateCertificateStatusUpdateTime(SingleResp certStatusResponse, TimeSpan allowedTimeSkew, TimeSpan maxThisUpdateAge)
         {
             // From RFC 2560, https://www.ietf.org/rfc/rfc2560.txt:
             // 4.2.2.  Notes on OCSP Responses
@@ -84,16 +75,43 @@ namespace WebEid.Security.Validator.Ocsp
             //   SHOULD be considered unreliable.
             //   If nextUpdate is not set, the responder is indicating that newer
             //   revocation information is available all the time.
-            var notAllowedBefore = producedAt.Add(AllowedTimeSkew.Negate());
-            var notAllowedAfter = producedAt.Add(AllowedTimeSkew);
-            if (notAllowedAfter < validFrom || notAllowedBefore > (validTo ?? validFrom))
+            var now = DateTimeProvider.UtcNow;
+            var earliestAcceptableTimeSkew = now.Subtract(allowedTimeSkew);
+            var latestAcceptableTimeSkew = now.Add(allowedTimeSkew);
+            var minimumValidThisUpdateTime = now.Subtract(maxThisUpdateAge);
+
+            var thisUpdate = certStatusResponse.ThisUpdate;
+
+            if (thisUpdate > latestAcceptableTimeSkew)
             {
-                throw new UserCertificateOcspCheckFailedException(
-                    "Certificate status update time check failed: "
-                    + $"notAllowedBefore: {ToUtcString(notAllowedBefore)}, "
-                    + $"notAllowedAfter: {ToUtcString(notAllowedAfter)}, "
-                    + $"thisUpdate: {ToUtcString(validFrom)}, "
-                    + $"nextUpdate: {ToUtcString(validTo)}");
+                throw new UserCertificateOcspCheckFailedException($"{ErrorPrefix}"
+                    + $"thisUpdate {ToUtcString(thisUpdate)} is too far in the future, "
+                    + $"latest allowed: {ToUtcString(latestAcceptableTimeSkew)}");
+            }
+
+            if (thisUpdate < minimumValidThisUpdateTime)
+            {
+                throw new UserCertificateOcspCheckFailedException($"{ErrorPrefix}"
+                    + $"thisUpdate {ToUtcString(thisUpdate)} is too old, "
+                    + $"minimum time allowed: {ToUtcString(minimumValidThisUpdateTime)}");
+            }
+
+            if (certStatusResponse.NextUpdate == null)
+            {
+                return;
+            }
+
+            var nextUpdate = certStatusResponse.NextUpdate.Value;
+            if (nextUpdate < earliestAcceptableTimeSkew)
+            {
+                throw new UserCertificateOcspCheckFailedException($"{ErrorPrefix}"
+                   + $"nextUpdate {ToUtcString(nextUpdate)} is in the past");
+            }
+
+            if (nextUpdate < thisUpdate)
+            {
+                throw new UserCertificateOcspCheckFailedException($"{ErrorPrefix}"
+                   + $"nextUpdate {ToUtcString(nextUpdate)} is before thisUpdate {ToUtcString(thisUpdate)}");
             }
         }
 
@@ -122,10 +140,7 @@ namespace WebEid.Security.Validator.Ocsp
                 "Status is neither good, revoked nor unknown");
         }
 
-        private static string ToUtcString(this DateTime? date)
-        {
-            return date?.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss zzz", CultureInfo.InvariantCulture) ?? "null";
-        }
+        private static string ToUtcString(this DateTime? date) => date?.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss zzz", CultureInfo.InvariantCulture) ?? "null";
     }
 
     internal interface ISingleResp

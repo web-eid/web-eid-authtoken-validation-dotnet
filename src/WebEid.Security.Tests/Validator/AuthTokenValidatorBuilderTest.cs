@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright © 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -36,7 +36,7 @@ namespace WebEid.Security.Tests.Validator
         [Test]
         public void WhenOriginMissingThenBuildingFails() =>
             Assert.Throws<ArgumentNullException>(() => this.builder.Build())
-                .WithMessage("Value cannot be null. (Parameter 'siteOrigin')");
+                .WithMessage("Value cannot be null. (Parameter 'SiteOrigin')");
 
         [Test]
         public void WhenRootCertificateAuthorityMissingThenBuildingFails()
