@@ -68,7 +68,7 @@ namespace WebEid.Security.Validator.Ocsp.Service
                 // Trusted certificates validity has been already verified in ValidateCertificateExpiry().
                 OcspResponseValidator.ValidateHasSigningExtension(responderCertificate);
                 _ = new X509Certificate2(DotNetUtilities.ToX509Certificate(responderCertificate))
-                    .ValidateIsSignedByTrustedCa(this.trustedCaCertificates);
+                    .ValidateIsValidAndSignedByTrustedCa(this.trustedCaCertificates);
             }
             catch (Exception ex) when (!(ex is CertificateNotTrustedException))
             {
