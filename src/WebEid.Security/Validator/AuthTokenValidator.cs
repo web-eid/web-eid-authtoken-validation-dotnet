@@ -55,7 +55,6 @@ namespace WebEid.Security.Validator
             this.authTokenSignatureValidator = new AuthTokenSignatureValidator(configuration.SiteOrigin);
 
             this.simpleSubjectCertificateValidators = SubjectCertificateValidatorBatch.CreateFrom(
-                new SubjectCertificateExpiryValidator(configuration.TrustedCaCertificates, this.logger),
                 new SubjectCertificatePurposeValidator(this.logger),
                 new SubjectCertificatePolicyValidator(configuration.DisallowedSubjectCertificatePolicies
                     .Select(policy => new Oid(policy))

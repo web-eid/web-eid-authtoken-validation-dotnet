@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright © 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -26,6 +26,7 @@ namespace WebEid.Security.Validator.CertValidators
     using System.Threading.Tasks;
     using Microsoft.Extensions.Logging;
     using Util;
+    using WebEid.Security.Exceptions;
 
     internal sealed class SubjectCertificateTrustedValidator : ISubjectCertificateValidator
     {
@@ -39,14 +40,18 @@ namespace WebEid.Security.Validator.CertValidators
         }
 
         /// <summary>
-        /// Validates that the user certificate from the authentication token is signed by a trusted certificate authority.
+        /// Checks that the user certificate from the authentication token is valid and signed by
+        /// a trusted certificate authority. Also checks the validity of the user certificate's
+        /// trusted CA certificate.
         /// </summary>
-        /// <param name="subjectCertificate">the user certificate.</param>
-        /// <exception cref="UserCertificateNotTrustedException">when user certificate is not signed by a trusted CA or is valid after CA certificate.</exception>
+        /// <param name="subjectCertificate">the user certificate to be validated</param>
+        /// <exception cref="CertificateNotTrustedException">when user certificate is not signed by a trusted CA</exception>
+        /// <exception cref="CertificateNotYetValidException">when a CA certificate in the chain or the user certificate is not yet valid</exception>
+        /// <exception cref="CertificateExpiredException">when a CA certificate in the chain or the user certificate is expired</exception>
         public Task Validate(X509Certificate2 subjectCertificate)
         {
-            this.SubjectCertificateIssuerCertificate = subjectCertificate.ValidateIsSignedByTrustedCa(this.trustedCaCertificates);
-            this.logger?.LogDebug("Subject certificate is signed by a trusted CA");
+            this.SubjectCertificateIssuerCertificate = subjectCertificate.ValidateIsValidAndSignedByTrustedCa(this.trustedCaCertificates);
+            this.logger?.LogDebug("Subject certificate is valid and signed by a trusted CA");
 
             return Task.CompletedTask;
         }

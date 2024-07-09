@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright © 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -45,6 +45,11 @@ namespace WebEid.Security.Tests.Validator
         private const string ExpiredEcdsaCert = "MIIF0TCCA7mgAwIBAgIQMBVFXroEt3hZ8FHcKKE65TANBgkqhkiG9w0BAQsFADBjMQswCQYDVQQGEwJFRTEiMCAGA1UECgwZQVMgU2VydGlmaXRzZWVyaW1pc2tlc2t1czEXMBUGA1UEYQwOTlRSRUUtMTA3NDcwMTMxFzAVBgNVBAMMDkVTVEVJRC1TSyAyMDE1MB4XDTE3MTAyNTA4NTcwMFoXDTIxMDIxMDIxNTk1OVowgYsxCzAJBgNVBAYTAkVFMQ8wDQYDVQQKDAZFU1RFSUQxFzAVBgNVBAsMDmF1dGhlbnRpY2F0aW9uMR4wHAYDVQQDDBVUT09NLE1BUlQsMzc2MDIwNDAzMzQxDTALBgNVBAQMBFRPT00xDTALBgNVBCoMBE1BUlQxFDASBgNVBAUTCzM3NjAyMDQwMzM0MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAExS1YQQBDLVvOi0a2GA5Y34AXODpx0AL8eKDOB7BjwBc/FAyVExhfb6O+lT5Tnaec3GnT4JNRyeV8d82L8cyOgFn4PWc+5cjFdmcZjJbtCvgyBOQQ831tteIDL2XSrvZEo4ICBDCCAgAwCQYDVR0TBAIwADAOBgNVHQ8BAf8EBAMCA4gwUwYDVR0gBEwwSjA+BgkrBgEEAc4fAQEwMTAvBggrBgEFBQcCARYjaHR0cHM6Ly93d3cuc2suZWUvcmVwb3NpdG9vcml1bS9DUFMwCAYGBACPegECMB8GA1UdEQQYMBaBFG1hcnQudG9vbS4zQGVlc3RpLmVlMB0GA1UdDgQWBBSzneoLqtqbvHvJ19cjhp2XR5ovQTAgBgNVHSUBAf8EFjAUBggrBgEFBQcDAgYIKwYBBQUHAwQwHwYDVR0jBBgwFoAUs6uIvJnVYqSFKgjNtB1yO4NyR1EwYQYIKwYBBQUHAQMEVTBTMFEGBgQAjkYBBTBHMEUWP2h0dHBzOi8vc2suZWUvZW4vcmVwb3NpdG9yeS9jb25kaXRpb25zLWZvci11c2Utb2YtY2VydGlmaWNhdGVzLxMCRU4wagYIKwYBBQUHAQEEXjBcMCcGCCsGAQUFBzABhhtodHRwOi8vYWlhLnNrLmVlL2VzdGVpZDIwMTUwMQYIKwYBBQUHMAKGJWh0dHA6Ly9jLnNrLmVlL0VTVEVJRC1TS18yMDE1LmRlci5jcnQwPAYDVR0fBDUwMzAxoC+gLYYraHR0cDovL3d3dy5zay5lZS9jcmxzL2VzdGVpZC9lc3RlaWQyMDE1LmNybDANBgkqhkiG9w0BAQsFAAOCAgEAOXTvktUXqPgaK/uxzgH0xSEYClBAWIQaNgpqY5lwsQtgQnpfKlsADqMZxCp7UuuMvQmpDbBxv1kIr0oG1uUXrUtPw81XOH1ClwPPXWpg9VRTAetNbHTBbHDyzuXQMNeDmrntChs+BteletejGD+aYG39HGMlrMbGQZOgvQrpYHMDek0ckCPEsZRXqUP0g7Ie7uBQhz5At7l4EDAeOW8xGoI6t+Ke4GedccXKef60w2ZIIDzvOFHPTc6POCsIlFtF/nCKwVi7GoQKjbUbM5OdBLZ0jyLq2LvzZuT86Jo8wObziuSzApGlBexHAqLrR83q+/Xl61yPnFf3w2kAfS9kBjeunzTH7Jm3pNT3Zq9JRLvEDqtpOPqr4zm9nG6OSghFU6tySkpQ5HiakGpMcnt5o5KuXhQ+Dg317tdXPyQkSiuJ9NfEBW0ijrwO12SVRzYo/jRl4ZQUkAEEUSMEsC6gTsZypPdIsLDVoQWTytHDU89s1xJDn4HulPl12dFnrhlLeX4RxOjDxppZxdjBU0FoJoDB0qwEAN2TMAPJWh+Pp9mFuS/u0dht9sKvAkpx+o0Z7v7QMz03XlzCHOLTIK+f81Rjokl8f+wiog5Ojj0wZkDe6DuQC9L5uDey3PJHv3naVovhs7jrEJu+yrsLue/OHhAgWRh2S75/wlVPHPEE44k=";
         private const string RevokedCert = "MIIERDCCA6agAwIBAgIQSs8/WoDixVxbKRhNnF/GEzAKBggqhkjOPQQDBDBgMQswCQYDVQQGEwJFRTEbMBkGA1UECgwSU0sgSUQgU29sdXRpb25zIEFTMRcwFQYDVQRhDA5OVFJFRS0xMDc0NzAxMzEbMBkGA1UEAwwSVEVTVCBvZiBFU1RFSUQyMDE4MB4XDTE4MDYxOTE0NTA1M1oXDTIwMDEwMjIxNTk1OVowfzELMAkGA1UEBhMCRUUxKjAoBgNVBAMMIUrDlUVPUkcsSkFBSy1LUklTVEpBTiwzODAwMTA4NTcxODEQMA4GA1UEBAwHSsOVRU9SRzEWMBQGA1UEKgwNSkFBSy1LUklTVEpBTjEaMBgGA1UEBRMRUE5PRUUtMzgwMDEwODU3MTgwdjAQBgcqhkjOPQIBBgUrgQQAIgNiAAR/jopNG3KL0ZQUvO4OGSvcaqUtFDm3azOtsM2VRp666r0d36Zh0Zx/xej8f+SzEfWvvDT1HQLo3USiSbYn1FyNHTNxifV+Zvf6StXJAkdu24d1UvKbf+LylglO/yS7o4ijggIEMIICADAJBgNVHRMEAjAAMA4GA1UdDwEB/wQEAwIDiDBHBgNVHSAEQDA+MDIGCysGAQQBg5F/AQIBMCMwIQYIKwYBBQUHAgEWFWh0dHBzOi8vd3d3LnNrLmVlL0NQUzAIBgYEAI96AQIwHwYDVR0RBBgwFoEUMzgwMDEwODU3MThAZWVzdGkuZWUwHQYDVR0OBBYEFEQA6/1GXJtp+6czUzorhEJ7B95pMGEGCCsGAQUFBwEDBFUwUzBRBgYEAI5GAQUwRzBFFj9odHRwczovL3NrLmVlL2VuL3JlcG9zaXRvcnkvY29uZGl0aW9ucy1mb3ItdXNlLW9mLWNlcnRpZmljYXRlcy8TAkVOMCAGA1UdJQEB/wQWMBQGCCsGAQUFBwMCBggrBgEFBQcDBDAfBgNVHSMEGDAWgBTAhJkpxE6fOwI09pnhClYACCk+ezB/BggrBgEFBQcBAQRzMHEwLAYIKwYBBQUHMAGGIGh0dHA6Ly9haWEuZGVtby5zay5lZS9lc3RlaWQyMDE4MEEGCCsGAQUFBzAChjVodHRwczovL3NrLmVlL3VwbG9hZC9maWxlcy9URVNUX29mX0VTVEVJRDIwMTguZGVyLmNydDAzBgNVHR8ELDAqMCigJqAkhiJodHRwOi8vYy5zay5lZS90ZXN0X2VzdGVpZDIwMTguY3JsMAoGCCqGSM49BAMEA4GLADCBhwJBcmcfLC+HcSJ6BuRrDGL+K+7BAW8BfAiiWWAuBV4ebLkbbAWmkc9dSKgr4BEGEt90xDTQ85yW4SjGulFXu9C3yQsCQgETaXTs3Hp6vDAcQYL8Bx4BO3DwJbDuD4BUJyT0+9HQiFCQmTQ4xrNjeaeOwRWyMOM9z5ORMeJCiQUyil1x4YPIbg==";
 
+        private const string ValidUntil2026TokenStr = "{\"algorithm\":\"ES384\"," +
+        "\"unverifiedCertificate\":\"MIIEBDCCA2WgAwIBAgIQY5OGshxoPMFg+Wfc0gFEaTAKBggqhkjOPQQDBDBgMQswCQYDVQQGEwJFRTEbMBkGA1UECgwSU0sgSUQgU29sdXRpb25zIEFTMRcwFQYDVQRhDA5OVFJFRS0xMDc0NzAxMzEbMBkGA1UEAwwSVEVTVCBvZiBFU1RFSUQyMDE4MB4XDTIxMDcyMjEyNDMwOFoXDTI2MDcwOTIxNTk1OVowfzELMAkGA1UEBhMCRUUxKjAoBgNVBAMMIUrDlUVPUkcsSkFBSy1LUklTVEpBTiwzODAwMTA4NTcxODEQMA4GA1UEBAwHSsOVRU9SRzEWMBQGA1UEKgwNSkFBSy1LUklTVEpBTjEaMBgGA1UEBRMRUE5PRUUtMzgwMDEwODU3MTgwdjAQBgcqhkjOPQIBBgUrgQQAIgNiAAQmwEKsJTjaMHSaZj19hb9EJaJlwbKc5VFzmlGMFSJVk4dDy+eUxa5KOA7tWXqzcmhh5SYdv+MxcaQKlKWLMa36pfgv20FpEDb03GCtLqjLTRZ7649PugAQ5EmAqIic29CjggHDMIIBvzAJBgNVHRMEAjAAMA4GA1UdDwEB/wQEAwIDiDBHBgNVHSAEQDA+MDIGCysGAQQBg5EhAQIBMCMwIQYIKwYBBQUHAgEWFWh0dHBzOi8vd3d3LnNrLmVlL0NQUzAIBgYEAI96AQIwHwYDVR0RBBgwFoEUMzgwMDEwODU3MThAZWVzdGkuZWUwHQYDVR0OBBYEFPlp/ceABC52itoqppEmbf71TJz6MGEGCCsGAQUFBwEDBFUwUzBRBgYEAI5GAQUwRzBFFj9odHRwczovL3NrLmVlL2VuL3JlcG9zaXRvcnkvY29uZGl0aW9ucy1mb3ItdXNlLW9mLWNlcnRpZmljYXRlcy8TAkVOMCAGA1UdJQEB/wQWMBQGCCsGAQUFBwMCBggrBgEFBQcDBDAfBgNVHSMEGDAWgBTAhJkpxE6fOwI09pnhClYACCk+ezBzBggrBgEFBQcBAQRnMGUwLAYIKwYBBQUHMAGGIGh0dHA6Ly9haWEuZGVtby5zay5lZS9lc3RlaWQyMDE4MDUGCCsGAQUFBzAChilodHRwOi8vYy5zay5lZS9UZXN0X29mX0VTVEVJRDIwMTguZGVyLmNydDAKBggqhkjOPQQDBAOBjAAwgYgCQgDCAgybz0u3W+tGI+AX+PiI5CrE9ptEHO5eezR1Jo4j7iGaO0i39xTGUB+NSC7P6AQbyE/ywqJjA1a62jTLcS9GHAJCARxN4NO4eVdWU3zVohCXm8WN3DWA7XUcn9TZiLGQ29P4xfQZOXJi/z4PNRRsR4plvSNB3dfyBvZn31HhC7my8woi\"," +
+        "\"appVersion\":\"https://web-eid.eu/web-eid-app/releases/2.5.0+0\"," +
+        "\"signature\":\"0Ov7ME6pTY1K2GXMj8Wxov/o2fGIMEds8OMY5dKdkB0nrqQX7fG1E5mnsbvyHpMDecMUH6Yg+p1HXdgB/lLqOcFZjt/OVXPjAAApC5d1YgRYATDcxsR1zqQwiNcHdmWn\"," +
+        "\"format\":\"web-eid:1.0\"}";
 
         [Test]
         public void WhenCertificateFieldIsMissingThenParsingFailsAsync()
@@ -164,30 +169,46 @@ namespace WebEid.Security.Tests.Validator
         }
 
         [Test]
-        public void WhenTrustedCACertificateIsNotYetValidThenValidationFailsAsync()
+        public void WhenTrustedCACertificateIsNotYetValidThenUserCertValidationFailsAsync()
         {
             using var _ = DateTimeProvider.OverrideUtcNow(new DateTime(2018, 8, 17));
-            Assert.ThrowsAsync<CertificateNotYetValidException>(() => this.Validator.Validate(this.ValidAuthToken, ValidChallengeNonce))
-                .WithMessage("Trusted CA certificate is not yet valid");
+            Assert.ThrowsAsync<CertificateNotYetValidException>(() => this.Validator
+                .Validate(this.ValidAuthToken, ValidChallengeNonce))
+                .WithMessage("User certificate is not yet valid");
         }
 
         [Test]
         public void WhenUserCertificateIsNoLongerValidThenValidationFailsAsync()
         {
-            using var _ = DateTimeProvider.OverrideUtcNow(new DateTime(2024, 10, 17));
+            using var _ = DateTimeProvider.OverrideUtcNow(new DateTime(2026, 10, 19));
             Assert.ThrowsAsync<CertificateExpiredException>(() => this.Validator.Validate(this.ValidAuthToken, ValidChallengeNonce))
                 .WithMessage("User certificate has expired");
         }
 
+        // In this case both CA and user certificate have expired, we expect the user certificate to be checked first.
         [Test]
-        public void WhenTrustedCACertificateIsNoLongerValidThenValidationFailsAsync()
+        public void WhenTrustedCACertificateIsNoLongerValidThenUserCertValidationFailsAsync()
         {
-            using var _ = DateTimeProvider.OverrideUtcNow(new DateTime(2033, 10, 17));
-            Assert.ThrowsAsync<CertificateExpiredException>(() => this.Validator.Validate(this.ValidAuthToken, ValidChallengeNonce))
-                .WithMessage("Trusted CA certificate has expired");
+            using var _ = DateTimeProvider.OverrideUtcNow(new DateTime(2033, 10, 19));
+            Assert.ThrowsAsync<CertificateExpiredException>(() => this.Validator
+                .Validate(this.ValidAuthToken, ValidChallengeNonce))
+                .WithMessage("User certificate has expired");
+        }
+
+        // The certificate validation process must only check the expiration of the CA certificate that is directly part of
+        // the user's certificate chain. Expired but unrelated CA certificates must not cause exceptions.
+        [Test]
+        public void WhenUnrelatedCACertificateIsExpiredThenValidationSucceeds()
+        {
+            using var _ = DateTimeProvider.OverrideUtcNow(new DateTime(2024, 7, 1));
+            var authToken = this.Validator.Parse(ValidUntil2026TokenStr);
+            var validatorWithExpiredUnrelatedTrustedCA = AuthTokenValidators.GetAuthTokenValidatorWthJuly2024ExpiredUnrelatedTrustedCA();
+
+            Assert.DoesNotThrowAsync(() => validatorWithExpiredUnrelatedTrustedCA.Validate(authToken, ValidChallengeNonce));
         }
 
         [Test]
+        [Ignore("A new designated test OCSP responder certificate was issued whose validity period no longer overlaps with the revoked certificate")]
         public void WhenCertificateIsRevokedThenOcspCheckFailsAsync()
         {
             var authTokenValidator = AuthTokenValidators.GetAuthTokenValidatorWithOcspCheck();

@@ -46,7 +46,6 @@ namespace WebEid.Security.Tests.Validator.Validators
         private X509Certificate2 esteid2018Cert;
 
         private AuthTokenValidationConfiguration configuration;
-        private DateTimeProvider dateTimeProvider;
 
         public SubjectCertificateNotRevokedValidatorTests() => this.ocspClient = new OcspClient(TimeSpan.FromSeconds(5));
 
@@ -99,12 +98,12 @@ namespace WebEid.Security.Tests.Validator.Validators
         public void WhenOcspRequestFailsThenThrows()
         {
             var ocspServiceProvider =
-                OcspServiceMaker.GetDesignatedOcspServiceProvider("https://web-eid-test.free.beeceptor.com");
+                OcspServiceMaker.GetDesignatedOcspServiceProvider("http://demo.sk.ee/ocsps");
             var validator = GetSubjectCertificateNotRevokedValidatior(ocspServiceProvider);
             Assert.ThrowsAsync<UserCertificateOcspCheckFailedException>(() =>
                     validator.Validate(this.esteid2018Cert))
                 .InnerException
-                .HasMessageStartingWith("OCSP request was not successful, response:");
+                .HasMessageStartingWith("OCSP request was not successful, response: StatusCode: 404");
         }
 
         [Test]
@@ -198,7 +197,7 @@ namespace WebEid.Security.Tests.Validator.Validators
         [Test]
         public void WhenOcspResponseRevokedThenThrows()
         {
-            this.dateTimeProvider = DateTimeProvider.OverrideUtcNow(new DateTime(2021, 9, 18));
+            using var _ = DateTimeProvider.OverrideUtcNow(new DateTime(2021, 9, 18));
             var validator = this.GetSubjectCertificateNotRevokedValidatorWithAiaOcsp(
                     new OcspClientMock(Certificates.ResourceReader.ReadFromResource("ocsp_response_revoked.der")));
             Assert.ThrowsAsync<UserCertificateOcspCheckFailedException>(() =>
@@ -228,6 +227,7 @@ namespace WebEid.Security.Tests.Validator.Validators
         [Test]
         public void WhenOcspResponseCaNotTrustedThenThrows()
         {
+            using var _ = DateTimeProvider.OverrideUtcNow(new DateTime(2021, 3, 1));
             var validator = this.GetSubjectCertificateNotRevokedValidatorWithAiaOcsp(
                 new OcspClientMock(Certificates.ResourceReader.ReadFromResource("ocsp_response_unknown.der")));
             var ex = Assert.ThrowsAsync<UserCertificateOcspCheckFailedException>(() =>

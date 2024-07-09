@@ -67,8 +67,10 @@ namespace WebEid.Security.Util
             }
         }
 
-        public static X509Certificate2 ValidateIsSignedByTrustedCa(this X509Certificate2 certificate, ICollection<X509Certificate2> trustedCaCertificates)
+        public static X509Certificate2 ValidateIsValidAndSignedByTrustedCa(this X509Certificate2 certificate, ICollection<X509Certificate2> trustedCaCertificates)
         {
+            ValidateCertificateExpiry(certificate, DateTimeProvider.UtcNow, "User");
+
             var chain = new X509Chain
             {
                 ChainPolicy =
@@ -80,6 +82,7 @@ namespace WebEid.Security.Util
                     UrlRetrievalTimeout = TimeSpan.Zero
                 }
             };
+
             foreach (var cert in trustedCaCertificates)
             {
                 chain.ChainPolicy.ExtraStore.Add(cert);
@@ -110,6 +113,8 @@ namespace WebEid.Security.Util
                 {
                     throw new CertificateNotTrustedException(certificate);
                 }
+                // Verify that the trusted CA cert is presently valid before returning the result.
+                ValidateCertificateExpiry(chainElement.Certificate, DateTimeProvider.UtcNow, "Trusted CA");
 
                 return chainElement.Certificate;
             }
