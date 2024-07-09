@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright © 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -29,7 +29,6 @@ namespace WebEid.Security.Util
     /// </summary>
     public sealed class DateTimeProvider : IDisposable
     {
-        [ThreadStatic]
         private static DateTime? overridenUtcNow;
 
         /// <summary>

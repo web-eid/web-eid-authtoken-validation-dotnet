@@ -61,6 +61,7 @@ namespace WebEid.Security.Tests.TestUtils
             GetAuthTokenValidatorBuilder(TokenOriginUrl,
                 Certificates.CertificateLoader
                 .LoadCertificatesFromResources("TEST_of_ESTEID2018.cer", "TEST_of_SK_OCSP_RESPONDER_2020.cer"))
+                .WithoutUserCertificateRevocationCheckWithOcsp()
                 .Build();
 
         public static IAuthTokenValidator GetAuthTokenValidatorWithDisallowedEsteidPolicy() =>
