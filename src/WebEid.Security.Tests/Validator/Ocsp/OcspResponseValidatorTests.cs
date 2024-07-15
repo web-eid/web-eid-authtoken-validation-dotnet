@@ -26,13 +26,11 @@ namespace WebEid.Security.Tests.Validator.Ocsp
     using Org.BouncyCastle.Ocsp;
     using Security.Validator.Ocsp;
     using WebEid.Security.Validator;
-    using Org.BouncyCastle.Asn1;
     using Org.BouncyCastle.Asn1.Ocsp;
     using System.Globalization;
     using WebEid.Security.Exceptions;
     using WebEid.Security.Tests.TestUtils;
     using WebEid.Security.Util;
-    using System.Runtime.CompilerServices;
 
     [TestFixture]
     public class OcspResponseValidatorTests

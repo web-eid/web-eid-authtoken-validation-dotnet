@@ -55,11 +55,8 @@ namespace WebEid.Security.Challenge
         /// </remarks>
         ChallengeNonce GetAndRemove()
         {
-            var challengeNonce = GetAndRemoveImpl();
-            if (challengeNonce == null)
-            {
-                throw new ChallengeNonceNotFoundException();
-            }
+            var challengeNonce = GetAndRemoveImpl() ?? throw new ChallengeNonceNotFoundException();
+
             if (DateTimeProvider.UtcNow >= challengeNonce.ExpirationTime)
             {
                 throw new ChallengeNonceExpiredException();

@@ -2,7 +2,6 @@ namespace WebEid.Security.Tests.Certificate
 {
     using System.Security.Cryptography.X509Certificates;
     using NUnit.Framework;
-    using WebEid.Security.Exceptions;
     using WebEid.Security.Tests.TestUtils;
     using WebEid.Security.Util;
 

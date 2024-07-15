@@ -36,6 +36,9 @@ namespace WebEid.Security.Validator
     using Util;
     using WebEid.Security.Validator.CertValidators;
 
+    /// <summary>
+    /// Represents the configuration for validating authentication tokens (JWTs) in the Web eID system.
+    /// </summary>
     public sealed class AuthTokenValidator : IAuthTokenValidator
     {
         private readonly ILogger logger;
@@ -48,6 +51,11 @@ namespace WebEid.Security.Validator
         private const int TokenMinLength = 100;
         private const int TokenMaxLength = 10000;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AuthTokenValidator"/> class.
+        /// </summary>
+        /// <param name="configuration">The configuration for token validation.</param>
+        /// <param name="logger">The logger for capturing log messages (optional).</param>
         public AuthTokenValidator(AuthTokenValidationConfiguration configuration, ILogger logger = null)
         {
             this.logger = logger;
@@ -74,6 +82,11 @@ namespace WebEid.Security.Validator
             CryptoProviderFactory.DefaultCacheSignatureProviders = false;
         }
 
+        /// <summary>
+        /// Parses the authentication token (JWT) and returns a <see cref="WebEidAuthToken"/> instance.
+        /// </summary>
+        /// <param name="authToken">The authentication token to parse.</param>
+        /// <returns>A parsed <see cref="WebEidAuthToken"/> instance.</returns>
         public WebEidAuthToken Parse(string authToken)
         {
             this.logger?.LogInformation("Starting token parsing");
@@ -91,6 +104,12 @@ namespace WebEid.Security.Validator
             }
         }
 
+        /// <summary>
+        /// Validates the authentication token (JWT) and returns the user certificate.
+        /// </summary>
+        /// <param name="authToken">The authentication token to validate.</param>
+        /// <param name="currentChallengeNonce">The current challenge nonce value.</param>
+        /// <returns>A task representing the validation result with the user certificate.</returns>
         public Task<X509Certificate2> Validate(WebEidAuthToken authToken, string currentChallengeNonce)
         {
             this.logger?.LogInformation("Starting token validation");

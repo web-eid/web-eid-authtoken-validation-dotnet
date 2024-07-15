@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright © 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -29,22 +29,26 @@ namespace WebEid.Security.Validator.CertValidators
     using Exceptions;
     using Microsoft.Extensions.Logging;
 
+    /// <summary>
+    /// Validates the purpose of the user certificate from the authentication token.
+    /// </summary>
     public class SubjectCertificatePurposeValidator : ISubjectCertificateValidator
     {
         private readonly ILogger logger;
         private const string ExtendedKeyUsageClientAuthentication = "1.3.6.1.5.5.7.3.2";
 
         /// <summary>
-        /// Creates an instance of SubjectCertificatePurposeValidator
+        /// Creates an instance of SubjectCertificatePurposeValidator.
         /// </summary>
-        /// <param name="logger">Logger instance to log validation result</param>
+        /// <param name="logger">Logger instance to log validation results.</param>
         public SubjectCertificatePurposeValidator(ILogger logger = null) => this.logger = logger;
 
         /// <summary>
         /// Validates that the purpose of the user certificate from the authentication token contains client authentication.
         /// </summary>
-        /// <param name="actualTokenData">authentication token data that contains the user certificate</param>
-        /// <exception cref="AuthTokenException">when the purpose of certificate does not contain client authentication</exception>
+        /// <param name="subjectCertificate">The user certificate from the authentication token.</param>
+        /// <returns>A completed task if validation succeeds.</returns>
+        /// <exception cref="AuthTokenException">Thrown when the purpose of the certificate does not contain client authentication.</exception>
         public Task Validate(X509Certificate2 subjectCertificate)
         {
             try
@@ -74,6 +78,5 @@ namespace WebEid.Security.Validator.CertValidators
 
             return Task.CompletedTask;
         }
-
     }
 }
