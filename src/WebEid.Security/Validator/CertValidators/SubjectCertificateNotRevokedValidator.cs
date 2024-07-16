@@ -33,6 +33,7 @@ namespace WebEid.Security.Validator.CertValidators
     using Org.BouncyCastle.Asn1.Ocsp;
     using Org.BouncyCastle.Ocsp;
     using Org.BouncyCastle.Security;
+    using WebEid.Security.Util;
 
     internal sealed class SubjectCertificateNotRevokedValidator : ISubjectCertificateValidator
     {
@@ -154,8 +155,7 @@ namespace WebEid.Security.Validator.CertValidators
             //   4. The signer is currently authorized to provide a response for the
             //      certificate in question.
 
-            var producedAt = basicResponse.ProducedAt;
-            ocspService.ValidateResponderCertificate(responderCert, producedAt);
+            ocspService.ValidateResponderCertificate(responderCert, DateTimeProvider.UtcNow);
 
             //   5. The time at which the status being indicated is known to be
             //      correct (thisUpdate) is sufficiently recent.

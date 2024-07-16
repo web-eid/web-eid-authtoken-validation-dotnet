@@ -225,7 +225,7 @@ namespace WebEid.Security.Tests.Validator.Validators
         }
 
         [Test]
-        public void WhenOcspResponseCaNotTrustedThenThrows()
+        public void WhenOcspResponseCaCertNotTrustedThenThrows()
         {
             using var _ = DateTimeProvider.OverrideUtcNow(new DateTime(2021, 3, 1));
             var validator = this.GetSubjectCertificateNotRevokedValidatorWithAiaOcsp(
@@ -239,6 +239,17 @@ namespace WebEid.Security.Tests.Validator.Validators
                     ));
         }
 
+        [Test]
+        public void WhenOcspResponseCACertExpiredThenThrows()
+        {
+            var validator = this.GetSubjectCertificateNotRevokedValidatorWithAiaOcsp(
+                new OcspClientMock(Certificates.ResourceReader.ReadFromResource("ocsp_response_unknown.der")));
+            var ex = Assert.ThrowsAsync<UserCertificateOcspCheckFailedException>(() =>
+                    validator.Validate(this.esteid2018Cert));
+            Assert.That(ex.InnerException, Is.TypeOf<CertificateExpiredException>());
+            Assert.That(ex.InnerException.Message,
+                Does.StartWith("AIA OCSP responder certificate has expired"));
+        }
 
         private static byte[] BuildOcspResponseBodyWithInternalErrorStatus()
         {

@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright © 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -60,17 +60,17 @@ namespace WebEid.Security.Validator.Ocsp.Service
                                                                      "from the certificate failed");
         }
 
-        public void ValidateResponderCertificate(Org.BouncyCastle.X509.X509Certificate responderCertificate, DateTime producedAt)
+        public void ValidateResponderCertificate(Org.BouncyCastle.X509.X509Certificate responderCertificate, DateTime now)
         {
             try
             {
-                responderCertificate.ValidateCertificateExpiry(producedAt, "AIA OCSP responder");
+                responderCertificate.ValidateCertificateExpiry(now, "AIA OCSP responder");
                 // Trusted certificates validity has been already verified in ValidateCertificateExpiry().
                 OcspResponseValidator.ValidateHasSigningExtension(responderCertificate);
                 _ = new X509Certificate2(DotNetUtilities.ToX509Certificate(responderCertificate))
                     .ValidateIsValidAndSignedByTrustedCa(this.trustedCaCertificates);
             }
-            catch (Exception ex) when (!(ex is CertificateNotTrustedException))
+            catch (Exception ex) when (!(ex is CertificateNotTrustedException) && !(ex is CertificateExpiredException))
             {
                 throw new OcspCertificateException("Invalid certificate", ex);
             }
