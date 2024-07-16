@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright © 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -44,7 +44,7 @@ namespace WebEid.Security.Validator.Ocsp.Service
 
         public bool SupportsIssuerOf(X509Certificate certificate) => this.configuration.SupportsIssuerOf(certificate);
 
-        public void ValidateResponderCertificate(X509Certificate responderCertificate, DateTime producedAt)
+        public void ValidateResponderCertificate(X509Certificate responderCertificate, DateTime now)
         {
             // Certificate pinning is implemented simply by comparing the certificates or their public keys,
             // see https://owasp.org/www-community/controls/Certificate_and_Public_Key_Pinning.
@@ -53,7 +53,7 @@ namespace WebEid.Security.Validator.Ocsp.Service
                 throw new OcspCertificateException(
                     "Responder certificate from the OCSP response is not equal to the configured designated OCSP responder certificate");
             }
-            responderCertificate.ValidateCertificateExpiry(producedAt, "Designated OCSP responder");
+            responderCertificate.ValidateCertificateExpiry(now, "Designated OCSP responder");
         }
     }
 }

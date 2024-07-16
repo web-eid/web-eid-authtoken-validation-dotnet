@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright © 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -27,6 +27,7 @@ namespace WebEid.Security.Validator.Ocsp.Service
     {
         bool DoesSupportNonce { get; }
         Uri AccessLocation { get; }
-        void ValidateResponderCertificate(Org.BouncyCastle.X509.X509Certificate responderCertificate, DateTime producedAt);
+
+        void ValidateResponderCertificate(Org.BouncyCastle.X509.X509Certificate responderCertificate, DateTime now);
     }
 }
