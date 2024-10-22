@@ -12,7 +12,7 @@ jobs:
       - name: Setup dotnet
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 6.0.x # SDK Version to use.
+          dotnet-version: 8.0.x # SDK Version to use.
 
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v1.1
@@ -37,4 +37,4 @@ jobs:
         run: msbuild src/WebEid.Security.sln /t:Build /p:Configuration=Release
 
       - name: Test
-        run: vstest.console.exe src/WebEid.Security.Tests/bin/Release/net6.0/WebEID.Security.Tests.dll
+        run: vstest.console.exe src/WebEid.Security.Tests/bin/Release/net8.0/WebEID.Security.Tests.dll
