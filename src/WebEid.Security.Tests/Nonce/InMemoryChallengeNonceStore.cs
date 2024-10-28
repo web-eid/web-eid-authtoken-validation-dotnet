@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright © 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -23,7 +23,7 @@ namespace WebEid.Security.Tests.Nonce
 {
     using WebEid.Security.Challenge;
 
-    internal class InMemoryChallengeNonceStore : IChallengeNonceStore
+    internal sealed class InMemoryChallengeNonceStore : IChallengeNonceStore
     {
         private ChallengeNonce challengeNonce;
 
