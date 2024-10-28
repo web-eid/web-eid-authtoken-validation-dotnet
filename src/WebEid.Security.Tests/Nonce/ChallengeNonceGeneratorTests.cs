@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright © 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -29,7 +29,9 @@ namespace WebEid.Security.Tests.Nonce
     [TestFixture]
     public class ChallengeNonceGeneratorTests
     {
+#pragma warning disable CA1859 // Use concrete types when possible for improved performance
         private IChallengeNonceStore store;
+#pragma warning restore CA1859 // Use concrete types when possible for improved performance
         private TimeSpan ttl;
 
         [SetUp]

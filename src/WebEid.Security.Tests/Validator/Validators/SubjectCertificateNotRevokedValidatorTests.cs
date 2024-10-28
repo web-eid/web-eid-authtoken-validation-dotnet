@@ -315,14 +315,14 @@ namespace WebEid.Security.Tests.Validator.Validators
                 BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.SetProperty | BindingFlags.Instance,
                 null,
                 obj,
-                new object[] { val },
+                [val],
                 CultureInfo.InvariantCulture);
         }
 
         private SubjectCertificateNotRevokedValidator GetSubjectCertificateNotRevokedValidatior(OcspServiceProvider ocspServiceProvider)
             => new(this.trustedValidator, this.ocspClient, ocspServiceProvider, configuration.AllowedOcspResponseTimeSkew, configuration.MaxOcspResponseThisUpdateAge);
 
-        private class OcspClientMock : IOcspClient
+        private sealed class OcspClientMock : IOcspClient
         {
             private readonly HttpContent content;
 
