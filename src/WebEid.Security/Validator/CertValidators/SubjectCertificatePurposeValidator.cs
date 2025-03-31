@@ -53,10 +53,21 @@ namespace WebEid.Security.Validator.CertValidators
         {
             try
             {
+                var keyUsage = subjectCertificate.Extensions.OfType<X509KeyUsageExtension>().FirstOrDefault();
+                if (keyUsage == null)
+                {
+                    throw new UserCertificateMissingPurposeException();
+                }
+                if ((keyUsage.KeyUsages & X509KeyUsageFlags.DigitalSignature) != X509KeyUsageFlags.DigitalSignature)
+                {
+                    throw new UserCertificateWrongPurposeException();
+                }
                 var usages = subjectCertificate.Extensions.OfType<X509EnhancedKeyUsageExtension>().ToArray();
                 if (!usages.Any())
                 {
-                    throw new UserCertificateMissingPurposeException();
+                    // Digital Signature extension present, but Extended Key Usage extension not present,
+                    // assume it is an authentication certificate (e.g. Luxembourg eID).
+                    return Task.CompletedTask;
                 }
 
                 if (usages.SelectMany(oid => oid.EnhancedKeyUsages.OfType<Oid>())
