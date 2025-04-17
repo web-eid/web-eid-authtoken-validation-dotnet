@@ -69,6 +69,19 @@ namespace WebEid.Security.Tests.TestUtils
                 .WithDisallowedCertificatePolicies(EstIdemiaPolicy)
                 .Build();
 
+        public static IAuthTokenValidator GetAuthTokenValidatorForBelgianIdCard() =>
+            GetAuthTokenValidator(
+                "https://47f0-46-131-86-189.ngrok-free.app",
+                Certificates.CertificateLoader.LoadCertificatesFromResources("eID TEST EC Citizen CA.cer")
+            );
+
+        public static IAuthTokenValidator GetAuthTokenValidatorForFinnishIdCard() =>
+            GetAuthTokenValidator(
+                "https://47f0-46-131-86-189.ngrok-free.app",
+                Certificates.CertificateLoader.LoadCertificatesFromResources("DVV TEST Certificates - G5E.crt", "VRK TEST CA for Test Purposes - G4.crt")
+            );
+
+
         public static AuthTokenValidatorBuilder GetDefaultAuthTokenValidatorBuilder() =>
             GetAuthTokenValidatorBuilder(TokenOriginUrl, GetCaCertificates());
 

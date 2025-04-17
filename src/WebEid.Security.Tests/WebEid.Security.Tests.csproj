@@ -21,6 +21,9 @@
     <None Remove="Resources\TEST_of_ESTEID-SK_2015.cer" />
     <None Remove="Resources\TEST_of_ESTEID2018.cer" />
     <None Remove="Resources\TEST_of_SK_OCSP_RESPONDER_2020.cer" />
+    <None Remove="Resources\eID TEST EC Citizen CA.cer" />
+    <None Remove="Resources\DVV TEST Certificates - G5E.crt" />
+    <None Remove="Resources\VRK TEST CA for Test Purposes - G4.crt" />
   </ItemGroup>
 
   <ItemGroup>
@@ -34,6 +37,9 @@
     <EmbeddedResource Include="Resources\TEST_of_ESTEID-SK_2015.cer" />
     <EmbeddedResource Include="Resources\TEST_of_ESTEID2018.cer" />
     <EmbeddedResource Include="Resources\TEST_of_SK_OCSP_RESPONDER_2020.cer" />
+    <EmbeddedResource Include="Resources\eID TEST EC Citizen CA.cer" />
+    <EmbeddedResource Include="Resources\DVV TEST Certificates - G5E.crt" />
+    <EmbeddedResource Include="Resources\VRK TEST CA for Test Purposes - G4.crt" />
   </ItemGroup>
 
   <ItemGroup>
