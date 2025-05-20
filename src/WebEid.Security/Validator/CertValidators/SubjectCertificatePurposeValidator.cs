@@ -67,6 +67,7 @@ namespace WebEid.Security.Validator.CertValidators
                 {
                     // Digital Signature extension present, but Extended Key Usage extension not present,
                     // assume it is an authentication certificate (e.g. Luxembourg eID).
+                    this.logger?.LogDebug("User certificate has Digital Signature key usage and no Extended Key Usage extension, this means that it can be used for client authentication.");
                     return Task.CompletedTask;
                 }
 
