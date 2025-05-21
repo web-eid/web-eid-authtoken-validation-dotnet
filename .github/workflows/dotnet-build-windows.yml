@@ -15,12 +15,12 @@ jobs:
           dotnet-version: 8.0.x # SDK Version to use.
 
       - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@v1.1
+        uses: microsoft/setup-msbuild@v2
         with:
-          vs-version: 17.1 # Visual Studio Version to use.
+          vs-version: 17.11 # Visual Studio Version to use.
 
       - name: Setup VSTest
-        uses: darenm/Setup-VSTest@v1.2
+        uses: darenm/Setup-VSTest@v1.3
 
       - name: Cache Nuget packages
         uses: actions/cache@v4
