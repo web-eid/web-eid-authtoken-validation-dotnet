@@ -139,7 +139,7 @@ If you only have a production eID card, i.e. an eID card issued to a real person
 
 You can specify the profile as an environment variable `ASPNETCORE_ENVIRONMENT` when running the application. To set the profile for the current session before starting the app using dotnet run, edit the appropriate profile in the `launchSettings.json` file located at `src/WebEid.AspNetCore.Example/Properties/`. Modify the `environmentVariables` section in the `launchSettings.json` file by setting the `ASPNETCORE_ENVIRONMENT` to `Production`.
 
-### 7. Run the application
+### 7. Run the application using HTTPS
 
 Run the application with the following command in a terminal window under the `src` directory:
 
@@ -151,6 +151,24 @@ This will activate the `https` profile in the `launchSettings.json` and launch t
 
 When the application has started, open your preferred web browser on the address defined in `launchSettings.json` on the `applicationUrl` field at `https` profile and follow instructions on the front page.
 By default the address is https://localhost:44391.
+
+### 7. Run the application using HTTP
+
+Change "OriginUrl" to "http://localhost:5000" in appsettings.Development.json.
+
+Run the application with the following command in a terminal window under the `src` directory:
+
+```cmd
+dotnet run --project ./WebEid.AspNetCore.Example/WebEid.AspNetCore.Example.csproj --launch-profile http
+```
+
+This will activate the default `Development` profile and launch the built-in web server on HTTP port 5000.
+
+When the application has started, open http://localhost:5000 and turn on HTTP support on Web-eID WebExtension:
+1. Open Browsers Web-eID WebExtensions settings and enable option Enable developer tools. Instruction for each browser can be found [here](https://github.com/web-eid/web-eid-webextension#enable-or-disable-the-web-eid-developer-tools-tab)
+2. Open http://localhost:5000 in your preferred web browser and open developer tools
+3. Find Web-eID tab, go to settings and enable ALLOW_HTTP_LOCALHOST
+4. Fllow instructions on the front page.
 
 ## Overview of the source code
 
