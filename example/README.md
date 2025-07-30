@@ -84,6 +84,7 @@ Set up the `libdigidocpp` library as follows:
 1.  Install the _libdigidocpp-4.0.0.8301.x64.msi_ package or higher. The installation packages are available from  [https://github.com/open-eid/libdigidocpp/releases](https://github.com/open-eid/libdigidocpp/releases).
 2.  Copy the C# source files from the `libdigidocpp` installation folder `include\digidocpp_csharp` to the `src\WebEid.AspNetCore.Example\DigiDoc` folder.
 3.  Copy all files from the `libdigidocpp` installation folder to the example application build output folder `bin\Debug\net8.0` (after building, see next step).
+   * Windows: Also copy folder `schema` from `libdigidocpp` installation folder to the example application build output folder `bin\Debug\net8.0`
 4.  When running in the `Development` profile, create an empty file named `EE_T.xml` for TSL cache as described in the [_Using test TSL lists_](https://github.com/open-eid/libdigidocpp/wiki/Using-test-TSL-lists#preconditions) section of the `libdigidocpp` wiki.
 
 #### For Ubuntu Linux
