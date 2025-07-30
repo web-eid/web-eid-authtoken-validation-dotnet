@@ -1,6 +1,14 @@
 name: Dotnet Windows build
 
-on: [ push, pull_request ]
+on:
+  push:
+    paths-ignore:
+      - 'example/**'
+      - '.github/workflows/*example*'
+  pull_request:
+    paths-ignore:
+      - 'example/**'
+      - '.github/workflows/*example*' 
 
 jobs:
   build:

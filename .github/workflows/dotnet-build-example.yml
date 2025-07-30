@@ -1,6 +1,18 @@
-name: Dotnet build
+name: Dotnet example build
 
-on: [ push, pull_request ]
+on:
+  push:
+    paths:
+      - 'example/**'
+      - '.github/workflows/*example*'
+  pull_request:
+    paths:
+      - 'example/**'
+      - '.github/workflows/*example*'
+
+defaults:
+  run:
+    working-directory: ./example 
 
 jobs:
   build:
@@ -50,5 +62,5 @@ jobs:
         run: dotnet test --no-restore --verbosity normal src/WebEid.AspNetCore.Example.sln
 
       - name: Test building Docker image
-        working-directory: ./src
+        working-directory: ./example/src
         run: docker build -t web-eid-asp-dotnet-example .
