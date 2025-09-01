@@ -42,7 +42,7 @@ namespace WebEid.Security.Validator.Ocsp.Service
             {
                 throw new ArgumentNullException(nameof(configuration));
             }
-            this.AccessLocation = this.GetOcspAiaUrlFromCertificate(certificate);
+            this.AccessLocation = GetOcspAiaUrlFromCertificate(certificate);
             this.trustedCaCertificates = configuration.TrustedCaCertificates;
             this.DoesSupportNonce = !configuration.NonceDisabledOcspUrls.Contains(this.AccessLocation);
         }
@@ -50,7 +50,7 @@ namespace WebEid.Security.Validator.Ocsp.Service
         public bool DoesSupportNonce { get; }
         public Uri AccessLocation { get; }
 
-        private Uri GetOcspAiaUrlFromCertificate(Org.BouncyCastle.X509.X509Certificate certificate)
+        private static Uri GetOcspAiaUrlFromCertificate(Org.BouncyCastle.X509.X509Certificate certificate)
         {
             if (certificate == null)
             { throw new ArgumentNullException(nameof(certificate)); }
