@@ -107,11 +107,6 @@ namespace WebEid.Security.Validator
 
         private static void RequirePositiveTimeSpan(TimeSpan timeSpan, string fieldName)
         {
-            if (timeSpan == null)
-            {
-                throw new ArgumentNullException($"{fieldName} must not be null");
-            }
-
             if (timeSpan.IsNegativeOrZero())
             {
                 throw new ArgumentOutOfRangeException(nameof(timeSpan), $"{fieldName} must be greater than zero");
@@ -125,9 +120,7 @@ namespace WebEid.Security.Validator
         /// <exception cref="ArgumentException">When required parameters are null</exception>
         public void Validate()
         {
-            if (this.SiteOrigin == null)
-            { throw new ArgumentNullException(nameof(this.SiteOrigin)); }
-            ValidateIsOriginURL(this.SiteOrigin);
+            ValidateSiteOriginURL(this.SiteOrigin);
 
             if (!this.TrustedCaCertificates.Any())
             { throw new ArgumentException("At least one trusted certificate authority must be provided"); }
@@ -142,17 +135,23 @@ namespace WebEid.Security.Validator
         /// Validates that the given URI is an origin URL as defined in <a href="https://developer.mozilla.org/en-US/docs/Web/API/Location/origin">MDN</a>,
         /// in the form of <![CDATA[<code> <scheme> "://" <hostname> [ ":" <port> ]</code>]]>.
         /// </summary>
-        /// <param name="uri">URI with origin URL</param>
+        /// <param name="siteOrigin">URI with origin URL</param>
+        /// <exception cref="ArgumentNullException">When siteOrigin parameter is null</exception>
         /// <exception cref="ArgumentException">When the URI is not in the form of origin URL</exception>
-        private static void ValidateIsOriginURL(Uri uri)
+        private static void ValidateSiteOriginURL(Uri siteOrigin)
         {
+            if (siteOrigin == null)
+            {
+                throw new ArgumentNullException(nameof(siteOrigin));
+            }
+
             try
             {
                 // 1. Verify that the URI can be converted to absolute URL.
-                if (!uri.IsAbsoluteUri)
+                if (!siteOrigin.IsAbsoluteUri)
                 { throw new ArgumentException("Provided URI is not a valid URL"); }
                 // 2. Verify that the URI contains only HTTPS scheme, host and optional port components.
-                if (!new Uri($"https://{uri.Host}:{uri.Port}").Equals(uri))
+                if (!new Uri($"https://{siteOrigin.Host}:{siteOrigin.Port}").Equals(siteOrigin))
                 { throw new ArgumentException("Origin URI must only contain the HTTPS scheme, host and optional port component"); }
             }
             catch (InvalidOperationException e)
