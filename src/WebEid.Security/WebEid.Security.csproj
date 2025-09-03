@@ -8,6 +8,7 @@
     <RootNamespace>WebEid.Security</RootNamespace>
     <AssemblyName>WebEid.Security</AssemblyName>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
     <PublisherName>RIA</PublisherName>
     <Authors>RIA</Authors>
     <Copyright>Copyright © Republic of Estonia Information System Authority 2023</Copyright>
@@ -19,6 +20,7 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.2" />
     <PackageReference Include="Portable.BouncyCastle" Version="1.9.0" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.1.2" />
+    <None Include="../../README.md" Pack="true" PackagePath="\"/>
   </ItemGroup>
 
   <PropertyGroup>

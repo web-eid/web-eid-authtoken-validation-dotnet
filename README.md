@@ -2,9 +2,13 @@
 
 ![European Regional Development Fund](https://raw.githubusercontent.com/open-eid/DigiDoc4-Client/master/client/images/EL_Regionaalarengu_Fond.png)
 
-*web-eid-authtoken-validation-dotnet* is a .NET library for issuing challenge nonces and validating Web eID JWT authentication tokens during secure authentication with electronic ID (eID) smart cards in web applications.
+Web eID enables usage of European Union electronic identity (eID) smart cards for secure authentication and digital signing of documents on the web using public-key cryptography.
 
-More information about the Web eID project is available on the project [website](https://web-eid.eu/).
+Web eID currently supports Estonian, Finnish, Latvian, Lithuanian, Belgian, Czech and Croatian eID cards.
+
+*web-eid-authtoken-validation-dotnet* is a .NET server side library to help implement authentication with electronic ID (eID) smart cards in web applications.
+
+Additional information regarding the Web eID project can be found on the official project [documentation](https://web-eid.eu/) and in the webseite [Web eID solution](https://www.id.ee/en/article/web-eid).
 
 # Quickstart
 
@@ -429,3 +433,7 @@ ChallengeNonce challengeNonce = nonceGenerator.GenerateAndStoreNonce(timeToLive)
 ```
 
 The `GenerateAndStoreNonce(TimeSpan ttl)` method both generates the nonce and stores it in the store. The `ttl` parameter defines nonce time-to-live duration. When the time-to-live passes, the nonce is considered to be expired.
+
+## Feedback
+
+For technical support or to report issues, please submit a [support ticket](https://github.com/web-eid/web-eid-authtoken-validation-dotnet/issues) or contact our support team at [help@ria.ee](mailto:help@ria.ee).
