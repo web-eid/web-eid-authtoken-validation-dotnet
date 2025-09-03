@@ -71,7 +71,7 @@ namespace WebEid.Security.Validator
 
             if (configuration.IsUserCertificateRevocationCheckWithOcspEnabled)
             {
-                this.ocspClient = new OcspClient(TimeSpan.FromSeconds(5), this.logger);
+                this.ocspClient = new OcspClient(configuration.OcspRequestTimeout, this.logger);
                 this.ocspServiceProvider =
                     new OcspServiceProvider(configuration.DesignatedOcspServiceConfiguration,
                         new AiaOcspServiceConfiguration(configuration.NonceDisabledOcspUrls,
