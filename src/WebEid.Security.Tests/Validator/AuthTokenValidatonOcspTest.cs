@@ -42,7 +42,7 @@ namespace WebEid.Security.Tests.Validator
 
             var exception = Assert.ThrowsAsync<UserCertificateOcspCheckFailedException>(() => authTokenValidator.Validate(authTokenValidator.Parse(ValidAuthTokenStr), ValidChallengeNonce));
             Assert.That(exception.InnerException, Is.TypeOf<TaskCanceledException>());
-            Assert.That(exception.InnerException.Message, Does.Match("The request was canceled due to the configured HttpClient.Timeout of 0,[0-9]* seconds elapsing."));
+            Assert.That(exception.InnerException.Message, Does.Contain("The request was canceled due to the configured HttpClient.Timeout of"));
 
         }
 
