@@ -19,37 +19,23 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-namespace WebEid.Security.Validator.CertValidators
+namespace WebEid.Security.Util
 {
-    using System.Collections.Generic;
     using System.Security.Cryptography.X509Certificates;
-    using System.Threading.Tasks;
 
-    public sealed class SubjectCertificateValidatorBatch
+    /// <summary>
+    /// Provides extension methods for working with <see cref="X509Certificate2"/> instances.
+    /// </summary>
+    public static class X509Certificate2Extensions
     {
-        private readonly List<ISubjectCertificateValidator> validatorList;
-
-        public static SubjectCertificateValidatorBatch CreateFrom(params ISubjectCertificateValidator[] validatorList) =>
-            new SubjectCertificateValidatorBatch(new List<ISubjectCertificateValidator>(validatorList));
-
-        public async Task ExecuteFor(X509Certificate2 subjectCertificate)
+        /// <summary>
+        /// Converts a <see cref="X509Certificate2"/> into an equivalent
+        /// BouncyCastle <see cref="Org.BouncyCastle.X509.X509Certificate"/> instance.
+        /// </summary>
+        public static Org.BouncyCastle.X509.X509Certificate ToBouncyCastle(this X509Certificate2 certificate)
         {
-            foreach (var validator in this.validatorList)
-            {
-                await validator.Validate(subjectCertificate);
-            }
+            var parser = new Org.BouncyCastle.X509.X509CertificateParser();
+            return parser.ReadCertificate(certificate.RawData);
         }
-
-        public SubjectCertificateValidatorBatch AddOptional(bool condition, ISubjectCertificateValidator optionalValidator)
-        {
-            if (condition)
-            {
-                this.validatorList.Add(optionalValidator);
-            }
-            return this;
-        }
-
-        private SubjectCertificateValidatorBatch(List<ISubjectCertificateValidator> validatorList) =>
-            this.validatorList = validatorList;
     }
 }

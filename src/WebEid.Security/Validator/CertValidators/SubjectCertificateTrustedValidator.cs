@@ -28,7 +28,7 @@ namespace WebEid.Security.Validator.CertValidators
     using Util;
     using WebEid.Security.Exceptions;
 
-    internal sealed class SubjectCertificateTrustedValidator : ISubjectCertificateValidator
+    public sealed class SubjectCertificateTrustedValidator : ISubjectCertificateValidator
     {
         private readonly ICollection<X509Certificate2> trustedCaCertificates;
         private readonly ILogger logger;

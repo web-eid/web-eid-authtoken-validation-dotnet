@@ -52,7 +52,7 @@ namespace WebEid.Security.Tests.Validator
         {
             var authToken = this.ReplaceTokenField(ValidAuthTokenStr, "web-eid:1", "invalid");
             Assert.ThrowsAsync<AuthTokenParseException>(() => this.Validator.Validate(authToken, ""))
-                .WithMessage("Only token format version 'web-eid:1' is currently supported");
+                .WithMessage("Token format version 'invalid' is currently not supported");
         }
     }
 }

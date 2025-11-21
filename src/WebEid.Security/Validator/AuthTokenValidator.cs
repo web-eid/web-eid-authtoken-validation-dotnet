@@ -22,19 +22,13 @@
 namespace WebEid.Security.Validator
 {
     using System;
-    using System.Linq;
-    using System.Security.Cryptography;
     using System.Security.Cryptography.X509Certificates;
     using System.Threading.Tasks;
     using Exceptions;
     using Microsoft.Extensions.Logging;
-    using Microsoft.IdentityModel.Tokens;
     using Newtonsoft.Json;
-    using Ocsp;
-    using Ocsp.Service;
     using AuthToken;
-    using Util;
-    using WebEid.Security.Validator.CertValidators;
+    using VersionValidators;
 
     /// <summary>
     /// Represents the configuration for validating authentication tokens (JWTs) in the Web eID system.
@@ -42,12 +36,9 @@ namespace WebEid.Security.Validator
     public sealed class AuthTokenValidator : IAuthTokenValidator
     {
         private readonly ILogger logger;
-        private readonly AuthTokenValidationConfiguration configuration;
-        private readonly AuthTokenSignatureValidator authTokenSignatureValidator;
-        private readonly SubjectCertificateValidatorBatch simpleSubjectCertificateValidators;
-        private readonly OcspClient ocspClient;
-        private readonly OcspServiceProvider ocspServiceProvider;
+        private readonly AuthTokenVersionValidatorFactory versionValidatorFactory;
 
+        // Use human-readable meaningful names for token length limits.
         private const int TokenMinLength = 100;
         private const int TokenMaxLength = 10000;
 
@@ -59,27 +50,10 @@ namespace WebEid.Security.Validator
         public AuthTokenValidator(AuthTokenValidationConfiguration configuration, ILogger logger = null)
         {
             this.logger = logger;
-            this.configuration = configuration.Copy();
-            this.authTokenSignatureValidator = new AuthTokenSignatureValidator(configuration.SiteOrigin);
+            var validationConfig = configuration.Copy();
 
-            this.simpleSubjectCertificateValidators = SubjectCertificateValidatorBatch.CreateFrom(
-                new SubjectCertificatePurposeValidator(this.logger),
-                new SubjectCertificatePolicyValidator(configuration.DisallowedSubjectCertificatePolicies
-                    .Select(policy => new Oid(policy))
-                    .ToArray(), this.logger)
-            );
-
-            if (configuration.IsUserCertificateRevocationCheckWithOcspEnabled)
-            {
-                this.ocspClient = new OcspClient(TimeSpan.FromSeconds(5), this.logger);
-                this.ocspServiceProvider =
-                    new OcspServiceProvider(configuration.DesignatedOcspServiceConfiguration,
-                        new AiaOcspServiceConfiguration(configuration.NonceDisabledOcspUrls,
-                            configuration.TrustedCaCertificates));
-            }
-
-            // Turn off caching of signature providers
-            CryptoProviderFactory.DefaultCacheSignatureProviders = false;
+            versionValidatorFactory =
+                AuthTokenVersionValidatorFactory.Create(validationConfig, null, this.logger);
         }
 
         /// <summary>
@@ -89,7 +63,7 @@ namespace WebEid.Security.Validator
         /// <returns>A parsed <see cref="WebEidAuthToken"/> instance.</returns>
         public WebEidAuthToken Parse(string authToken)
         {
-            this.logger?.LogInformation("Starting token parsing");
+            logger?.LogInformation("Starting token parsing");
 
             try
             {
@@ -99,7 +73,7 @@ namespace WebEid.Security.Validator
             catch (Exception ex)
             {
                 // Generally "log and rethrow" is an anti-pattern, but it fits with the surrounding logging style.
-                this.logger?.LogWarning("Token parsing was interrupted:", ex);
+                logger?.LogWarning(ex, "Token parsing was interrupted");
                 throw;
             }
         }
@@ -112,16 +86,16 @@ namespace WebEid.Security.Validator
         /// <returns>A task representing the validation result with the user certificate.</returns>
         public Task<X509Certificate2> Validate(WebEidAuthToken authToken, string currentChallengeNonce)
         {
-            this.logger?.LogInformation("Starting token validation");
+            logger?.LogInformation("Starting token validation");
 
             try
             {
-                return this.ValidateToken(authToken, currentChallengeNonce);
+                var validator = versionValidatorFactory.GetValidatorFor(authToken.Format);
+                return validator.Validate(authToken, currentChallengeNonce);
             }
             catch (Exception ex)
             {
-                // Generally "log and rethrow" is an anti-pattern, but it fits with the surrounding logging style.
-                this.logger?.LogWarning("Token validation was interrupted:", ex);
+                logger?.LogWarning(ex, "Token validation was interrupted");
                 throw;
             }
         }
@@ -142,77 +116,13 @@ namespace WebEid.Security.Validator
         {
             try
             {
-                var token = JsonConvert.DeserializeObject<WebEidAuthToken>(authToken);
-                if (token == null)
-                {
-                    throw new AuthTokenParseException("Web eID authentication token deserialization failed");
-                }
-                return token;
+                return JsonConvert.DeserializeObject<WebEidAuthToken>(authToken)
+                       ?? throw new AuthTokenParseException("Web eID authentication token is null");
             }
             catch (JsonException ex)
             {
                 throw new AuthTokenParseException("Error parsing Web eID authentication token", ex);
             }
-        }
-
-        private async Task<X509Certificate2> ValidateToken(WebEidAuthToken token, string currentChallengeNonce)
-        {
-            if (token.Format == null || !token.Format.StartsWith(IAuthTokenValidator.CURRENT_TOKEN_FORMAT_VERSION))
-            {
-                throw new AuthTokenParseException($"Only token format version '{IAuthTokenValidator.CURRENT_TOKEN_FORMAT_VERSION}' is currently supported");
-            }
-            if (string.IsNullOrEmpty(token.UnverifiedCertificate))
-            {
-                throw new AuthTokenParseException("'unverifiedCertificate' field is missing, null or empty");
-            }
-
-            var subjectCertificate = X509CertificateExtensions.ParseCertificate(token.UnverifiedCertificate, "unverifiedCertificate");
-
-            await this.simpleSubjectCertificateValidators.ExecuteFor(subjectCertificate);
-            await this.GetCertTrustValidators().ExecuteFor(subjectCertificate);
-
-            try
-            {
-                var publicKey = subjectCertificate
-                    .GetAsymmetricPublicKey()
-                    .CreateSecurityKeyWithoutCachingSignatureProviders();
-
-                // It is guaranteed that if the signature verification succeeds, then the origin and challenge
-                // have been implicitly and correctly verified without the need to implement any additional checks.
-                this.authTokenSignatureValidator.Validate(token.Algorithm,
-                        publicKey,
-                        token.Signature,
-                        currentChallengeNonce);
-
-                return subjectCertificate;
-
-            }
-            catch (Exception ex) when (!(ex is AuthTokenException))
-            {
-                throw new AuthTokenSignatureValidationException(ex);
-            }
-        }
-
-        /// <summary>
-        /// Creates the certificate trust validator batch.
-        /// As SubjectCertificateTrustedValidator has mutable state that SubjectCertificateNotRevokedValidator depends on,
-        /// they cannot be reused/cached in an instance variable in a multi-threaded environment. Hence they are
-        /// re-created for each validation run for thread safety.
-        /// </summary>
-        /// <returns>certificate trust validator batch</returns>
-        private SubjectCertificateValidatorBatch GetCertTrustValidators()
-        {
-            var certTrustedValidator =
-                new SubjectCertificateTrustedValidator(this.configuration.TrustedCaCertificates, this.logger);
-
-            return SubjectCertificateValidatorBatch.CreateFrom(certTrustedValidator)
-                .AddOptional(this.configuration.IsUserCertificateRevocationCheckWithOcspEnabled,
-                    new SubjectCertificateNotRevokedValidator(certTrustedValidator,
-                        this.ocspClient,
-                        this.ocspServiceProvider,
-                        this.configuration.AllowedOcspResponseTimeSkew,
-                        this.configuration.MaxOcspResponseThisUpdateAge,
-                        this.logger));
         }
     }
 }

@@ -298,6 +298,116 @@ When using standard [ASP.NET cookie authentication](https://docs.microsoft.com/e
     }
     ```
 
+- Similarly, the `MobileAuthInitController` generates a challenge nonce and returns the mobile deep-link for starting the Web eID Mobile authentication flow, and the `MobileAuthLoginController` handles the mobile login request by validating the returned authentication token and creating the authentication cookie.
+    ```cs
+    using System;
+    using System.Text;
+    using Microsoft.AspNetCore.Mvc;
+    using Microsoft.Extensions.Options;
+    using System.Text.Json;
+    using System.Text.Json.Serialization;
+    using Options;
+    using Security.Challenge;
+
+    [ApiController]
+    [Route("auth/mobile")]
+    public class MobileAuthInitController(
+        IChallengeNonceGenerator nonceGenerator,
+        IOptions<WebEidMobileOptions> mobileOptions
+    ) : ControllerBase
+    {
+        private const string WebEidMobileAuthPath = "auth";
+        private const string MobileLoginPath = "/auth/mobile/login";
+
+        [HttpPost("init")]
+        public IActionResult Init()
+        {
+            var challenge = nonceGenerator.GenerateAndStoreNonce(TimeSpan.FromMinutes(5));
+            var challengeBase64 = challenge.Base64EncodedNonce;
+
+            var loginUri = $"{Request.Scheme}://{Request.Host}{MobileLoginPath}";
+
+            var payload = new AuthPayload
+            {
+                Challenge = challengeBase64,
+                LoginUri = loginUri,
+                GetSigningCertificate = mobileOptions.Value.RequestSigningCert ? true : null
+            };
+
+            var json = JsonSerializer.Serialize(payload);
+            var encodedPayload = Convert.ToBase64String(Encoding.UTF8.GetBytes(json));
+
+            var authUri = BuildAuthUri(encodedPayload);
+
+            return Ok(new AuthUri
+            {
+                AuthUriValue = authUri
+            });
+        }
+    ```
+
+    ```cs
+    using Microsoft.AspNetCore.Mvc;
+    using System.Text.Json;
+    using Dto;
+    using Security.Challenge;
+    using Security.Validator;
+    using System.Security.Claims;
+    using System.Threading.Tasks;
+    using Microsoft.AspNetCore.Authentication;
+    using Microsoft.AspNetCore.Authentication.Cookies;
+    using Security.Util;
+
+    [ApiController]
+    [Route("auth/mobile")]
+    public class MobileAuthLoginController(
+        IAuthTokenValidator authTokenValidator,
+        IChallengeNonceStore challengeNonceStore
+    ) : ControllerBase
+    {
+        [HttpPost("login")]
+        public async Task<IActionResult> MobileLogin([FromBody] AuthenticateRequestDto dto)
+        {
+            if (dto?.AuthToken == null)
+            {
+                return BadRequest(new { error = "Missing auth_token" });
+            }
+
+            var parsedToken = dto.AuthToken;
+            var certificate = await authTokenValidator.Validate(
+                parsedToken,
+                challengeNonceStore.GetAndRemove().Base64EncodedNonce);
+
+            var identity = new ClaimsIdentity(CookieAuthenticationDefaults.AuthenticationScheme);
+
+            identity.AddClaim(new Claim(ClaimTypes.GivenName, certificate.GetSubjectGivenName()));
+            identity.AddClaim(new Claim(ClaimTypes.Surname, certificate.GetSubjectSurname()));
+            identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, certificate.GetSubjectIdCode()));
+            identity.AddClaim(new Claim(ClaimTypes.Name, certificate.GetSubjectCn()));
+
+            if (!string.IsNullOrEmpty(parsedToken.UnverifiedSigningCertificate))
+            {
+                identity.AddClaim(new Claim("signingCertificate", parsedToken.UnverifiedSigningCertificate));
+            }
+
+            if (parsedToken.SupportedSignatureAlgorithms != null)
+            {
+                identity.AddClaim(new Claim(
+                    "supportedSignatureAlgorithms",
+                    JsonSerializer.Serialize(parsedToken.SupportedSignatureAlgorithms)));
+            }
+
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                new ClaimsPrincipal(identity),
+                new AuthenticationProperties { IsPersistent = false });
+
+            return Ok(new { redirect = "/welcome" });
+        }
+    }
+    ```
+
+
 # Table of contents
 
 * [Introduction](#introduction)

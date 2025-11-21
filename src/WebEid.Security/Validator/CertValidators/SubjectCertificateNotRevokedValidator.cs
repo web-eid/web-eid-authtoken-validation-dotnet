@@ -35,7 +35,7 @@ namespace WebEid.Security.Validator.CertValidators
     using Org.BouncyCastle.Security;
     using WebEid.Security.Util;
 
-    internal sealed class SubjectCertificateNotRevokedValidator : ISubjectCertificateValidator
+    public sealed class SubjectCertificateNotRevokedValidator : ISubjectCertificateValidator
     {
         private readonly SubjectCertificateTrustedValidator trustValidator;
         private readonly IOcspClient ocspClient;

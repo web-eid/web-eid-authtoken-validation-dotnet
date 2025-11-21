@@ -32,7 +32,7 @@ namespace WebEid.Security.Validator.CertValidators
     using Org.BouncyCastle.Asn1.X509;
     using Org.BouncyCastle.Security;
 
-    internal sealed class SubjectCertificatePolicyValidator : ISubjectCertificateValidator
+    public sealed class SubjectCertificatePolicyValidator : ISubjectCertificateValidator
     {
         private readonly ICollection<Oid> disallowedSubjectCertificatePolicies;
         private readonly ILogger logger;

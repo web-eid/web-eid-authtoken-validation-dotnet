@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright © 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -19,37 +19,32 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-namespace WebEid.Security.Validator
+namespace WebEid.Security.Validator.VersionValidators
 {
     using System.Security.Cryptography.X509Certificates;
     using System.Threading.Tasks;
-    using Exceptions;
-    using Util;
     using AuthToken;
+    using Exceptions;
 
     /// <summary>
-    /// Interface for validating Web eID authentication tokens.
+    /// Version-specific Web eID authentication token validator.
     /// </summary>
-    public interface IAuthTokenValidator
+    public interface IAuthTokenVersionValidator
     {
         /// <summary>
-        /// Parses the Web eID authentication token signed by the subject.
+        /// Whether this validator supports the specified token format,
+        /// e.g. "web-eid:1.0" or "web-eid:1.1".
         /// </summary>
-        /// <param name="authToken">the Web eID authentication token string, in Web eID JSON format</param>
-        /// <returns>the Web eID authentication token</returns>
-        /// <exception cref="AuthTokenException">When parsing fails</exception>
-        WebEidAuthToken Parse(string authToken);
+        bool Supports(string format);
 
         /// <summary>
-        /// Validates the Web eID authentication token signed by the subject and returns
-        /// the subject certificate that can be used for retrieving information about the subject.
-        /// See <see cref="X509CertificateExtensions"/> for convenience methods for retrieving user
-        /// information from the certificate.
+        /// Validates the Web eID authentication token according to the
+        /// version-specific rules and returns the authenticated user's certificate.
         /// </summary>
-        /// <param name="authToken">the Web eID authentication token, in Web eID custom format</param>
-        /// <param name="currentChallengeNonce"></param>
-        /// <returns>validated subject certificate</returns>
-        /// <exception cref="AuthTokenException">When validation fails</exception>
+        /// <param name="authToken">Parsed Web eID authentication token.</param>
+        /// <param name="currentChallengeNonce">Server-issued challenge nonce.</param>
+        /// <returns>Validated authentication certificate.</returns>
+        /// <exception cref="AuthTokenException">If validation fails.</exception>
         Task<X509Certificate2> Validate(WebEidAuthToken authToken, string currentChallengeNonce);
     }
 }
