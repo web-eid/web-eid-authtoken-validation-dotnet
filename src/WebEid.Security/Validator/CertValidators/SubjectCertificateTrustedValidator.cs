@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020-2024 Estonian Information System Authority
+ * Copyright © 2020-2025 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,16 +28,10 @@ namespace WebEid.Security.Validator.CertValidators
     using Util;
     using WebEid.Security.Exceptions;
 
-    internal sealed class SubjectCertificateTrustedValidator : ISubjectCertificateValidator
+    internal sealed class SubjectCertificateTrustedValidator(ICollection<X509Certificate2> trustedCaCertificates, ILogger logger) : ISubjectCertificateValidator
     {
-        private readonly ICollection<X509Certificate2> trustedCaCertificates;
-        private readonly ILogger logger;
-
-        public SubjectCertificateTrustedValidator(ICollection<X509Certificate2> trustedCaCertificates, ILogger logger)
-        {
-            this.trustedCaCertificates = trustedCaCertificates;
-            this.logger = logger;
-        }
+        private readonly ICollection<X509Certificate2> trustedCaCertificates = trustedCaCertificates;
+        private readonly ILogger logger = logger;
 
         /// <summary>
         /// Checks that the user certificate from the authentication token is valid and signed by
@@ -50,8 +44,9 @@ namespace WebEid.Security.Validator.CertValidators
         /// <exception cref="CertificateExpiredException">when a CA certificate in the chain or the user certificate is expired</exception>
         public Task Validate(X509Certificate2 subjectCertificate)
         {
-            this.SubjectCertificateIssuerCertificate = subjectCertificate.ValidateIsValidAndSignedByTrustedCa(this.trustedCaCertificates);
-            this.logger?.LogDebug("Subject certificate is valid and signed by a trusted CA");
+            SubjectCertificateIssuerCertificate = subjectCertificate.ValidateIsValidAndSignedByTrustedCa(trustedCaCertificates);
+
+            logger?.LogDebug("Subject certificate is valid and signed by a trusted CA");
 
             return Task.CompletedTask;
         }

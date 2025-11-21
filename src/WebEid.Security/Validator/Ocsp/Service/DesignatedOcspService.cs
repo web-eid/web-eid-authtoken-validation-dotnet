@@ -36,19 +36,19 @@ namespace WebEid.Security.Validator.Ocsp.Service
         public DesignatedOcspService(DesignatedOcspServiceConfiguration configuration)
         {
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-            this.DoesSupportNonce = this.configuration.DoesSupportNonce;
+            DoesSupportNonce = this.configuration.DoesSupportNonce;
         }
 
         public bool DoesSupportNonce { get; }
-        public Uri AccessLocation => this.configuration.OcspServiceAccessLocation;
+        public Uri AccessLocation => configuration.OcspServiceAccessLocation;
 
-        public bool SupportsIssuerOf(X509Certificate certificate) => this.configuration.SupportsIssuerOf(certificate);
+        public bool SupportsIssuerOf(X509Certificate certificate) => configuration.SupportsIssuerOf(certificate);
 
         public void ValidateResponderCertificate(X509Certificate responderCertificate, DateTime now)
         {
             // Certificate pinning is implemented simply by comparing the certificates or their public keys,
             // see https://owasp.org/www-community/controls/Certificate_and_Public_Key_Pinning.
-            if (!this.configuration.ResponderCertificate.Equals(responderCertificate))
+            if (!configuration.ResponderCertificate.Equals(responderCertificate))
             {
                 throw new OcspCertificateException(
                     "Responder certificate from the OCSP response is not equal to the configured designated OCSP responder certificate");

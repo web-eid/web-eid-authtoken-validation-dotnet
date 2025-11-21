@@ -42,7 +42,7 @@ namespace WebEid.Security.Util
         {
             this.assembly = assembly;
             this.assemblyNamespace = assemblyNamespace;
-            if (!this.assemblyNamespace.EndsWith(".", StringComparison.InvariantCulture))
+            if (!this.assemblyNamespace.EndsWith('.'))
             {
                 this.assemblyNamespace += ".";
             }
@@ -56,11 +56,11 @@ namespace WebEid.Security.Util
         /// <exception cref="ArgumentException">Thrown when the resource is not found.</exception>
         public byte[] ReadFromResource(string filename)
         {
-            using var stream = this.GetStream(filename) ?? throw new ArgumentException($"Unable to find resource: {this.assemblyNamespace + filename}");
+            using var stream = GetStream(filename) ?? throw new ArgumentException($"Unable to find resource: {assemblyNamespace + filename}");
             return stream.ToByteArray();
         }
 
         private Stream GetStream(string filename) =>
-            this.assembly.GetManifestResourceStream(this.assemblyNamespace + filename);
+            assembly.GetManifestResourceStream(assemblyNamespace + filename);
     }
 }

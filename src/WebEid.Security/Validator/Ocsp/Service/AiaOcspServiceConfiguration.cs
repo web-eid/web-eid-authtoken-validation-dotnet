@@ -29,30 +29,25 @@ namespace WebEid.Security.Validator.Ocsp.Service
     /// <summary>
     /// Represents the configuration for an AIA (Authority Information Access) OCSP service.
     /// </summary>
-    public sealed class AiaOcspServiceConfiguration : IEquatable<AiaOcspServiceConfiguration>
+    /// <remarks>
+    /// Initializes a new instance of the <see cref="AiaOcspServiceConfiguration"/> class.
+    /// </remarks>
+    /// <param name="nonceDisabledOcspUrls">List of OCSP responder URLs where nonce is disabled.</param>
+    /// <param name="trustedCaCertificates">List of trusted CA certificates.</param>
+    public sealed class AiaOcspServiceConfiguration(List<Uri> nonceDisabledOcspUrls, List<X509Certificate2> trustedCaCertificates) : IEquatable<AiaOcspServiceConfiguration>
     {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="AiaOcspServiceConfiguration"/> class.
-        /// </summary>
-        /// <param name="nonceDisabledOcspUrls">List of OCSP responder URLs where nonce is disabled.</param>
-        /// <param name="trustedCaCertificates">List of trusted CA certificates.</param>
-        public AiaOcspServiceConfiguration(List<Uri> nonceDisabledOcspUrls, List<X509Certificate2> trustedCaCertificates)
-        {
-            this.NonceDisabledOcspUrls =
-                nonceDisabledOcspUrls ?? throw new ArgumentNullException(nameof(nonceDisabledOcspUrls));
-            this.TrustedCaCertificates =
-                trustedCaCertificates ?? throw new ArgumentNullException(nameof(trustedCaCertificates));
-        }
 
         /// <summary>
         /// Gets the list of OCSP responder URLs where nonce is disabled.
         /// </summary>
-        public List<Uri> NonceDisabledOcspUrls { get; }
+        public List<Uri> NonceDisabledOcspUrls { get; } =
+                nonceDisabledOcspUrls ?? throw new ArgumentNullException(nameof(nonceDisabledOcspUrls));
 
         /// <summary>
         /// Gets the list of trusted CA certificates.
         /// </summary>
-        public List<X509Certificate2> TrustedCaCertificates { get; }
+        public List<X509Certificate2> TrustedCaCertificates { get; } =
+                trustedCaCertificates ?? throw new ArgumentNullException(nameof(trustedCaCertificates));
 
         /// <summary>
         /// Determines whether the current instance is equal to another <see cref="AiaOcspServiceConfiguration"/>.
@@ -71,20 +66,20 @@ namespace WebEid.Security.Validator.Ocsp.Service
                 return true;
             }
 
-            return Enumerable.SequenceEqual(this.NonceDisabledOcspUrls, other.NonceDisabledOcspUrls) &&
-                   Enumerable.SequenceEqual(this.TrustedCaCertificates, other.TrustedCaCertificates);
+            return Enumerable.SequenceEqual(NonceDisabledOcspUrls, other.NonceDisabledOcspUrls) &&
+                   Enumerable.SequenceEqual(TrustedCaCertificates, other.TrustedCaCertificates);
         }
 
         /// <inheritdoc/>
-        public override bool Equals(object obj) => ReferenceEquals(this, obj) || obj is AiaOcspServiceConfiguration other && Equals(other);
+        public override bool Equals(object obj) => ReferenceEquals(this, obj) || (obj is AiaOcspServiceConfiguration other && Equals(other));
 
         /// <inheritdoc/>
         public override int GetHashCode()
         {
             unchecked
             {
-                return ((this.NonceDisabledOcspUrls != null ? this.NonceDisabledOcspUrls.GetHashCode() : 0) * 397) ^
-                       (this.TrustedCaCertificates != null ? this.TrustedCaCertificates.GetHashCode() : 0);
+                return ((NonceDisabledOcspUrls != null ? NonceDisabledOcspUrls.GetHashCode() : 0) * 397) ^
+                       (TrustedCaCertificates != null ? TrustedCaCertificates.GetHashCode() : 0);
             }
         }
 
