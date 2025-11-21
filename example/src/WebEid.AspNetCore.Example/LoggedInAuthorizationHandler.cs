@@ -1,17 +1,17 @@
 // SPDX-FileCopyrightText: Estonian Information System Authority
 // SPDX-License-Identifier: MIT
 
-﻿namespace WebEid.AspNetCore.Example
+namespace WebEid.AspNetCore.Example
 {
-    using Microsoft.AspNetCore.Authorization;
     using System.Threading.Tasks;
+    using Microsoft.AspNetCore.Authorization;
 
     public class LoggedInAuthorizationHandler : AuthorizationHandler<LoggedInRequirement>
     {
         protected override Task HandleRequirementAsync(
             AuthorizationHandlerContext context, LoggedInRequirement requirement)
         {
-            if (context.User.Identity.IsAuthenticated)
+            if (context.User.Identity?.IsAuthenticated == true)
             {
                 context.Succeed(requirement);
             }
@@ -20,5 +20,4 @@
     }
 
     public class LoggedInRequirement : IAuthorizationRequirement { }
-
 }

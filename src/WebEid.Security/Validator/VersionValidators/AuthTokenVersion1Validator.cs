@@ -1,0 +1,99 @@
+// SPDX-FileCopyrightText: Estonian Information System Authority
+// SPDX-License-Identifier: MIT
+
+namespace WebEid.Security.Validator.VersionValidators
+{
+    using System.Security.Cryptography.X509Certificates;
+    using System.Threading.Tasks;
+    using AuthToken;
+    using CertValidators;
+    using Exceptions;
+    using Microsoft.Extensions.Logging;
+    using Ocsp;
+    using Util;
+
+    /// <summary>
+    /// Validator for token formats with major version 1, e.g. web-eid:1 and web-eid:1.0.
+    /// </summary>
+    public partial class AuthTokenVersion1Validator : IAuthTokenVersionValidator
+    {
+        internal const int SupportedExactMajorVersion = 1;
+        private const int SupportedMinimalMinorVersion = 0;
+
+        private readonly SubjectCertificateValidatorBatch simpleSubjectCertificateValidators;
+        private readonly AuthTokenSignatureValidator signatureValidator;
+        private readonly AuthTokenValidationConfiguration configuration;
+        private readonly IOcspClient ocspClient;
+        private readonly OcspServiceProvider ocspServiceProvider;
+        private readonly ILogger logger;
+
+        /// <summary>
+        /// Initializes a validator for Web eID authentication tokens with token format major version 1.
+        /// </summary>
+        internal AuthTokenVersion1Validator(
+            SubjectCertificateValidatorBatch simpleSubjectCertificateValidators,
+            AuthTokenSignatureValidator signatureValidator,
+            AuthTokenValidationConfiguration configuration,
+            IOcspClient ocspClient,
+            OcspServiceProvider ocspServiceProvider,
+            ILogger logger = null)
+        {
+            this.simpleSubjectCertificateValidators = simpleSubjectCertificateValidators;
+            this.signatureValidator = signatureValidator;
+            this.configuration = configuration;
+            this.ocspClient = ocspClient;
+            this.ocspServiceProvider = ocspServiceProvider;
+            this.logger = logger;
+        }
+
+        /// <summary>
+        /// Determines whether this validator supports the specified token format.
+        /// </summary>
+        public virtual bool Supports(string format) =>
+            AuthTokenVersion.Supports(format, SupportedExactMajorVersion, SupportedMinimalMinorVersion);
+
+        /// <summary>
+        /// Validates a Web eID authentication token and returns the authenticated user's certificate.
+        /// </summary>
+        public virtual async Task<X509Certificate2> Validate(WebEidAuthToken authToken, string currentChallengeNonce)
+        {
+            if (AuthTokenVersion.SupportsExactly(authToken.Format, SupportedExactMajorVersion, SupportedMinimalMinorVersion) &&
+                authToken.UnverifiedSigningCertificates != null)
+            {
+                throw new AuthTokenParseException($"'unverifiedSigningCertificates' field is not allowed for format '{authToken.Format}'");
+            }
+
+            if (string.IsNullOrEmpty(authToken.UnverifiedCertificate))
+            {
+                throw new AuthTokenParseException("'unverifiedCertificate' field is missing, null or empty");
+            }
+
+            var subjectCertificate = X509CertificateExtensions.ParseCertificate(
+                authToken.UnverifiedCertificate,
+                "unverifiedCertificate"
+            );
+
+            await simpleSubjectCertificateValidators.ExecuteFor(subjectCertificate);
+
+            var trustValidators = SubjectCertificateValidatorBatch.ForTrustValidation(
+                configuration,
+                configuration.TrustedCaCertificates,
+                ocspClient,
+                ocspServiceProvider,
+                logger
+            );
+
+            await trustValidators.ExecuteFor(subjectCertificate);
+
+            signatureValidator.Validate(
+                authToken.Algorithm,
+                subjectCertificate.GetAsymmetricPublicKey()
+                    .CreateSecurityKeyWithoutCachingSignatureProviders(),
+                authToken.Signature,
+                currentChallengeNonce
+            );
+
+            return subjectCertificate;
+        }
+    }
+}

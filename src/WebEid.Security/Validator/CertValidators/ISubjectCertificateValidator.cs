@@ -12,6 +12,6 @@ namespace WebEid.Security.Validator.CertValidators
     /// </summary>
     internal interface ISubjectCertificateValidator
     {
-        Task Validate(X509Certificate2 subjectCertificate);
+        public Task Validate(X509Certificate2 subjectCertificate);
     }
 }

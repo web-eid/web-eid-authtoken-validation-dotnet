@@ -3,6 +3,8 @@
 
 namespace WebEid.Security.AuthToken
 {
+    using System.Collections.Generic;
+
     /// <summary>
     /// The Web eID authentication token
     /// </summary>
@@ -26,5 +28,9 @@ namespace WebEid.Security.AuthToken
         /// The base64-encoded DER-encoded authentication certificate of the eID user.
         /// </summary>
         public string UnverifiedCertificate { get; set; }
+        /// <summary>
+        /// The base64-encoded signing certificates (DER).
+        /// </summary>
+        public List<UnverifiedSigningCertificate> UnverifiedSigningCertificates { get; set; }
     }
 }

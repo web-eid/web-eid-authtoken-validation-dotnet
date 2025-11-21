@@ -26,12 +26,12 @@ namespace WebEid.Security.Tests.Validator.Ocsp
         {
             var mockCertificate = new Mock<X509Certificate>();
             _ = mockCertificate.Setup(x => x.GetExtensionValue(It.IsAny<DerObjectIdentifier>()))
-                .Returns(() => new DerOctetString(ToByteArray(new sbyte[] { 1, 2, 3 })));
+                .Returns(() => new DerOctetString(ToByteArray([1, 2, 3])));
             Assert.That(OcspUrls.GetOcspUri(mockCertificate.Object), Is.Null);
         }
 
         private static byte ToByte(sbyte sb) => (byte)(sb & 0xFF);
 
-        private static byte[] ToByteArray(sbyte[] sBytes) => sBytes.Select(ToByte).ToArray();
+        private static byte[] ToByteArray(sbyte[] sBytes) => [.. sBytes.Select(ToByte)];
     }
 }

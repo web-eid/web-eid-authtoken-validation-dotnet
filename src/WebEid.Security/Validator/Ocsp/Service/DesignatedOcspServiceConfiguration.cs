@@ -27,12 +27,12 @@ namespace WebEid.Security.Validator.Ocsp.Service
             List<X509Certificate> supportedCertificateIssuers,
             bool doesSupportNonce = true)
         {
-            this.OcspServiceAccessLocation = ocspServiceAccessLocation ??
+            OcspServiceAccessLocation = ocspServiceAccessLocation ??
                                              throw new ArgumentNullException(nameof(ocspServiceAccessLocation));
-            this.ResponderCertificate =
+            ResponderCertificate =
                 responderCertificate ?? throw new ArgumentNullException(nameof(responderCertificate));
-            this.SupportedIssuers = supportedCertificateIssuers.Select(i => i.SubjectDN).ToList();
-            this.DoesSupportNonce = doesSupportNonce;
+            SupportedIssuers = [.. supportedCertificateIssuers.Select(i => i.SubjectDN)];
+            DoesSupportNonce = doesSupportNonce;
             OcspResponseValidator.ValidateHasSigningExtension(responderCertificate);
         }
 
@@ -64,11 +64,8 @@ namespace WebEid.Security.Validator.Ocsp.Service
         /// <exception cref="ArgumentNullException">Thrown when the certificate is null.</exception>
         public bool SupportsIssuerOf(X509Certificate certificate)
         {
-            if (certificate == null)
-            {
-                throw new ArgumentNullException(nameof(certificate));
-            }
-            return this.SupportedIssuers.Contains(certificate.IssuerDN);
+            ArgumentNullException.ThrowIfNull(certificate);
+            return SupportedIssuers.Contains(certificate.IssuerDN);
         }
     }
 }

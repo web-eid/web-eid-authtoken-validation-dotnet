@@ -1,12 +1,12 @@
 // SPDX-FileCopyrightText: Estonian Information System Authority
 // SPDX-License-Identifier: MIT
 
-﻿namespace WebEid.AspNetCore.Example.Services
+namespace WebEid.AspNetCore.Example.Services
 {
     using System;
     using System.Collections.Generic;
-    using System.Linq;
     using System.IO;
+    using System.Linq;
     using System.Security.Claims;
     using System.Security.Cryptography.X509Certificates;
     using digidoc;
@@ -17,13 +17,11 @@
     public class SigningService : IDisposable
     {
         private static readonly string FileToSign = Path.Combine("wwwroot", "files", "example-for-signing.txt");
-        private readonly DigiDocConfiguration configuration;
         private readonly ILogger logger;
-        private bool _disposedValue;
+        private bool disposedValue;
 
         public SigningService(DigiDocConfiguration configuration, ILogger logger)
         {
-            this.configuration = configuration;
             this.logger = logger;
 
             // The current implementation of the static DigiDoc library assumes that SigningService is used as a singleton.
@@ -35,17 +33,26 @@
 
         public DigestDto PrepareContainer(CertificateDto data, ClaimsIdentity identity, string tempContainerName)
         {
-            var certificate = new X509Certificate(Convert.FromBase64String(data.CertificateBase64String));
+            var certificateBytes = Convert.FromBase64String(data.CertificateBase64String);
+            var certificate = X509CertificateLoader.LoadCertificate(certificateBytes);
+
             if (identity.GetIdCode() != certificate.GetSubjectIdCode())
             {
                 throw new ArgumentException(
                     "Authenticated subject ID code differs from signing certificate subject ID code");
             }
 
-            this.logger?.LogDebug("Creating container file: '{0}'", tempContainerName);
-            Container container = Container.create(tempContainerName);
+#pragma warning disable CA1873
+            logger?.LogDebug("Creating container file: '{ContainerName}'", tempContainerName);
+#pragma warning restore CA1873
+
+            var container = Container.create(tempContainerName);
             container.addDataFile(FileToSign, "application/octet-stream");
-            logger?.LogInformation("Preparing container for signing for file '{0}'", tempContainerName);
+
+#pragma warning disable CA1873
+            logger?.LogInformation("Preparing container for signing for file '{ContainerName}'", tempContainerName);
+#pragma warning restore CA1873
+
             var signature =
                 container.prepareWebSignature(certificate.Export(X509ContentType.Cert), "time-stamp");
             var hashFunction = GetSupportedHashAlgorithm(data.SupportedSignatureAlgorithms, signature.signatureMethod());
@@ -69,8 +76,8 @@
 
         private static string GetSupportedHashAlgorithm(IList<SignatureAlgorithmDto> supportedSignatureAlgorithms, string signatureMethod)
         {
-            var framgment = new Uri(signatureMethod).Fragment;
-            if (supportedSignatureAlgorithms.FirstOrDefault(algo => FragmentEquals(framgment, algo), null) is SignatureAlgorithmDto algo)
+            var fragment = new Uri(signatureMethod).Fragment;
+            if (supportedSignatureAlgorithms.FirstOrDefault(algo => FragmentEquals(fragment, algo)) is SignatureAlgorithmDto algo)
             {
                 return algo.HashFunction;
             }
@@ -105,7 +112,7 @@
 
         private void Dispose(bool disposing)
         {
-            if (!_disposedValue)
+            if (!disposedValue)
             {
                 if (disposing)
                 {
@@ -113,7 +120,7 @@
                 }
 
                 digidoc.terminate();
-                _disposedValue = true;
+                disposedValue = true;
             }
         }
     }

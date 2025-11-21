@@ -1,15 +1,10 @@
 // SPDX-FileCopyrightText: Estonian Information System Authority
 // SPDX-License-Identifier: MIT
 
-﻿namespace WebEid.AspNetCore.Example.Dto
+namespace WebEid.AspNetCore.Example.Dto
 {
-    public class FileDto
+    public class FileDto(string name)
     {
-        public FileDto(string name)
-        {
-            this.Name = name;
-        }
-
-        public string Name { get; }
+        public string Name { get; } = name;
     }
 }

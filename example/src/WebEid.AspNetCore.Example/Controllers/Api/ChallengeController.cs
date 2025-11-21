@@ -1,23 +1,18 @@
 // SPDX-FileCopyrightText: Estonian Information System Authority
 // SPDX-License-Identifier: MIT
 
-﻿namespace WebEid.AspNetCore.Example.Controllers.Api
+namespace WebEid.AspNetCore.Example.Controllers.Api
 {
+    using System;
     using Microsoft.AspNetCore.Mvc;
     using Security.Challenge;
-    using System;
     using WebEid.AspNetCore.Example.Dto;
 
     [Route("auth")]
     [ApiController]
-    public class ChallengeController : BaseController
+    public class ChallengeController(IChallengeNonceGenerator challengeNonceGenerator) : BaseController
     {
-        private readonly IChallengeNonceGenerator challengeNonceGenerator;
-
-        public ChallengeController(IChallengeNonceGenerator challengeNonceGenerator)
-        {
-            this.challengeNonceGenerator = challengeNonceGenerator;
-        }
+        private readonly IChallengeNonceGenerator challengeNonceGenerator = challengeNonceGenerator;
 
         [HttpGet]
         [Route("challenge")]
