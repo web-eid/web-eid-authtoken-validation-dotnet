@@ -17,7 +17,7 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-﻿namespace WebEid.AspNetCore.Example.Controllers.Api
+namespace WebEid.AspNetCore.Example.Controllers.Api
 {
     using System;
     using Microsoft.AspNetCore.Http;
@@ -25,26 +25,18 @@
 
     public abstract class BaseController : ControllerBase
     {
-        const string uniqueIdKey = "UniqueId";
+        private const string UniqueIdKey = "UniqueId";
 
-        protected void RemoveUserContainerFile()
-        {
-            System.IO.File.Delete(GetUserContainerName());
-        }
+        protected void RemoveUserContainerFile() => System.IO.File.Delete(GetUserContainerName());
 
-        protected void SetUniqueIdInSession() 
-        {
-            HttpContext.Session.SetString(uniqueIdKey, Guid.NewGuid().ToString());
-        }
+        protected void SetUniqueIdInSession() => HttpContext.Session.SetString(UniqueIdKey, Guid.NewGuid().ToString());
 
-        private string GetUniqueIdFromSession() 
-        {
-            return HttpContext.Session.GetString(uniqueIdKey);
-        }
+        protected bool HasActiveSession() => GetUniqueIdFromSession() is not null;
 
-        protected string GetUserContainerName()
-        {
-            return $"container_{GetUniqueIdFromSession()}";
-        }
+        protected UnauthorizedObjectResult SessionExpired() => Unauthorized(new { error = "session_expired" });
+
+        private string? GetUniqueIdFromSession() => HttpContext.Session.GetString(UniqueIdKey);
+
+        protected string GetUserContainerName() => $"container_{GetUniqueIdFromSession()}";
     }
 }

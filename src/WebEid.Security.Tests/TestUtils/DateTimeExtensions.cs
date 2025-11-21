@@ -26,10 +26,7 @@ namespace WebEid.Security.Tests.TestUtils
 
     internal static class DateTimeExtensions
     {
-        internal static DateTime TrimMilliseconds(this DateTime dt)
-        {
-            return dt.AddTicks(-dt.Ticks % TimeSpan.TicksPerSecond);
-        }
+        internal static DateTime TrimMilliseconds(this DateTime dt) => dt.AddTicks(-dt.Ticks % TimeSpan.TicksPerSecond);
 
         internal static DerGeneralizedTime ToDerGenTime(this DateTime dateTime) => new(dateTime);
     }
