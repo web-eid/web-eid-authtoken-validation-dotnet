@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020-2024 Estonian Information System Authority
+ * Copyright © 2020-2025 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,6 +21,8 @@
  */
 namespace WebEid.Security.AuthToken
 {
+    using System.Collections.Generic;
+
     /// <summary>
     /// The Web eID authentication token
     /// </summary>
@@ -44,5 +46,13 @@ namespace WebEid.Security.AuthToken
         /// The base64-encoded DER-encoded authentication certificate of the eID user.
         /// </summary>
         public string UnverifiedCertificate { get; set; }
+        /// <summary>
+        /// The base64-encoded signing certificate (DER).
+        /// </summary>
+        public string UnverifiedSigningCertificate { get; set; }
+        /// <summary>
+        /// List of supported signature algorithms from the card.
+        /// </summary>
+        public List<SupportedSignatureAlgorithm> SupportedSignatureAlgorithms { get; set; }
     }
 }

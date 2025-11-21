@@ -1,4 +1,4 @@
-// Copyright (c) 2021-2024 Estonian Information System Authority
+// Copyright (c) 2021-2025 Estonian Information System Authority
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -38,6 +38,8 @@ namespace WebEid.AspNetCore.Example
     using System.Threading.Tasks;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
+    using Options;
+    using Signing;
 
     public class Startup
     {
@@ -88,7 +90,9 @@ namespace WebEid.AspNetCore.Example
                 {
                     options.Cookie.Name = "__Host-WebEid.AspNetCore.Example.Auth";
                     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-                    options.Cookie.SameSite = SameSiteMode.Strict;
+                    // Set to "strict" if Web eID for Mobile flow is not used - this would restrict sending back the
+                    // authentication response in the Web eID for Mobile flow.
+                    options.Cookie.SameSite = SameSiteMode.Lax;
                     options.Events.OnRedirectToLogin = context =>
                     {
                         context.Response.Redirect("/");
@@ -105,10 +109,19 @@ namespace WebEid.AspNetCore.Example
             {
                 options.Cookie.Name = "__Host-WebEid.AspNetCore.Example.Session";
                 options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-                options.Cookie.SameSite = SameSiteMode.Strict;
+                // Set to "strict" if Web eID for Mobile flow is not used - this would restrict sending back the
+                // authentication response in the Web eID for Mobile flow.
+                options.Cookie.SameSite = SameSiteMode.Lax;
                 options.IdleTimeout = TimeSpan.FromSeconds(60);
                 options.Cookie.IsEssential = true;
             });
+            
+            services.AddOptions<WebEidMobileOptions>()
+                .Bind(Configuration.GetSection("WebEidMobile"))
+                .ValidateDataAnnotations()
+                .ValidateOnStart();
+
+            services.AddSingleton<MobileRequestUriBuilder>();
 
             var url = GetOriginUrl(Configuration);
 
@@ -119,6 +132,7 @@ namespace WebEid.AspNetCore.Example
 
             services.AddSingleton(RandomNumberGenerator.Create());
             services.AddSingleton<SigningService>();
+            services.AddScoped<MobileSigningService>();
             services.AddSingleton<DigiDocConfiguration>();
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             services.AddSingleton<IChallengeNonceStore, SessionBackedChallengeNonceStore>();
@@ -160,18 +174,18 @@ namespace WebEid.AspNetCore.Example
             }
             else
             {
-                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-                app.UseHsts();
                 // Add support for running behind a TLS terminating proxy.
                 app.UseForwardedHeaders();
+                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+                app.UseHsts();
             }
 
             app.UseStaticFiles();
 
             app.UseRouting();
 
-            app.UseAuthorization();
             app.UseAuthentication();
+            app.UseAuthorization();
             app.UseSession();
 
             app.UseEndpoints(endpoints =>
