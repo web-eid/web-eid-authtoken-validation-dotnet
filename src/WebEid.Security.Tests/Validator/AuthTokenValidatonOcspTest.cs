@@ -42,13 +42,12 @@ namespace WebEid.Security.Tests.Validator
             using var _ = DateTimeProvider.OverrideUtcNow(new DateTime(2026, 02, 03));
             var authTokenValidator = AuthTokenValidators
                 .GetDefaultAuthTokenValidatorBuilder()
-               .WithOcspRequestTimeout(TimeSpan.FromMilliseconds(1))
+                .WithOcspRequestTimeout(TimeSpan.FromMilliseconds(1))
                 .Build();
 
             var exception = Assert.ThrowsAsync<UserCertificateOcspCheckFailedException>(() => authTokenValidator.Validate(authTokenValidator.Parse(AuthToken), ValidChallengeNonce));
             Assert.That(exception.InnerException, Is.TypeOf<TaskCanceledException>());
             Assert.That(exception.InnerException.Message, Does.Contain("The request was canceled due to the configured HttpClient.Timeout of"));
-
         }
 
         [Test]

@@ -32,7 +32,7 @@ namespace WebEid.Security.Validator.CertValidators
     /// <summary>
     /// Validates the purpose of the user certificate from the authentication token.
     /// </summary>
-    public class SubjectCertificatePurposeValidator : ISubjectCertificateValidator
+    internal sealed class SubjectCertificatePurposeValidator : ISubjectCertificateValidator
     {
         private readonly ILogger logger;
         private const string ExtendedKeyUsageClientAuthentication = "1.3.6.1.5.5.7.3.2";
