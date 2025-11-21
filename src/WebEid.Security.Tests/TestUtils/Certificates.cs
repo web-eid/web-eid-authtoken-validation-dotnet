@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright © 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -82,19 +82,13 @@ namespace WebEid.Security.Tests.TestUtils
 
         public static X509Certificate2 GetJaakKristjanEsteid2018Cert()
         {
-            if (jaakKristjanEsteid2018Cert == null)
-            {
-                jaakKristjanEsteid2018Cert = CertificateLoader.LoadCertificateFromBase64String(JaakKristjanEsteid2018Cert);
-            }
+            jaakKristjanEsteid2018Cert ??= CertificateLoader.LoadCertificateFromBase64String(JaakKristjanEsteid2018Cert);
             return jaakKristjanEsteid2018Cert;
         }
 
         public static X509Certificate GetMariliisEsteid2015Cert()
         {
-            if (mariliisEsteid2015Cert == null)
-            {
-                mariliisEsteid2015Cert = CertificateLoader.LoadCertificateFromBase64String(MariliisEsteid2015Cert);
-            }
+            mariliisEsteid2015Cert ??= CertificateLoader.LoadCertificateFromBase64String(MariliisEsteid2015Cert);
             return mariliisEsteid2015Cert;
         }
 

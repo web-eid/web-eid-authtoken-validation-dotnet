@@ -17,7 +17,7 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-﻿namespace WebEid.AspNetCore.Example.Certificates
+namespace WebEid.AspNetCore.Example.Certificates
 {
     using System.Collections.Generic;
     using System.IO;
@@ -26,33 +26,19 @@
 
     internal static class CertificateLoader
     {
-        public static X509Certificate2[] LoadTrustedCaCertificatesFromDisk(bool isTest = false)
-        {
-            return new FileReader(GetCertPath(isTest), "*.cer").ReadFiles()
-                .Select(file => new X509Certificate2(file))
-                .ToArray();
-        }
+        public static X509Certificate2[] LoadTrustedCaCertificatesFromDisk(bool isTest = false) => [.. new FileReader(GetCertPath(isTest), "*.cer").ReadFiles().Select(X509CertificateLoader.LoadCertificate)];
 
-        private static string GetCertPath(bool isTest)
-        {
-            return isTest ? "Certificates/Dev" : "Certificates/Prod";
-        }
+        private static string GetCertPath(bool isTest) => isTest ? "Certificates/Dev" : "Certificates/Prod";
     }
 
-    internal class FileReader
+    internal sealed class FileReader(string path, string? searchPattern = null)
     {
-        private readonly string path;
-        private readonly string searchPattern;
-
-        public FileReader(string path, string searchPattern = null)
-        {
-            this.path = path;
-            this.searchPattern = searchPattern;
-        }
+        private readonly string path = path;
+        private readonly string? searchPattern = searchPattern;
 
         public IEnumerable<byte[]> ReadFiles()
         {
-            foreach (var file in Directory.EnumerateFiles(this.path, this.searchPattern))
+            foreach (var file in Directory.EnumerateFiles(path, searchPattern ?? "*"))
             {
                 yield return File.ReadAllBytes(file);
             }

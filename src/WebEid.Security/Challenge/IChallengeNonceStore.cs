@@ -33,13 +33,15 @@ namespace WebEid.Security.Challenge
         /// Inserts given <see cref="ChallengeNonce"/> object into the store.
         /// </summary>
         /// <param name="challengeNonce">The nonce object to be stored.</param>
-        void Put(ChallengeNonce challengeNonce);
+        public void Put(ChallengeNonce challengeNonce);
 
+#pragma warning disable CA1711
         /// <summary>
         /// Internal implementation of <see cref="GetAndRemove"/> method.
         /// </summary>
         /// <returns>Stored <see cref="ChallengeNonce"/> object.</returns>
-        ChallengeNonce GetAndRemoveImpl();
+        public ChallengeNonce GetAndRemoveImpl();
+#pragma warning restore CA1711
 
         /// <summary>
         /// Removes and returns the <see cref="ChallengeNonce"/> object being stored.
@@ -53,7 +55,7 @@ namespace WebEid.Security.Challenge
         /// If there is no Challenge Nonce stored, either no <see cref="Put(ChallengeNonce)"/> method was not called or it was removed previously
         /// due expiration then ChallengeNonceNotFoundException exception is thrown.
         /// </remarks>
-        ChallengeNonce GetAndRemove()
+        public ChallengeNonce GetAndRemove()
         {
             var challengeNonce = GetAndRemoveImpl() ?? throw new ChallengeNonceNotFoundException();
 

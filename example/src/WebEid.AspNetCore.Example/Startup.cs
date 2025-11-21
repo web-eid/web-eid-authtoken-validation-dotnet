@@ -1,4 +1,4 @@
-// Copyright (c) 2021-2024 Estonian Information System Authority
+// Copyright (c) 2021-2025 Estonian Information System Authority
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -19,76 +19,64 @@
 
 namespace WebEid.AspNetCore.Example
 {
+    using System;
+    using System.Configuration;
+    using System.Security.Cryptography;
+    using System.Threading.Tasks;
     using Certificates;
     using Microsoft.AspNetCore.Authentication.Cookies;
+    using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Hosting;
+    using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.HttpOverrides;
+    using Microsoft.AspNetCore.Mvc;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Hosting;
     using Microsoft.Extensions.Logging;
-    using Services;
-    using System;
-    using System.Security.Cryptography;
+    using Options;
     using Security.Challenge;
     using Security.Validator;
-    using System.Configuration;
-    using Microsoft.AspNetCore.Authorization;
-    using System.Threading.Tasks;
-    using Microsoft.AspNetCore.Http;
-    using Microsoft.AspNetCore.Mvc;
+    using Services;
+    using Signing;
 
-    public class Startup
+    public class Startup(IConfiguration configuration, IWebHostEnvironment environment)
     {
-        public Startup(IConfiguration configuration, IWebHostEnvironment environment)
-        {
-            Configuration = configuration;
-            CurrentEnvironment = environment;
-        }
-
-        private IConfiguration Configuration { get; }
-        private IWebHostEnvironment CurrentEnvironment { get; }
+        private IConfiguration Configuration { get; } = configuration;
+        private IWebHostEnvironment CurrentEnvironment { get; } = environment;
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            var loggerFactory = LoggerFactory.Create(builder =>
-            {
-                builder.AddConsole();
-            });
+            var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
             var logger = loggerFactory.CreateLogger("Web-eId ASP.NET Core Example");
             services.AddSingleton(logger);
 
-            services.AddRazorPages(options =>
-            {
-                options.Conventions.AuthorizePage("/welcome", "LoggedInOnly");
-            });
+            services.AddRazorPages(options => options.Conventions.AuthorizePage("/welcome", "LoggedInOnly"));
 
-            services.AddAuthorization(options =>
-            {
-                options.AddPolicy("LoggedInOnly", policy =>
+            services
+                .AddAuthorizationBuilder()
+                .AddPolicy("LoggedInOnly", policy =>
                 {
                     policy.AuthenticationSchemes.Add(CookieAuthenticationDefaults.AuthenticationScheme);
                     policy.RequireAuthenticatedUser();
                     policy.Requirements.Add(new LoggedInRequirement());
                 });
-            });
 
             services.AddSingleton<IAuthorizationHandler, LoggedInAuthorizationHandler>();
 
             services.AddControllers();
-            services.AddMvc(options =>
-            {
-                options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute());
-            });
+            services.AddMvc(options => options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute()));
 
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
                 {
                     options.Cookie.Name = "__Host-WebEid.AspNetCore.Example.Auth";
                     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-                    options.Cookie.SameSite = SameSiteMode.Strict;
+                    // Set to "strict" if Web eID for Mobile flow is not used - this would restrict sending back the
+                    // authentication response in the Web eID for Mobile flow.
+                    options.Cookie.SameSite = SameSiteMode.Lax;
                     options.Events.OnRedirectToLogin = context =>
                     {
                         context.Response.Redirect("/");
@@ -105,10 +93,19 @@ namespace WebEid.AspNetCore.Example
             {
                 options.Cookie.Name = "__Host-WebEid.AspNetCore.Example.Session";
                 options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-                options.Cookie.SameSite = SameSiteMode.Strict;
-                options.IdleTimeout = TimeSpan.FromSeconds(60);
+                // Set to "strict" if Web eID for Mobile flow is not used - this would restrict sending back the
+                // authentication response in the Web eID for Mobile flow.
+                options.Cookie.SameSite = SameSiteMode.Lax;
+                options.IdleTimeout = TimeSpan.FromSeconds(300);
                 options.Cookie.IsEssential = true;
             });
+
+            services.AddOptions<WebEidMobileOptions>()
+                .Bind(Configuration.GetSection("WebEidMobile"))
+                .ValidateDataAnnotations()
+                .ValidateOnStart();
+
+            services.AddSingleton<MobileRequestUriBuilder>();
 
             var url = GetOriginUrl(Configuration);
 
@@ -119,22 +116,22 @@ namespace WebEid.AspNetCore.Example
 
             services.AddSingleton(RandomNumberGenerator.Create());
             services.AddSingleton<SigningService>();
+            services.AddScoped<MobileSigningService>();
             services.AddSingleton<DigiDocConfiguration>();
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             services.AddSingleton<IChallengeNonceStore, SessionBackedChallengeNonceStore>();
             services.AddSingleton<IChallengeNonceGenerator, ChallengeNonceGenerator>();
 
-            services.AddAntiforgery(options =>
-            {
-                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-            });
+            services.AddAntiforgery(options => options.Cookie.SecurePolicy = CookieSecurePolicy.Always);
+
+            services.AddHostedService<ContainerCleanupService>();
 
             // Add support for running behind a TLS terminating proxy.
             services.Configure<ForwardedHeadersOptions>(options =>
             {
                 options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
                 // Only use this if you're behind a known proxy:
-                options.KnownNetworks.Clear();
+                options.KnownIPNetworks.Clear();
                 options.KnownProxies.Clear();
             });
         }
@@ -153,6 +150,9 @@ namespace WebEid.AspNetCore.Example
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            // Add support for running behind a TLS terminating proxy.
+            app.UseForwardedHeaders();
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -162,16 +162,14 @@ namespace WebEid.AspNetCore.Example
             {
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
-                // Add support for running behind a TLS terminating proxy.
-                app.UseForwardedHeaders();
             }
 
             app.UseStaticFiles();
 
             app.UseRouting();
 
-            app.UseAuthorization();
             app.UseAuthentication();
+            app.UseAuthorization();
             app.UseSession();
 
             app.UseEndpoints(endpoints =>

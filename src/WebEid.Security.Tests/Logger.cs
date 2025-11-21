@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright © 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -27,16 +27,16 @@ namespace WebEid.Security.Tests
 
     public class Logger : ILogger
     {
-        public Logger() => this.Logs = new List<string>();
+        public Logger() => Logs = [];
 
         public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
         {
-            if (!this.IsEnabled(logLevel))
+            if (!IsEnabled(logLevel))
             {
                 return;
             }
 
-            this.Logs.Add(formatter(state, exception));
+            Logs.Add(formatter(state, exception));
         }
 
         public bool IsEnabled(LogLevel logLevel) => true;
