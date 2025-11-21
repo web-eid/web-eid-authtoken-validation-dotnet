@@ -1,4 +1,4 @@
-// Copyright (c) 2021-2025 Estonian Information System Authority
+// Copyright (c) 2025-2025 Estonian Information System Authority
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -17,14 +17,26 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-﻿namespace WebEid.AspNetCore.Example.Dto
+namespace WebEid.AspNetCore.Example.Services
 {
-    using System.Text.Json.Serialization;
-    using Security.AuthToken;
+    using System;
+    using Microsoft.Extensions.Options;
+    using Options;
 
-    public class AuthenticateRequestDto
+    public class MobileRequestUriBuilder
     {
-        [JsonPropertyName("auth_token")]
-        public WebEidAuthToken AuthToken { get; set; }
+        private readonly string baseUri;
+
+        public MobileRequestUriBuilder(IOptions<WebEidMobileOptions> options)
+        {
+            baseUri = options.Value.BaseRequestUri;
+        }
+
+        public string Build(string path, string encodedPayload)
+        {
+            return baseUri.StartsWith("http", StringComparison.OrdinalIgnoreCase)
+                ? $"{baseUri.TrimEnd('/')}/{path}#{encodedPayload}"
+                : $"{baseUri}{path}#{encodedPayload}";
+        }
     }
 }

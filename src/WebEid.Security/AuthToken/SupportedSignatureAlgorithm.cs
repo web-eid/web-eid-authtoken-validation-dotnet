@@ -1,5 +1,5 @@
-﻿/*
- * Copyright © 2020-2025 Estonian Information System Authority
+/*
+ * Copyright © 2025-2025 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,17 +19,25 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-namespace WebEid.Security.Validator.CertValidators
+namespace WebEid.Security.AuthToken
 {
-    using System.Security.Cryptography.X509Certificates;
-    using System.Threading.Tasks;
-
     /// <summary>
-    /// Validators perform the actual user certificate validation actions.
-    /// They are used by AuthTokenValidator internally and are not part of the public API.
+    /// Represents a signature algorithm supported by the authentication token,
+    /// including its cryptographic algorithm, hash function, and padding scheme.
     /// </summary>
-    internal interface ISubjectCertificateValidator
+    public class SupportedSignatureAlgorithm
     {
-        Task Validate(X509Certificate2 subjectCertificate);
+        /// <summary>
+        /// The cryptographic algorithm, e.g. "RSA" or "ECDSA".
+        /// </summary>
+        public string CryptoAlgorithm { get; set; }
+        /// <summary>
+        /// The hash function, e.g. "SHA-256".
+        /// </summary>
+        public string HashFunction { get; set; }
+        /// <summary>
+        /// The padding scheme, e.g. "PKCS1" or "PSS".
+        /// </summary>
+        public string PaddingScheme { get; set; }
     }
 }

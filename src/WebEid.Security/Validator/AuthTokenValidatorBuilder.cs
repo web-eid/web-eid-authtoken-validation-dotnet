@@ -25,6 +25,7 @@ namespace WebEid.Security.Validator
     using System.Linq;
     using System.Security.Cryptography.X509Certificates;
     using Microsoft.Extensions.Logging;
+    using Ocsp;
     using Ocsp.Service;
     using Util;
 
@@ -34,6 +35,7 @@ namespace WebEid.Security.Validator
     public class AuthTokenValidatorBuilder
     {
         private readonly ILogger logger;
+        private IOcspClient ocspClient;
         private readonly AuthTokenValidationConfiguration configuration = new AuthTokenValidationConfiguration();
 
         /// <summary>
@@ -176,14 +178,33 @@ namespace WebEid.Security.Validator
         }
 
         /// <summary>
+        /// Configures a custom OCSP client for user certificate revocation checking.
+        /// </summary>
+        /// <returns>the builder instance for method chaining</returns>
+        public AuthTokenValidatorBuilder WithOcspClient(IOcspClient ocspClient)
+        {
+            this.ocspClient = ocspClient;
+            logger?.LogDebug("Custom OCSP client configured");
+            return this;
+        }
+
+        /// <summary>
         /// Validates the configuration and builds the <see cref="AuthTokenValidator"/> object with it.
         /// The returned <see cref="AuthTokenValidator"/> object is immutable/thread-safe.
         /// </summary>
         /// <returns></returns>
         public IAuthTokenValidator Build()
         {
-            this.configuration.Validate();
-            return new AuthTokenValidator(this.configuration, this.logger);
+            configuration.Validate();
+
+            if (configuration.IsUserCertificateRevocationCheckWithOcspEnabled && ocspClient == null)
+            {
+                ocspClient = new OcspClient(
+                configuration.OcspRequestTimeout,
+                logger);
+            }
+
+            return new AuthTokenValidator(configuration, ocspClient, logger);
         }
     }
 }

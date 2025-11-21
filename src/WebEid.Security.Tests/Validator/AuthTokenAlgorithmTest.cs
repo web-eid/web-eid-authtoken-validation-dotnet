@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2020-2024 Estonian Information System Authority
+ * Copyright © 2020-2025 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,33 +22,77 @@
 namespace WebEid.Security.Tests.Validator
 {
     using NUnit.Framework;
-    using WebEid.Security.Exceptions;
-    using WebEid.Security.Tests.TestUtils;
+    using Exceptions;
+    using TestUtils;
 
     public class AuthTokenAlgorithmTest : AbstractTestWithValidator
     {
         [Test]
         public void WhenAlgorithmNoneThenValidationFailsAsync()
         {
-            var authToken = this.ReplaceTokenField(ValidAuthTokenStr, "ES384", "NONE");
-            Assert.ThrowsAsync<AuthTokenParseException>(() => this.Validator.Validate(authToken, ValidChallengeNonce))
+            var authToken = ReplaceTokenField(ValidAuthTokenStr, "ES384", "NONE");
+            Assert.ThrowsAsync<AuthTokenParseException>(() => Validator.Validate(authToken, ValidChallengeNonce))
                 .WithMessage("Unsupported signature algorithm");
         }
 
         [Test]
         public void WhenAlgorithmEmptyThenParsingFailsAsync()
         {
-            var authToken = this.ReplaceTokenField(ValidAuthTokenStr, "ES384", "");
-            Assert.ThrowsAsync<AuthTokenParseException>(() => this.Validator.Validate(authToken, ValidChallengeNonce))
+            var authToken = ReplaceTokenField(ValidAuthTokenStr, "ES384", "");
+            Assert.ThrowsAsync<AuthTokenParseException>(() => Validator.Validate(authToken, ValidChallengeNonce))
                 .WithMessage("'algorithm' is null or empty");
         }
 
         [Test]
         public void WhenAlgorithmInvalidThenParsingFailsAsync()
         {
-            var authToken = this.ReplaceTokenField(ValidAuthTokenStr, "ES384", "\u0000\t\ninvalid");
-            Assert.ThrowsAsync<AuthTokenParseException>(() => this.Validator.Validate(authToken, ValidChallengeNonce))
+            var authToken = ReplaceTokenField(ValidAuthTokenStr, "ES384", "\u0000\t\ninvalid");
+            Assert.ThrowsAsync<AuthTokenParseException>(() => Validator.Validate(authToken, ValidChallengeNonce))
                 .WithMessage("Unsupported signature algorithm");
+        }
+
+        [Test]
+        public void WhenV11TokenMissingSupportedAlgorithmsThenValidationFailsAsync()
+        {
+            var tokenJson = RemoveJsonField(ValidV11AuthTokenStr, "supportedSignatureAlgorithms");
+            var token = Validator.Parse(tokenJson);
+
+            var ex = Assert.ThrowsAsync<AuthTokenParseException>(() =>
+                Validator.Validate(token, ValidChallengeNonce));
+
+            Assert.That(ex.Message, Does.Contain("'supportedSignatureAlgorithms' field is missing"));
+        }
+
+        [Test]
+        public void WhenV11TokenHasInvalidCryptoAlgorithmThenValidationFailsAsync()
+        {
+            var token = ReplaceTokenField(ValidV11AuthTokenStr, "\"cryptoAlgorithm\":\"RSA\"", "\"cryptoAlgorithm\":\"INVALID\"");
+            Assert.ThrowsAsync<AuthTokenParseException>(() => Validator.Validate(token, ValidChallengeNonce))
+                .WithMessage("Unsupported signature algorithm");
+        }
+
+        [Test]
+        public void WhenV11TokenHasInvalidHashFunctionThenValidationFailsAsync()
+        {
+            var token = ReplaceTokenField( ValidV11AuthTokenStr, "\"hashFunction\":\"SHA-256\"", "\"hashFunction\":\"NOT_A_HASH\"");
+            Assert.ThrowsAsync<AuthTokenParseException>(() => Validator.Validate(token, ValidChallengeNonce))
+                .WithMessage("Unsupported signature algorithm");
+        }
+
+        [Test]
+        public void WhenV11TokenHasInvalidPaddingSchemeThenValidationFailsAsync()
+        {
+            var token = ReplaceTokenField( ValidV11AuthTokenStr, "\"paddingScheme\":\"PKCS1.5\"", "\"paddingScheme\":\"BAD_PADDING\"");
+            Assert.ThrowsAsync<AuthTokenParseException>(() => Validator.Validate(token, ValidChallengeNonce))
+                .WithMessage("Unsupported signature algorithm");
+        }
+
+        [Test]
+        public void WhenV11TokenHasEmptySupportedAlgorithmsThenValidationFailsAsync()
+        {
+            var token = ReplaceTokenField( ValidV11AuthTokenStr, "\"supportedSignatureAlgorithms\":[{\"cryptoAlgorithm\":\"RSA\",\"hashFunction\":\"SHA-256\",\"paddingScheme\":\"PKCS1.5\"}]", "\"supportedSignatureAlgorithms\":[]");
+            Assert.ThrowsAsync<AuthTokenParseException>(() => Validator.Validate(token, ValidChallengeNonce))
+                .WithMessage("'supportedSignatureAlgorithms' field is missing");
         }
     }
 }

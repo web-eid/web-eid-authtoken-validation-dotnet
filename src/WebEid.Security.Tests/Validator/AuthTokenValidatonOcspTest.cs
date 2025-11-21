@@ -37,19 +37,19 @@ namespace WebEid.Security.Tests.Validator
             using var _ = DateTimeProvider.OverrideUtcNow(new DateTime(2023, 10, 21));
             var authTokenValidator = AuthTokenValidators
                 .GetDefaultAuthTokenValidatorBuilder()
-               .WithOcspRequestTimeout(TimeSpan.FromMilliseconds(1))
+                .WithOcspRequestTimeout(TimeSpan.FromMilliseconds(1))
                 .Build();
 
             var exception = Assert.ThrowsAsync<UserCertificateOcspCheckFailedException>(() => authTokenValidator.Validate(authTokenValidator.Parse(ValidAuthTokenStr), ValidChallengeNonce));
             Assert.That(exception.InnerException, Is.TypeOf<TaskCanceledException>());
             Assert.That(exception.InnerException.Message, Does.Contain("The request was canceled due to the configured HttpClient.Timeout of"));
-
         }
 
         [Test]
+        [Ignore("A new designated test OCSP responder certificate was issued whose validity period no longer overlaps with the revoked certificate")]
         public async Task WhenCertificateIsNotRevokedThenOcspCheckIsSuccessful()
         {
-            using var _ = DateTimeProvider.OverrideUtcNow(new DateTime(2023, 10, 21));
+            using var _ = DateTimeProvider.OverrideUtcNow(new DateTime(2020, 10, 21));
             var authTokenValidator = AuthTokenValidators
                 .GetDefaultAuthTokenValidatorBuilder()
                 .WithAllowedOcspResponseTimeSkew(TimeSpan.FromDays(365 * 20))
