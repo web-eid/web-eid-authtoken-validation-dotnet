@@ -1,0 +1,72 @@
+﻿@page "/auth/mobile/login"
+@model WebEid.AspNetCore.Example.Pages.WebEidLoginModel
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Xsrf
+
+@{
+var tokens = Xsrf.GetAndStoreTokens(HttpContext);
+}
+
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Signing you in…</title>
+
+    <meta name="csrf-token" content="@tokens.RequestToken">
+
+    <link rel="stylesheet" href="/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="/css/main.css" />
+</head>
+<body>
+
+<div id="error-message" class="alert alert-danger" style="display: none;" role="alert">
+    <div class="message"></div>
+    <pre class="details"></pre>
+</div>
+
+<script type="module">
+    import { showErrorMessage, checkHttpError } from "/js/errors.js";
+
+    // Using an async IIFE for mobile WebView compatibility:
+    // top-level await is not supported in some mobile browsers/WebViews.
+    (async function () {
+        const fragment = window.location.hash.slice(1);
+        if (!fragment) {
+            throw new Error("Missing authentication payload");
+        }
+
+        let payload;
+        try { 
+            payload = JSON.parse(atob(fragment)); 
+        } catch (e) {
+            console.error(e)
+            throw new Error("Failed to parse auth payload"); 
+        }
+
+        if (payload.error) {
+            const error = new Error(payload.message ?? "Authentication failed");
+            error.code = payload.code;
+            throw error;
+        }
+
+        const authToken = payload["auth_token"];
+        const csrf = document.querySelector('meta[name="csrf-token"]').content;
+        const response = await fetch("/auth/mobile/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "RequestVerificationToken": csrf
+            },
+            body: JSON.stringify({ auth_token: authToken }),
+            credentials: "include"
+        });
+
+        await checkHttpError(response);
+        window.location.replace("/welcome");
+    })().catch(error => {
+        console.error(error);
+        showErrorMessage(error);
+    });
+</script>
+</body>
+</html>

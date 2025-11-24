@@ -38,6 +38,7 @@ namespace WebEid.AspNetCore.Example
     using System.Threading.Tasks;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
+    using WebEid.AspNetCore.Example.Options;
 
     public class Startup
     {
@@ -88,7 +89,9 @@ namespace WebEid.AspNetCore.Example
                 {
                     options.Cookie.Name = "__Host-WebEid.AspNetCore.Example.Auth";
                     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-                    options.Cookie.SameSite = SameSiteMode.Strict;
+                    // Set to "strict" if Web eID for Mobile flow is not used - this would restrict sending back the
+                    // authentication response in the Web eID for Mobile flow.
+                    options.Cookie.SameSite = SameSiteMode.Lax;
                     options.Events.OnRedirectToLogin = context =>
                     {
                         context.Response.Redirect("/");
@@ -105,10 +108,17 @@ namespace WebEid.AspNetCore.Example
             {
                 options.Cookie.Name = "__Host-WebEid.AspNetCore.Example.Session";
                 options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-                options.Cookie.SameSite = SameSiteMode.Strict;
+                // Set to "strict" if Web eID for Mobile flow is not used - this would restrict sending back the
+                // authentication response in the Web eID for Mobile flow.
+                options.Cookie.SameSite = SameSiteMode.Lax;
                 options.IdleTimeout = TimeSpan.FromSeconds(60);
                 options.Cookie.IsEssential = true;
             });
+            
+            services.AddOptions<WebEidMobileOptions>()
+                .Bind(Configuration.GetSection("WebEidMobile"))
+                .ValidateDataAnnotations()
+                .ValidateOnStart();
 
             var url = GetOriginUrl(Configuration);
 

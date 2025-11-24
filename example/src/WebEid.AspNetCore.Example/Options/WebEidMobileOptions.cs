@@ -1,4 +1,4 @@
-// Copyright (c) 2021-2024 Estonian Information System Authority
+﻿// Copyright (c) 2021-2024 Estonian Information System Authority
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -17,20 +17,16 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-﻿namespace WebEid.AspNetCore.Example.Dto
+namespace WebEid.AspNetCore.Example.Options
 {
-    using System.Text.Json.Serialization;
-    using Security.AuthToken;
+    using System.ComponentModel.DataAnnotations;
 
-    public class AuthenticateRequestDto
+    public class WebEidMobileOptions
     {
-        // Mobile version uses "auth_token"
-        [JsonPropertyName("auth_token")] public WebEidAuthToken AuthTokenUnderscore { get; set; }
+        [Required]
+        [RegularExpression("^.*(?:[^/]|://)$", ErrorMessage = "Base URI must not have a trailing slash")]
+        public string BaseRequestUri { get; set; } = null!;
 
-        // Desktop version uses "auth-token"
-        [JsonPropertyName("auth-token")] public WebEidAuthToken AuthTokenDash { get; set; }
-
-        // Unified property for backend logic
-        [JsonIgnore] public WebEidAuthToken AuthToken => AuthTokenDash ?? AuthTokenUnderscore;
+        public bool RequestSigningCert { get; set; }
     }
 }
