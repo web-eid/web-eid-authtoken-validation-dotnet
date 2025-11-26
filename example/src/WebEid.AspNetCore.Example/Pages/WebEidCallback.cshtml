@@ -1,0 +1,122 @@
+﻿@page "/sign/mobile/{mode}"
+@model WebEid.AspNetCore.Example.Pages.WebEidCallbackModel
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Xsrf
+
+@{
+    var tokens = Xsrf.GetAndStoreTokens(HttpContext);
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <meta http-equiv="Cache-Control" content="no-store"/>
+    <meta id="csrftoken" name="csrftoken" content="@tokens.RequestToken" />
+    <meta id="csrfheadername" name="csrfheadername" content="@tokens.HeaderName" />
+    <title>Completing signing…</title>
+    <link rel="stylesheet" href="/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="/css/main.css"/>
+</head>
+
+<body class="loading-page">
+<div id="spinner-message">
+    <h2>Completing signing…</h2>
+    <div class="spinner"></div>
+</div>
+<div id="error-message" class="alert alert-danger" style="display: none;" role="alert">
+    <div class="message"></div>
+    <pre class="details"></pre>
+</div>
+
+<p class="text-center p-4" style="display: none;" id="error-actions">
+    <button id="back-button" class="btn btn-primary">Back</button>
+</p>
+
+<script type="module">
+    import {showErrorMessage, checkHttpError} from '/js/errors.js';
+
+    // Using an async IIFE for mobile WebView compatibility:
+    // top-level await is not supported in some mobile browsers/WebViews.
+    (async () => {
+        const fragment = window.location.hash.slice(1);
+
+        if (!fragment) {
+            throw new Error("Missing response payload");
+        }
+
+        let payload;
+        try {
+            payload = JSON.parse(atob(fragment));
+        } catch (e) {
+            console.error(e)
+            throw new Error("Failed to parse the response");
+        }
+
+        if (payload.error) {
+            const error = new Error(payload.message ?? "Signing failed");
+            error.code = payload.code;
+            throw error;
+        }
+
+        const path = window.location.pathname;
+        let endpoint;
+        if (path === "/sign/mobile/certificate") {
+            endpoint = "/sign/mobile/certificate";
+        } else if (path === "/sign/mobile/signature") {
+            endpoint = "/sign/mobile/signature";
+        } else {
+            const error = new Error("Unexpected callback path: " + path);
+            error.code = "INVALID_CALLBACK_PATH";
+            throw error;
+        }
+
+        const csrfHeaderName = document.querySelector('#csrfheadername').content;
+        const csrfToken = document.querySelector('#csrftoken').content;
+
+        // The mobile Web eID app always returns this value as a plain string (e.g. "ES256"),
+        // but .NET backend expects an object { id, name }. Normalize the string form
+        // into the object form for consistent handling in .NET.
+        if (payload.signatureAlgorithm && typeof payload.signatureAlgorithm === "string") {
+            payload.signatureAlgorithm = {
+                id: payload.signatureAlgorithm,
+                name: payload.signatureAlgorithm
+            };
+        }
+        
+        const response = await fetch(endpoint, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                [csrfHeaderName]: csrfToken,
+            },
+            credentials: "include",
+            body: JSON.stringify(payload),
+        });
+        await checkHttpError(response);
+
+        const result = await response.json();
+        if (endpoint.endsWith("/certificate")) {
+            const {request_uri} = result;
+            window.location.replace(request_uri);
+            return;
+        }
+
+        window.location.replace(
+            "/welcome?signed=" + encodeURIComponent(result.name)
+        );
+    })().catch((error) => {
+        console.error(error);
+        showErrorMessage(error, "Signing failed");
+        const spinner = document.querySelector("#spinner-message")
+        spinner.style.display = "none";
+        const actions = document.getElementById("error-actions");
+        const goBackButton = document.getElementById("back-button");
+        actions.style.display = "block";
+        goBackButton.addEventListener("click", () => {
+            window.location.replace("/welcome?error=webeid-callback");
+        });
+    });
+</script>
+</body>
+</html>

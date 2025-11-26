@@ -38,7 +38,8 @@ namespace WebEid.AspNetCore.Example
     using System.Threading.Tasks;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
-    using WebEid.AspNetCore.Example.Options;
+    using Options;
+    using Signing;
 
     public class Startup
     {
@@ -129,6 +130,7 @@ namespace WebEid.AspNetCore.Example
 
             services.AddSingleton(RandomNumberGenerator.Create());
             services.AddSingleton<SigningService>();
+            services.AddScoped<MobileSigningService>();
             services.AddSingleton<DigiDocConfiguration>();
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             services.AddSingleton<IChallengeNonceStore, SessionBackedChallengeNonceStore>();

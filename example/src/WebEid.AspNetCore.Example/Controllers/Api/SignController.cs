@@ -17,15 +17,16 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-﻿namespace WebEid.AspNetCore.Example.Controllers.Api
+namespace WebEid.AspNetCore.Example.Controllers.Api
 {
     using System;
     using System.Security.Claims;
     using System.Threading.Tasks;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.Extensions.Logging;
+    using Dto;
     using Services;
-    using WebEid.AspNetCore.Example.Dto;
+    using Signing;
 
     [Route("[controller]")]
     [ApiController]
@@ -33,11 +34,13 @@
     {
         private const string SignedFile = "example-for-signing.asice";
         private readonly SigningService signingService;
+        private readonly MobileSigningService mobileSigningService;
         private readonly ILogger logger;
 
-        public SignController(SigningService signingService, ILogger logger)
+        public SignController(SigningService signingService, MobileSigningService mobileSigningService, ILogger logger)
         {
             this.signingService = signingService;
+            this.mobileSigningService = mobileSigningService;
             this.logger = logger;
         }
 
@@ -53,6 +56,49 @@
         public FileDto Sign([FromBody] SignatureDto data)
         {
             signingService.SignContainer(data, GetUserContainerName());
+            return new FileDto(SignedFile);
+        }
+
+        [HttpPost("mobile/init")]
+        public MobileSigningService.MobileInitRequest MobileInit()
+        {
+            var identity = (ClaimsIdentity)HttpContext.User.Identity;
+            var container = GetUserContainerName();
+            return mobileSigningService.InitCertificateOrSigningRequest(identity, container);
+        }
+
+        [Route("sign/mobile/certificate")]
+        [HttpGet]
+        public IActionResult CertificateResponse()
+        {
+            return Redirect("/sign/mobile/certificate");
+        }
+
+        [Route("mobile/certificate")]
+        [HttpPost]
+        public MobileSigningService.MobileInitRequest CertificatePost([FromBody] CertificateDto certificateDto)
+        {
+            var identity = (ClaimsIdentity)HttpContext.User.Identity;
+            var containerName = GetUserContainerName();
+
+            return mobileSigningService.InitSigningRequest(
+                identity,
+                certificateDto,
+                containerName);
+        }
+
+        [Route("sign/mobile/signature")]
+        [HttpGet]
+        public IActionResult SignatureResponse()
+        {
+            return Redirect("/sign/mobile/signature");
+        }
+
+        [Route("mobile/signature")]
+        [HttpPost]
+        public FileDto SignaturePost([FromBody] SignatureDto signatureDto)
+        {
+            signingService.SignContainer(signatureDto, GetUserContainerName());
             return new FileDto(SignedFile);
         }
 
