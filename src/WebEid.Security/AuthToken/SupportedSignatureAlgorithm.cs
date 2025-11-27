@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020-2025 Estonian Information System Authority
+ * Copyright © 2025-2025 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,38 +21,26 @@
  */
 namespace WebEid.Security.AuthToken
 {
-    using System.Collections.Generic;
+    using Newtonsoft.Json;
 
     /// <summary>
-    /// The Web eID authentication token
+    /// Represents a signature algorithm supported by the authentication token,
+    /// including its cryptographic algorithm, hash function, and padding scheme.
     /// </summary>
-    public class WebEidAuthToken
+    [JsonObject]
+    public class SupportedSignatureAlgorithm
     {
         /// <summary>
-        /// The signature algorithm used to produce the signature.
-        /// The allowed values are the algorithms specified in JWA RFC sections 3.3, 3.4 and 3.5
+        /// The cryptographic algorithm, e.g. "RSA" or "ECDSA".
         /// </summary>
-        public string Algorithm { get; set; }
+        public string CryptoAlgorithm { get; set; }
         /// <summary>
-        /// The type identifier and version of the token format separated by a colon character ':', web-eid:1.0 for example.
-        /// The version number consists of the major and minor number separated by a dot.
+        /// The hash function, e.g. "SHA-256".
         /// </summary>
-        public string Format { get; set; }
+        public string HashFunction { get; set; }
         /// <summary>
-        /// The base64-encoded signature of the token.
+        /// The padding scheme, e.g. "PKCS1" or "PSS".
         /// </summary>
-        public string Signature { get; set; }
-        /// <summary>
-        /// The base64-encoded DER-encoded authentication certificate of the eID user.
-        /// </summary>
-        public string UnverifiedCertificate { get; set; }
-        /// <summary>
-        /// The base64-encoded signing certificate (DER).
-        /// </summary>
-        public string UnverifiedSigningCertificate { get; set; }
-        /// <summary>
-        /// List of supported signature algorithms from the card.
-        /// </summary>
-        public List<SupportedSignatureAlgorithm> SupportedSignatureAlgorithms { get; set; }
+        public string PaddingScheme { get; set; }
     }
 }

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2020-2025 Estonian Information System Authority
+ * Copyright © 2025-2025 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,17 +19,23 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-namespace WebEid.Security.Validator.CertValidators
+namespace WebEid.Security.Util
 {
     using System.Security.Cryptography.X509Certificates;
-    using System.Threading.Tasks;
 
     /// <summary>
-    /// Validators perform the actual user certificate validation actions.
-    /// They are used by AuthTokenValidator internally and are not part of the public API.
+    /// Provides extension methods for working with <see cref="X509Certificate2"/> instances.
     /// </summary>
-    public interface ISubjectCertificateValidator
+    public static class X509Certificate2Extensions
     {
-        Task Validate(X509Certificate2 subjectCertificate);
+        /// <summary>
+        /// Converts a <see cref="X509Certificate2"/> into an equivalent
+        /// BouncyCastle <see cref="Org.BouncyCastle.X509.X509Certificate"/> instance.
+        /// </summary>
+        public static Org.BouncyCastle.X509.X509Certificate ToBouncyCastle(this X509Certificate2 certificate)
+        {
+            var parser = new Org.BouncyCastle.X509.X509CertificateParser();
+            return parser.ReadCertificate(certificate.RawData);
+        }
     }
 }

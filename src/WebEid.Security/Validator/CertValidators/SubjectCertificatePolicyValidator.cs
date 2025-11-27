@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020-2024 Estonian Information System Authority
+ * Copyright © 2020-2025 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -32,7 +32,7 @@ namespace WebEid.Security.Validator.CertValidators
     using Org.BouncyCastle.Asn1.X509;
     using Org.BouncyCastle.Security;
 
-    internal sealed class SubjectCertificatePolicyValidator : ISubjectCertificateValidator
+    public sealed class SubjectCertificatePolicyValidator : ISubjectCertificateValidator
     {
         private readonly ICollection<Oid> disallowedSubjectCertificatePolicies;
         private readonly ILogger logger;

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2020-2025 Estonian Information System Authority
+ * Copyright © 2025-2025 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,37 +19,32 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-namespace WebEid.Security.Validator.CertValidators
+namespace WebEid.Security.Validator.VersionValidators
 {
-    using System.Collections.Generic;
     using System.Security.Cryptography.X509Certificates;
     using System.Threading.Tasks;
+    using AuthToken;
+    using Exceptions;
 
-    public sealed class SubjectCertificateValidatorBatch
+    /// <summary>
+    /// Version-specific Web eID authentication token validator.
+    /// </summary>
+    public interface IAuthTokenVersionValidator
     {
-        private readonly List<ISubjectCertificateValidator> validatorList;
+        /// <summary>
+        /// Whether this validator supports the specified token format,
+        /// e.g. "web-eid:1.0" or "web-eid:1.1".
+        /// </summary>
+        bool Supports(string format);
 
-        public static SubjectCertificateValidatorBatch CreateFrom(params ISubjectCertificateValidator[] validatorList) =>
-            new SubjectCertificateValidatorBatch(new List<ISubjectCertificateValidator>(validatorList));
-
-        public async Task ExecuteFor(X509Certificate2 subjectCertificate)
-        {
-            foreach (var validator in this.validatorList)
-            {
-                await validator.Validate(subjectCertificate);
-            }
-        }
-
-        public SubjectCertificateValidatorBatch AddOptional(bool condition, ISubjectCertificateValidator optionalValidator)
-        {
-            if (condition)
-            {
-                this.validatorList.Add(optionalValidator);
-            }
-            return this;
-        }
-
-        private SubjectCertificateValidatorBatch(List<ISubjectCertificateValidator> validatorList) =>
-            this.validatorList = validatorList;
+        /// <summary>
+        /// Validates the Web eID authentication token according to the
+        /// version-specific rules and returns the authenticated user's certificate.
+        /// </summary>
+        /// <param name="authToken">Parsed Web eID authentication token.</param>
+        /// <param name="currentChallengeNonce">Server-issued challenge nonce.</param>
+        /// <returns>Validated authentication certificate.</returns>
+        /// <exception cref="AuthTokenException">If validation fails.</exception>
+        Task<X509Certificate2> Validate(WebEidAuthToken authToken, string currentChallengeNonce);
     }
 }

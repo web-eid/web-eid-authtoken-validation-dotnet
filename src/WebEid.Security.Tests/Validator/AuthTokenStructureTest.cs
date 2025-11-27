@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2020-2024 Estonian Information System Authority
+ * Copyright © 2020-2025 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -52,7 +52,7 @@ namespace WebEid.Security.Tests.Validator
         {
             var authToken = this.ReplaceTokenField(ValidAuthTokenStr, "web-eid:1", "invalid");
             Assert.ThrowsAsync<AuthTokenParseException>(() => this.Validator.Validate(authToken, ""))
-                .WithMessage("Only token format version 'web-eid:1' is currently supported");
+                .WithMessage("Token format version 'invalid' is currently not supported");
         }
     }
 }

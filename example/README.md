@@ -130,6 +130,7 @@ The `src\WebEid.AspNetCore.Example` directory contains the ASP.NET application s
 -   `DigiDoc`: contains the C# binding files of the `libdigidocpp` library; these files must be copied from the `libdigidocpp` installation directory `\include\digidocpp_csharp`,
 -   `Pages`: Razor pages,
 -   `Services`: Web eID signing service implementation that uses `libdigidocpp`.
+-   `Options`: strongly-typed configuration classes for mobile Web eID settings such as `BaseRequestUri` and `RequestSigningCert` (when set to false, initiates a separate signing-certificate flow to demo requesting the certificate without prior authentication, as the signing certificate normally comes from the authentication flow).
 
 ## More information
 

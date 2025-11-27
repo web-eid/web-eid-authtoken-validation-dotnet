@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020-2024 Estonian Information System Authority
+ * Copyright © 2020-2025 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -35,7 +35,7 @@ namespace WebEid.Security.Validator.CertValidators
     using Org.BouncyCastle.Security;
     using WebEid.Security.Util;
 
-    internal sealed class SubjectCertificateNotRevokedValidator : ISubjectCertificateValidator
+    public sealed class SubjectCertificateNotRevokedValidator : ISubjectCertificateValidator
     {
         private readonly SubjectCertificateTrustedValidator trustValidator;
         private readonly IOcspClient ocspClient;

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020-2024 Estonian Information System Authority
+ * Copyright © 2020-2025 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,7 +28,7 @@ namespace WebEid.Security.Validator.CertValidators
     using Util;
     using WebEid.Security.Exceptions;
 
-    internal sealed class SubjectCertificateTrustedValidator : ISubjectCertificateValidator
+    public sealed class SubjectCertificateTrustedValidator : ISubjectCertificateValidator
     {
         private readonly ICollection<X509Certificate2> trustedCaCertificates;
         private readonly ILogger logger;
