@@ -36,7 +36,7 @@ namespace WebEid.Security.Tests.Validator
         [Test]
         public void WhenOriginMissingThenBuildingFails() =>
             Assert.Throws<ArgumentNullException>(() => this.builder.Build())
-                .WithMessage("Value cannot be null. (Parameter 'SiteOrigin')");
+                .WithMessage("Value cannot be null. (Parameter 'siteOrigin')");
 
         [Test]
         public void WhenRootCertificateAuthorityMissingThenBuildingFails()

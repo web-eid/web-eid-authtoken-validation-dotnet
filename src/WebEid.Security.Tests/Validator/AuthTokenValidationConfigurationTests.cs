@@ -39,7 +39,7 @@ namespace WebEid.Security.Tests.Validator
         {
             var configuration = new AuthTokenValidationConfiguration();
             Assert.Throws<ArgumentNullException>(() => configuration.Validate())
-                .WithMessage("Value cannot be null. (Parameter 'SiteOrigin')");
+                .WithMessage("Value cannot be null. (Parameter 'siteOrigin')");
         }
 
         [Test]
