@@ -10,6 +10,7 @@ var tokens = Xsrf.GetAndStoreTokens(HttpContext);
 <html lang="en">
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Signing you in…</title>
 
     <meta name="csrf-token" content="@tokens.RequestToken">
@@ -18,12 +19,20 @@ var tokens = Xsrf.GetAndStoreTokens(HttpContext);
     <link rel="stylesheet" href="/css/bootstrap.min.css" />
     <link rel="stylesheet" href="/css/main.css" />
 </head>
-<body>
+<body class="loading-page">
+    <div id="spinner-message">
+        <h2>Signing you in…</h2>
+        <div class="spinner"></div>
+    </div>
 
-<div id="error-message" class="alert alert-danger" style="display: none;" role="alert">
-    <div class="message"></div>
-    <pre class="details"></pre>
-</div>
+    <div id="error-message" class="alert alert-danger" style="display: none;" role="alert">
+        <div class="message"></div>
+        <pre class="details"></pre>
+    </div>
+
+    <p class="text-center p-4" style="display: none" id="error-actions">
+        <button id="back-button" class="btn btn-primary">Back</button>
+    </p>
 
 <script type="module">
     import { showErrorMessage, checkHttpError } from "/js/errors.js";
@@ -33,7 +42,7 @@ var tokens = Xsrf.GetAndStoreTokens(HttpContext);
     // top-level await is not supported in some mobile browsers/WebViews.
     (async function () {
         const payload = parsePayload("Authentication");
-        const authToken = payload["auth_token"];
+        const authToken = payload["authToken"];
         const csrf = document.querySelector('meta[name="csrf-token"]').content;
         const csrfHeaderName = document.querySelector('meta[name="csrf-header-name"]').content;
         const response = await fetch("/auth/login", {
@@ -48,9 +57,17 @@ var tokens = Xsrf.GetAndStoreTokens(HttpContext);
 
         await checkHttpError(response);
         window.location.replace("/welcome");
-    })().catch(error => {
+    })().catch((error) => {
         console.error(error);
         showErrorMessage(error);
+        document.getElementById("spinner-message").style.display = "none";
+
+        const actions = document.getElementById("error-actions");
+        actions.style.display = "block";
+
+        document.getElementById("back-button").addEventListener("click", () => {
+            window.location.replace("/");
+        });
     });
 </script>
 </body>

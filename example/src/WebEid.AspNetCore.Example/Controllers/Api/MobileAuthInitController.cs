@@ -73,18 +73,18 @@ namespace WebEid.AspNetCore.Example.Controllers.Api
             public required string Challenge { get; init; }
 
             [JsonInclude]
-            [JsonPropertyName("login_uri")]
+            [JsonPropertyName("loginUri")]
             public required string LoginUri { get; init; }
 
             [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-            [JsonPropertyName("get_signing_certificate")]
+            [JsonPropertyName("getSigningCertificate")]
             public bool? GetSigningCertificate { get; init; }
         }
 
         private sealed record AuthUri
         {
             [JsonInclude]
-            [JsonPropertyName("auth_uri")]
+            [JsonPropertyName("authUri")]
             public required string AuthUriValue { get; init; }
         }
     }
