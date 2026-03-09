@@ -83,8 +83,8 @@ Set up the `libdigidocpp` library as follows:
 
 1.  Install the _libdigidocpp-4.0.0.8301.x64.msi_ package or higher. The installation packages are available from  [https://github.com/open-eid/libdigidocpp/releases](https://github.com/open-eid/libdigidocpp/releases).
 2.  Copy the C# source files from the `libdigidocpp` installation folder `include\digidocpp_csharp` to the `src\WebEid.AspNetCore.Example\DigiDoc` folder.
-3.  Copy all files from the `libdigidocpp` installation folder to the example application build output folder `bin\Debug\net8.0` (after building, see next step).
-   * Windows: Also copy folder `schema` from `libdigidocpp` installation folder to the example application build output folder `bin\Debug\net8.0`
+3.  Copy all files from the `libdigidocpp` installation folder to the example application build output folder `bin\Debug\net10.0` (after building, see next step).
+   * Windows: Also copy folder `schema` from `libdigidocpp` installation folder to the example application build output folder `bin\Debug\net10.0`
 4.  When running in the `Development` profile, create an empty file named `EE_T.xml` for TSL cache as described in the [_Using test TSL lists_](https://github.com/open-eid/libdigidocpp/wiki/Using-test-TSL-lists#preconditions) section of the `libdigidocpp` wiki.
 
 #### For Ubuntu Linux
@@ -115,7 +115,7 @@ Set up the `libdigidocpp` library as follows:
 
 1.  Install the *libdigidocpp_4.0.0.1460.pkg* package or higher. The installation packages are available from  [https://github.com/open-eid/libdigidocpp/releases](https://github.com/open-eid/libdigidocpp/releases).
 2.  Copy the C# source files from `/Library/libdigidocpp/include/digidocpp_csharp` directory to `src/WebEid.AspNetCore.Example/DigiDoc` directory.
-3.  Go to `bin/Debug/net8.0` directory and create symbolic link to `/Library/libdigidocpp/lib/libdigidoc_csharp.dylib` library:
+3.  Go to `bin/Debug/net10.0` directory and create symbolic link to `/Library/libdigidocpp/lib/libdigidoc_csharp.dylib` library:
     ```cmd
     ln -s /Library/libdigidocpp/lib/libdigidoc_csharp.dylib
     ```
@@ -124,7 +124,7 @@ Further information is available in the [libdigidocpp example C# application sou
 
 ### 5. Build the application
 
-You need to have the [.NET 8.0 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) installed for building the application package.
+You need to have the [.NET 10.0 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/10.0) installed for building the application package.
 Build the application by running the following command in a terminal window under the `src` directory:
 
 ```cmd
@@ -184,13 +184,13 @@ This section covers the steps required to build the application on an Ubuntu Lin
 
 Before you begin, ensure you have the following installed on your system:
 
-- .NET SDK 8.0
+- .NET SDK 10.0
 - libdigidocpp-csharp
 
 You can install them using the following command:
 
 ```sh
-sudo apt install dotnet-sdk-8.0 libdigidocpp-csharp
+sudo apt install dotnet-sdk-10.0 libdigidocpp-csharp
 ```
 
 Note: Before installing `libdigidocpp-csharp` you have to have added the RIA repository as a package source. See [For Ubuntu Linux section](#for-ubuntu-linux) for information.
@@ -220,7 +220,7 @@ To build the application, follow these steps:
 4. Update the `OriginUrl` in the `appsettings.json` to match your production environment:
 
     ```sh
-    sed -i 's#"OriginUrl": "https://localhost:44391"#"OriginUrl": "https://example.com"#' WebEid.AspNetCore.Example/bin/Release/net6.0/publish/appsettings.json
+    sed -i 's#"OriginUrl": "https://localhost:44391"#"OriginUrl": "https://example.com"#' WebEid.AspNetCore.Example/bin/Release/net10.0/publish/appsettings.json
     ```
 
 ### Building the Docker image
