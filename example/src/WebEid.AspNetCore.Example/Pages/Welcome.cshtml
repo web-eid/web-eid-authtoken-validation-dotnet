@@ -107,8 +107,8 @@ var tokens = Xsrf.GetAndStoreTokens(HttpContext);
                 });
 
                 await checkHttpError(initMobileSignResponse);
-                const { request_uri } = await initMobileSignResponse.json();
-                window.location.href = request_uri;
+                const { requestUri } = await initMobileSignResponse.json();
+                window.location.href = requestUri;
             } else {
                 const {
                     certificate,

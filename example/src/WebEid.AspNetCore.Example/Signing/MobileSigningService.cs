@@ -117,18 +117,18 @@ namespace WebEid.AspNetCore.Example.Signing
         public sealed record MobileInitRequest
         {
             [JsonInclude]
-            [JsonPropertyName("request_uri")]
+            [JsonPropertyName("requestUri")]
             public required string RequestUri { get; init; }
         }
 
         internal sealed record RequestObject
         {
             [JsonInclude]
-            [JsonPropertyName("response_uri")]
+            [JsonPropertyName("responseUri")]
             public required string ResponseUri { get; init; }
 
             [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-            [JsonPropertyName("signing_certificate")]
+            [JsonPropertyName("signingCertificate")]
             public string? SigningCertificate { get; init; }
 
             [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -136,7 +136,7 @@ namespace WebEid.AspNetCore.Example.Signing
             public string? Hash { get; init; }
 
             [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-            [JsonPropertyName("hash_function")]
+            [JsonPropertyName("hashFunction")]
             public string? HashFunction { get; init; }
         }
     }
