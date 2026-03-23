@@ -54,13 +54,13 @@ namespace WebEid.Security.Tests.Validator
         [Test]
         public void WhenV11TokenMissingSupportedAlgorithmsThenValidationFailsAsync()
         {
-            var tokenJson = RemoveJsonField(ValidV11AuthTokenStr, "supportedSignatureAlgorithms");
-            var token = Validator.Parse(tokenJson);
+            var token = ReplaceTokenField(
+                ValidV11AuthTokenStr,
+                "\"supportedSignatureAlgorithms\":[{\"cryptoAlgorithm\":\"RSA\",\"hashFunction\":\"SHA-256\",\"paddingScheme\":\"PKCS1.5\"}]",
+                "");
 
-            var ex = Assert.ThrowsAsync<AuthTokenParseException>(() =>
-                Validator.Validate(token, ValidChallengeNonce));
-
-            Assert.That(ex.Message, Does.Contain("'supportedSignatureAlgorithms' field is missing"));
+            Assert.ThrowsAsync<AuthTokenParseException>(() => Validator.Validate(token, ValidChallengeNonce))
+                .WithMessage("'supportedSignatureAlgorithms' field is missing");
         }
 
         [Test]

@@ -83,20 +83,23 @@ namespace WebEid.AspNetCore.Example.Controllers.Api
             AddNewClaimIfCertificateHasData(claims, ClaimTypes.NameIdentifier, certificate.GetSubjectIdCode);
             AddNewClaimIfCertificateHasData(claims, ClaimTypes.Name, certificate.GetSubjectCn);
 
-            var isV11 = authToken.Format?.StartsWith("web-eid:1.1", StringComparison.OrdinalIgnoreCase) == true;
+            var signingCertificate = authToken.UnverifiedSigningCertificates != null &&
+                                     authToken.UnverifiedSigningCertificates.Count > 0
+                ? authToken.UnverifiedSigningCertificates[0]
+                : null;
 
-            if (isV11 && !string.IsNullOrEmpty(authToken.UnverifiedSigningCertificate))
+            if (signingCertificate != null && !string.IsNullOrEmpty(signingCertificate.Certificate))
             {
                 claims.Add(new Claim(
                     "signingCertificate",
-                    authToken.UnverifiedSigningCertificate));
+                    signingCertificate.Certificate));
             }
 
-            if (authToken.SupportedSignatureAlgorithms != null)
+            if (signingCertificate?.SupportedSignatureAlgorithms != null)
             {
                 claims.Add(new Claim(
                     "supportedSignatureAlgorithms",
-                    JsonSerializer.Serialize(authToken.SupportedSignatureAlgorithms)));
+                    JsonSerializer.Serialize(signingCertificate.SupportedSignatureAlgorithms)));
             }
 
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
