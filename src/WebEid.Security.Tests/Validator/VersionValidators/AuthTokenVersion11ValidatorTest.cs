@@ -53,7 +53,9 @@ namespace WebEid.Security.Tests.Validator.VersionValidators
             {
                 SiteOrigin = new Uri("https://example.com")
             };
+            #pragma warning disable SYSLIB0026
             configuration.TrustedCaCertificates.Add(new X509Certificate2());
+            #pragma warning disable SYSLIB0026
 
             signatureValidator = new Mock<AuthTokenSignatureValidator>(
                 new Uri("https://ria.ee")
@@ -101,13 +103,12 @@ namespace WebEid.Security.Tests.Validator.VersionValidators
         }
 
         [Test]
-        public void WhenUnverifiedSigningCertificateMissingThenValidationFails()
+        public void WhenUnverifiedSigningCertificatesMissingThenValidationFails()
         {
             var token = new WebEidAuthToken
             {
                 Format = "web-eid:1.1",
-                UnverifiedSigningCertificate = null,
-                SupportedSignatureAlgorithms = new List<SupportedSignatureAlgorithm>()
+                UnverifiedSigningCertificates = null
             };
 
             Assert.ThrowsAsync<AuthTokenParseException>(() =>
@@ -120,8 +121,14 @@ namespace WebEid.Security.Tests.Validator.VersionValidators
             var token = new WebEidAuthToken
             {
                 Format = "web-eid:1.1",
-                UnverifiedSigningCertificate = "ABC123",
-                SupportedSignatureAlgorithms = null
+                UnverifiedSigningCertificates = new List<UnverifiedSigningCertificate>
+                {
+                    new UnverifiedSigningCertificate
+                    {
+                        Certificate = "ABC123",
+                        SupportedSignatureAlgorithms = null
+                    }
+                }
             };
 
             Assert.ThrowsAsync<AuthTokenParseException>(() =>
@@ -129,5 +136,3 @@ namespace WebEid.Security.Tests.Validator.VersionValidators
         }
     }
 }
-
-

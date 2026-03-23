@@ -83,6 +83,11 @@ namespace WebEid.Security.Validator.VersionValidators
         /// </summary>
         public virtual async Task<X509Certificate2> Validate(WebEidAuthToken authToken, string currentChallengeNonce)
         {
+            if (IsExactV10Format(authToken.Format) && authToken.UnverifiedSigningCertificates != null)
+            {
+                throw new AuthTokenParseException($"'unverifiedSigningCertificates' field is not allowed for format '{authToken.Format}'");
+            }
+
             if (string.IsNullOrEmpty(authToken.UnverifiedCertificate))
             {
                 throw new AuthTokenParseException("'unverifiedCertificate' field is missing, null or empty");
@@ -115,5 +120,9 @@ namespace WebEid.Security.Validator.VersionValidators
 
             return subjectCertificate;
         }
-    }
+
+        private static bool IsExactV10Format(string format) =>
+            V1_SUPPORTED_TOKEN_FORMAT_PREFIX.Equals(format, StringComparison.OrdinalIgnoreCase) ||
+            "web-eid:1.0".Equals(format, StringComparison.OrdinalIgnoreCase);
+        }
 }
