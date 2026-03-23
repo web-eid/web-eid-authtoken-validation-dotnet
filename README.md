@@ -1,6 +1,6 @@
 # web-eid-authtoken-validation-dotnet
 
-![European Regional Development Fund](https://raw.githubusercontent.com/open-eid/DigiDoc4-Client/master/client/images/EL_Regionaalarengu_Fond.png)
+<img src="example/src/WebEid.AspNetCore.Example/wwwroot/img/eu-fund-flags.jpg" width="300" alt="European Regional Development Fund">
 
 Web eID enables usage of European Union electronic identity (eID) smart cards for secure authentication and digital signing of documents on the web using public-key cryptography.
 
