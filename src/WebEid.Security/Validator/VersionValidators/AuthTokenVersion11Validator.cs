@@ -99,55 +99,80 @@ namespace WebEid.Security.Validator.VersionValidators
         public override async Task<X509Certificate2> Validate(WebEidAuthToken authToken, string currentChallengeNonce)
         {
             var subjectCertificate = await base.Validate(authToken, currentChallengeNonce);
-            var signingCertificate = ValidateSigningCertificateExists(authToken);
-            ValidateSupportedSignatureAlgorithms(authToken.SupportedSignatureAlgorithms);
-            ValidateSameSubject(subjectCertificate, signingCertificate);
-            ValidateSameIssuer(subjectCertificate, signingCertificate);
-            ValidateSigningCertificateValidity(signingCertificate);
-            ValidateSigningCertificateKeyUsage(signingCertificate);
+            var signingCertificates = ValidateSigningCertificates(authToken);
+
+            foreach (var signingCertificate in signingCertificates)
+            {
+                ValidateSameSubject(subjectCertificate, signingCertificate);
+                ValidateSameIssuer(subjectCertificate, signingCertificate);
+                ValidateSigningCertificateValidity(signingCertificate);
+                ValidateSigningCertificateKeyUsage(signingCertificate);
+            }
 
             return subjectCertificate;
         }
 
-        private static X509Certificate2 ValidateSigningCertificateExists(WebEidAuthToken token)
+        private static void ValidateSupportedSignatureAlgorithms(UnverifiedSigningCertificate cert)
         {
-            if (string.IsNullOrEmpty(token.UnverifiedSigningCertificate))
-            {
-                throw new AuthTokenParseException(
-                    "'unverifiedSigningCertificate' field is missing, null or empty for format 'web-eid:1.1'");
-            }
+            var algorithms = cert.SupportedSignatureAlgorithms;
 
-            try
-            {
-                return X509CertificateExtensions.ParseCertificate(
-                    token.UnverifiedSigningCertificate,
-                    "unverifiedSigningCertificate");
-            }
-            catch (Exception ex)
-            {
-                throw new AuthTokenParseException("Failed to decode signing certificate", ex);
-            }
-        }
-
-        private static void ValidateSupportedSignatureAlgorithms(
-            IList<SupportedSignatureAlgorithm> algorithms)
-        {
             if (algorithms == null || algorithms.Count == 0)
             {
                 throw new AuthTokenParseException("'supportedSignatureAlgorithms' field is missing");
             }
 
             bool hasInvalid =
-                algorithms.Any(a =>
-                    a == null ||
-                    !SupportedSigningCryptoAlgorithms.Contains(a.CryptoAlgorithm) ||
-                    !SupportedSigningHashFunctions.Contains(a.HashFunction) ||
-                    !SupportedSigningPaddingSchemes.Contains(a.PaddingScheme));
+                algorithms.Any(algorithm =>
+                    algorithm == null ||
+                    algorithm.CryptoAlgorithm == null ||
+                    algorithm.HashFunction == null ||
+                    algorithm.PaddingScheme == null ||
+                    !SupportedSigningCryptoAlgorithms.Contains(algorithm.CryptoAlgorithm) ||
+                    !SupportedSigningHashFunctions.Contains(algorithm.HashFunction) ||
+                    !SupportedSigningPaddingSchemes.Contains(algorithm.PaddingScheme));
 
             if (hasInvalid)
             {
                 throw new AuthTokenParseException("Unsupported signature algorithm");
             }
+        }
+
+        private static List<X509Certificate2> ValidateSigningCertificates(WebEidAuthToken token)
+        {
+            var signingCertificates = token.UnverifiedSigningCertificates;
+
+            if (signingCertificates == null || signingCertificates.Count == 0)
+            {
+                throw new AuthTokenParseException(
+                    "'unverifiedSigningCertificates' field is missing, null or empty for format 'web-eid:1.1'");
+            }
+
+            var result = new List<X509Certificate2>();
+
+            foreach (var certificate in signingCertificates)
+            {
+                if (certificate == null || string.IsNullOrEmpty(certificate.Certificate))
+                {
+                    throw new AuthTokenParseException(
+                        "'unverifiedSigningCertificates' contains a null or empty entry for format 'web-eid:1.1'");
+                }
+
+                ValidateSupportedSignatureAlgorithms(certificate);
+
+                try
+                {
+                    result.Add(
+                        X509CertificateExtensions.ParseCertificate(
+                            certificate.Certificate,
+                            "unverifiedSigningCertificates"));
+                }
+                catch (Exception ex)
+                {
+                    throw new AuthTokenParseException("Failed to decode signing certificate", ex);
+                }
+            }
+
+            return result;
         }
 
         private static void ValidateSameSubject(X509Certificate2 subjectCert, X509Certificate2 signingCert)

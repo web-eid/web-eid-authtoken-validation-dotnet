@@ -53,7 +53,9 @@ namespace WebEid.Security.Tests.Validator.VersionValidators
             {
                 SiteOrigin = new Uri("https://example.com")
             };
+            #pragma warning disable SYSLIB0026
             configuration.TrustedCaCertificates.Add(new X509Certificate2());
+            #pragma warning disable SYSLIB0026
 
             signatureValidator = new Mock<AuthTokenSignatureValidator>(
                 new Uri("https://ria.ee")
@@ -107,11 +109,34 @@ namespace WebEid.Security.Tests.Validator.VersionValidators
             var token = new WebEidAuthToken
             {
                 Format = "web-eid:1",
+                UnverifiedSigningCertificates = null,
                 UnverifiedCertificate = null
             };
 
-            Assert.ThrowsAsync<AuthTokenParseException>(() =>
+            var ex = Assert.ThrowsAsync<AuthTokenParseException>(() =>
                 validator.Validate(token, "nonce"));
+
+            Assert.That(ex.Message, Does.Contain("'unverifiedCertificate' field is missing"));
+        }
+
+        [Test]
+        public void WhenUnverifiedSigningCertificatesPresentForV1ThenValidationFails()
+        {
+            var token = new WebEidAuthToken
+            {
+                Format = "web-eid:1",
+                UnverifiedSigningCertificates = new List<UnverifiedSigningCertificate>
+                {
+                    new UnverifiedSigningCertificate()
+                }
+            };
+
+            var ex = Assert.ThrowsAsync<AuthTokenParseException>(() =>
+                validator.Validate(token, "nonce"));
+
+            Assert.That(
+                ex.Message,
+                Does.Contain("'unverifiedSigningCertificates' field is not allowed for format 'web-eid:1'"));
         }
     }
 }
