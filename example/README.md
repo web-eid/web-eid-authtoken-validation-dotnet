@@ -1,6 +1,6 @@
 # Web eID ASP.NET example
 
-![European Regional Development Fund](https://github.com/open-eid/DigiDoc4-Client/blob/master/client/images/EL_Regionaalarengu_Fond.png)
+<img src="src/WebEid.AspNetCore.Example/wwwroot/img/eu-fund-flags.jpg" width="300" alt="European Regional Development Fund">
 
 This project is an example ASP.NET web application that shows how to implement strong authentication and digital signing with electronic ID smart cards using Web eID.
 
