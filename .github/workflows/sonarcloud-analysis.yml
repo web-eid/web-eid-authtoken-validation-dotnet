@@ -5,6 +5,8 @@ on:
     paths-ignore:
       - 'example/**'
       - '.github/workflows/*example*'
+  schedule:
+    - cron: '30 6 8-14,22-28 * 1'
 
 jobs:
   analyze:
