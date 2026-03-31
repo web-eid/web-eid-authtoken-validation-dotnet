@@ -28,7 +28,6 @@ See full example [here](https://github.com/web-eid/web-eid-authtoken-validation-
 
   - From GUI:  
     Right-click the project in the Solution Explorer where you want to install the Web eID dependency. Select **Manage NuGet Packages**. Choose the _Web eID GitLab_ package source you added earlier from the _Package source_ dropdown. Then, install the `WebEid.Security` package.
-     
 
   - From Package Manager Console:  
     Run the following command:
@@ -112,7 +111,7 @@ public void ConfigureServices(IServiceCollection services)
 
 ## 4. Add trusted certificate authority certificates
 
-You must explicitly specify which **intermediate** certificate authorities (CAs) are trusted to issue the eID authentication certificates. CA certificates can be loaded from either the resources or any stream source. 
+You must explicitly specify which **intermediate** certificate authorities (CAs) are trusted to issue the eID authentication certificates. CA certificates can be loaded from either the resources or any stream source.  
 First implement `CertificateLoader` class:
 ```cs
 using System.Collections.Generic;
@@ -155,7 +154,7 @@ Then copy the trusted certificates, for example `ESTEID2018.cer`, to `Certificat
 
 ```cs
 ...
-private X509Certificate[] TrustedCertificateAuthorities() 
+private X509Certificate[] TrustedCertificateAuthorities()
 {
     CertificateLoader.LoadTrustedCaCertificatesFromStore();
 }
@@ -196,8 +195,9 @@ A REST endpoint that issues challenge nonces is required for authentication. The
 In the following example, we are using the [ASP.NET Web APIs RESTful Web Services framework](https://dotnet.microsoft.com/apps/aspnet/apis) to implement the endpoint, see also full implementation [here](https://github.com/web-eid/web-eid-authtoken-validation-dotnet/blob/main/example/src/WebEid.AspNetCore.Example/Controllers/Api/AuthController.cs).
 
 ```cs
+using System;
 using Microsoft.AspNetCore.Mvc;
-using WebEid.Security.Nonce;
+using WebEid.Security.Challenge;
 
 [ApiController]
 [Route("auth")]
@@ -241,7 +241,7 @@ When using standard [ASP.NET cookie authentication](https://docs.microsoft.com/e
     ```cs
     app.UseAuthentication();
     app.UseAuthorization();
-    
+
     app.UseEndpoints(endpoints =>
     {
         endpoints.MapControllers();
@@ -253,79 +253,155 @@ When using standard [ASP.NET cookie authentication](https://docs.microsoft.com/e
     using System;
     using System.Collections.Generic;
     using System.Security.Claims;
-    using System.Text.Json.Serialization;
+    using System.Security.Cryptography.X509Certificates;
+    using System.Text.Json;
     using System.Threading.Tasks;
     using Microsoft.AspNetCore.Authentication;
     using Microsoft.AspNetCore.Authentication.Cookies;
+    using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
+    using WebEid.AspNetCore.Example.Dto;
+    using WebEid.Security.AuthToken;
+    using WebEid.Security.Challenge;
+    using WebEid.Security.Exceptions;
     using WebEid.Security.Util;
     using WebEid.Security.Validator;
-    
+
     [Route("[controller]")]
     [ApiController]
-    public class AuthController : ControllerBase
+    public class AuthController(IAuthTokenValidator authTokenValidator, IChallengeNonceStore challengeNonceStore) : BaseController
     {
-        private readonly IAuthTokenValidator authTokenValidator;
-    
-        public AuthController(IAuthTokenValidator authTokenValidator, IChallengeNonceStore challengeNonceStore)
+        private readonly IAuthTokenValidator authTokenValidator = authTokenValidator;
+        private readonly IChallengeNonceStore challengeNonceStore = challengeNonceStore;
+
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] AuthenticateRequestDto dto)
         {
-            this.authTokenValidator = authTokenValidator;
-            this.challengeNonceStore = challengeNonceStore;
-        }
-    
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        [Route("login")]
-        public async Task Login([FromBody] AuthenticateRequestDto authToken)
-        {
-            var certificate = await this.authTokenValidator.Validate(authToken.AuthToken, this.challengeNonceStore.GetAndRemove().Base64EncodedNonce);
-            var claims = new List<Claim>
+            if (dto?.AuthToken is null)
             {
-                new Claim(ClaimTypes.GivenName, certificate.GetSubjectGivenName()),
-                new Claim(ClaimTypes.Surname, certificate.GetSubjectSurname()),
-                new Claim(ClaimTypes.NameIdentifier, certificate.GetSubjectIdCode())
-            };
-    
-            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-    
-            var authProperties = new AuthenticationProperties
+                return BadRequest(new { error = "Missing auth_token" });
+            }
+
+            try
             {
-                AllowRefresh = true
-            };
-    
-            await HttpContext.SignInAsync(
-                CookieAuthenticationDefaults.AuthenticationScheme,
-                new ClaimsPrincipal(claimsIdentity),
-                authProperties);
+                await SignInUser(dto.AuthToken);
+                return Ok();
+            }
+            catch (Exception ex) when (ex is ChallengeNonceNotFoundException or ChallengeNonceExpiredException)
+            {
+                return Unauthorized(new { error = "challenge_nonce_not_found_or_expired" });
+            }
+            catch (AuthTokenException)
+            {
+                return Unauthorized(new { error = "authentication_failed" });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new { error = "user_not_authorized" });
+            }
         }
-    
-        [HttpGet]
-        [ValidateAntiForgeryToken]
-        [Route("logout")]
+
+        [HttpPost("logout")]
         public async Task Logout()
         {
-            await HttpContext.SignOutAsync(
-                CookieAuthenticationDefaults.AuthenticationScheme);
+            if (HasActiveSession())
+            {
+                RemoveUserContainerFile();
+            }
+
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        }
+
+        private async Task SignInUser(WebEidAuthToken authToken)
+        {
+            var certificate = await authTokenValidator.Validate(authToken, challengeNonceStore.GetAndRemove().Base64EncodedNonce);
+
+            // Successful token validation establishes the identity of the user, but not their
+            // permission to use the service. The application-specific authorization check
+            // must be performed before the authenticated session is created below.
+            if (!IsUserAuthorized(certificate))
+            {
+                throw new UnauthorizedAccessException("The user is not authorized to access this service");
+            }
+
+            var claims = new List<Claim>();
+
+            AddNewClaimIfCertificateHasData(claims, ClaimTypes.GivenName, certificate.GetSubjectGivenName);
+            AddNewClaimIfCertificateHasData(claims, ClaimTypes.Surname, certificate.GetSubjectSurname);
+            AddNewClaimIfCertificateHasData(claims, ClaimTypes.NameIdentifier, certificate.GetSubjectIdCode);
+            AddNewClaimIfCertificateHasData(claims, ClaimTypes.Name, certificate.GetSubjectCn);
+
+            var signingCertificate = authToken.UnverifiedSigningCertificates != null &&
+                                     authToken.UnverifiedSigningCertificates.Count > 0
+                ? authToken.UnverifiedSigningCertificates[0]
+                : null;
+
+            if (signingCertificate != null && !string.IsNullOrEmpty(signingCertificate.Certificate))
+            {
+                claims.Add(new Claim("signingCertificate", signingCertificate.Certificate));
+            }
+
+            if (signingCertificate?.SupportedSignatureAlgorithms != null)
+            {
+                claims.Add(new Claim(
+                    "supportedSignatureAlgorithms",
+                    JsonSerializer.Serialize(signingCertificate.SupportedSignatureAlgorithms)));
+            }
+
+            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                new ClaimsPrincipal(identity),
+                new AuthenticationProperties { AllowRefresh = true });
+
+            SetUniqueIdInSession();
+        }
+
+        // Application-specific authorization check stub. Replace it with the check that
+        // your application requires, for example a lookup of the user's identity code in
+        // the service's user registry or a query for the roles granted to the user.
+        private static bool IsUserAuthorized(X509Certificate2 certificate)
+        {
+            var idCode = certificate.GetSubjectIdCode();
+            // TODO Replace with the actual authorization decision for the given user.
+            return !string.IsNullOrEmpty(idCode);
+        }
+
+        private static void AddNewClaimIfCertificateHasData(List<Claim> claims, string claimType, Func<string> dataGetter)
+        {
+            var claimData = dataGetter();
+            if (!string.IsNullOrEmpty(claimData))
+            {
+                claims.Add(new Claim(claimType, claimData));
+            }
         }
     }
     ```
 
-- Similarly, the `MobileAuthInitController` generates a challenge nonce and returns the mobile deep-link for starting the Web eID Mobile authentication flow, and the `MobileAuthLoginController` handles the mobile login request by validating the returned authentication token and creating the authentication cookie.
-    ```cs
+    Note that successful token validation only establishes *who* the user is; it does not establish that the user is allowed to use the service. The authorization check is application-specific and must be implemented by the application itself, as outlined by the `IsUserAuthorized()` stub above.
+
+
+- Similarly, the `MobileAuthInitController` generates a challenge nonce and returns the authentication request link (OS-verified App Link / Universal Link) for starting the Web eID mobile authentication flow, and the `AuthController` handles the mobile login request by validating the returned authentication token and creating the authentication cookie.
+  ```cs
     using System;
     using System.Text;
-    using Microsoft.AspNetCore.Mvc;
-    using Microsoft.Extensions.Options;
     using System.Text.Json;
     using System.Text.Json.Serialization;
-    using Options;
-    using Security.Challenge;
+    using Microsoft.AspNetCore.Mvc;
+    using Microsoft.Extensions.Configuration;
+    using Microsoft.Extensions.Options;
+    using WebEid.AspNetCore.Example.Options;
+    using WebEid.AspNetCore.Example.Services;
+    using WebEid.Security.Challenge;
 
     [ApiController]
     [Route("auth/mobile")]
     public class MobileAuthInitController(
         IChallengeNonceGenerator nonceGenerator,
-        IOptions<WebEidMobileOptions> mobileOptions
+        IOptions<WebEidMobileOptions> mobileOptions,
+        MobileRequestUriBuilder uriBuilder,
+        IConfiguration configuration
     ) : ControllerBase
     {
         private const string WebEidMobileAuthPath = "auth";
@@ -337,7 +413,7 @@ When using standard [ASP.NET cookie authentication](https://docs.microsoft.com/e
             var challenge = nonceGenerator.GenerateAndStoreNonce(TimeSpan.FromMinutes(5));
             var challengeBase64 = challenge.Base64EncodedNonce;
 
-            var loginUri = $"{Request.Scheme}://{Request.Host}{MobileLoginPath}";
+            var loginUri = $"{configuration["OriginUrl"]}{MobileLoginPath}";
 
             var payload = new AuthPayload
             {
@@ -349,80 +425,44 @@ When using standard [ASP.NET cookie authentication](https://docs.microsoft.com/e
             var json = JsonSerializer.Serialize(payload);
             var encodedPayload = Convert.ToBase64String(Encoding.UTF8.GetBytes(json));
 
-            var authUri = BuildAuthUri(encodedPayload);
+            var authUri = uriBuilder.Build(WebEidMobileAuthPath, encodedPayload);
 
             return Ok(new AuthUri
             {
                 AuthUriValue = authUri
             });
         }
-    ```
 
-    ```cs
-    using Microsoft.AspNetCore.Mvc;
-    using System.Text.Json;
-    using Dto;
-    using Security.Challenge;
-    using Security.Validator;
-    using System.Security.Claims;
-    using System.Threading.Tasks;
-    using Microsoft.AspNetCore.Authentication;
-    using Microsoft.AspNetCore.Authentication.Cookies;
-    using Security.Util;
-
-    [ApiController]
-    [Route("auth/mobile")]
-    public class MobileAuthLoginController(
-        IAuthTokenValidator authTokenValidator,
-        IChallengeNonceStore challengeNonceStore
-    ) : ControllerBase
-    {
-        [HttpPost("login")]
-        public async Task<IActionResult> MobileLogin([FromBody] AuthenticateRequestDto dto)
+        private sealed record AuthPayload
         {
-            if (dto?.AuthToken == null)
-            {
-                return BadRequest(new { error = "Missing auth_token" });
-            }
+            [JsonInclude]
+            [JsonPropertyName("challenge")]
+            public required string Challenge { get; init; }
 
-            var parsedToken = dto.AuthToken;
-            var certificate = await authTokenValidator.Validate(
-                parsedToken,
-                challengeNonceStore.GetAndRemove().Base64EncodedNonce);
+            [JsonInclude]
+            [JsonPropertyName("loginUri")]
+            public required string LoginUri { get; init; }
 
-            var identity = new ClaimsIdentity(CookieAuthenticationDefaults.AuthenticationScheme);
+            [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+            [JsonPropertyName("getSigningCertificate")]
+            public bool? GetSigningCertificate { get; init; }
+        }
 
-            identity.AddClaim(new Claim(ClaimTypes.GivenName, certificate.GetSubjectGivenName()));
-            identity.AddClaim(new Claim(ClaimTypes.Surname, certificate.GetSubjectSurname()));
-            identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, certificate.GetSubjectIdCode()));
-            identity.AddClaim(new Claim(ClaimTypes.Name, certificate.GetSubjectCn()));
-
-            if (!string.IsNullOrEmpty(parsedToken.UnverifiedSigningCertificate))
-            {
-                identity.AddClaim(new Claim("signingCertificate", parsedToken.UnverifiedSigningCertificate));
-            }
-
-            if (parsedToken.SupportedSignatureAlgorithms != null)
-            {
-                identity.AddClaim(new Claim(
-                    "supportedSignatureAlgorithms",
-                    JsonSerializer.Serialize(parsedToken.SupportedSignatureAlgorithms)));
-            }
-
-            await HttpContext.SignInAsync(
-                CookieAuthenticationDefaults.AuthenticationScheme,
-                new ClaimsPrincipal(identity),
-                new AuthenticationProperties { IsPersistent = false });
-
-            return Ok(new { redirect = "/welcome" });
+        private sealed record AuthUri
+        {
+            [JsonInclude]
+            [JsonPropertyName("authUri")]
+            public required string AuthUriValue { get; init; }
         }
     }
-    ```
-
+  ```
 
 # Table of contents
 
+* [Quickstart](#quickstart)
 * [Introduction](#introduction)
+* [Authentication token format](#authentication-token-format)
+  * [Supported token format versions](#supported-token-format-versions)
 * [Authentication token validation](#authentication-token-validation)
   * [Basic usage](#basic-usage)
   * [Extended configuration](#extended-configuration)
@@ -435,16 +475,91 @@ When using standard [ASP.NET cookie authentication](https://docs.microsoft.com/e
 
 # Introduction
 
-The Web eID authentication token validation library for .NET contains the implementation of the Web eID authentication token validation process in its entirety to ensure that the authentication token sent by the Web eID browser extension contains valid, consistent data that has not been modified by a third party. It also implements secure challenge nonce generation as required by the Web eID authentication protocol. It is easy to configure and integrate into your authentication service.
+The Web eID authentication token validation library for .NET contains the implementation of the Web eID authentication token validation process in its entirety to ensure that the authentication token sent by the Web eID browser extension or mobile application contains valid, consistent data that has not been modified by a third party. It also implements secure challenge nonce generation as required by the Web eID authentication protocol. It is easy to configure and integrate into your authentication service.
 
 The authentication protocol, validation requirements, authentication token format and nonce usage are described in more detail in the [Web eID system architecture document](https://github.com/web-eid/web-eid-system-architecture-doc#authentication-1).
 
+# Authentication token format
+
+In the following,
+
+- **origin** is defined as the website origin, the URL serving the web application,
+- **challenge nonce** (or challenge) is defined as a cryptographic nonce, a large random number that can be used only once, with at least 256 bits of entropy.
+
+The authentication token is a JSON data structure. The canonical definition of its
+fields, their allowed values and the requirements of each token format version is
+given in the [Web eID authentication token
+specification](https://github.com/web-eid/web-eid-system-architecture-doc#web-eid-authentication-token-specification);
+the tokens shown below are illustrative examples only.
+
+An authentication token in format **`web-eid:1.0`** looks like the following:
+
+```json
+{
+  "unverifiedCertificate": "MIIFozCCA4ugAwIBAgIQHFpdK-zCQsFW4...",
+  "algorithm": "RS256",
+  "signature": "HBjNXIaUskXbfhzYQHvwjKDUWfNu4yxXZha...",
+  "format": "web-eid:1.0",
+  "appVersion": "https://web-eid.eu/web-eid-app/releases/v2.0.0"
+}
+```
+
+An authentication token in format **`web-eid:1.1`** additionally contains the
+`unverifiedSigningCertificates` field:
+
+```json
+{
+  "unverifiedCertificate": "MIIFozCCA4ugAwIBAgIQHFpdK-zCQsFW4...",
+  "algorithm": "RS256",
+  "signature": "HBjNXIaUskXbfhzYQHvwjKDUWfNu4yxXZha...",
+  "unverifiedSigningCertificates": [
+    {
+      "certificate": "MIIFikACB3ugAwASAgIHHFrtdZ-zeQsas1...",
+      "supportedSignatureAlgorithms": [
+        {
+          "cryptoAlgorithm": "ECC",
+          "hashFunction": "SHA-384",
+          "paddingScheme": "NONE"
+        }
+      ]
+    }
+  ],
+  "format": "web-eid:1.1",
+  "appVersion": "https://web-eid.eu/web-eid-app/releases/v2.0.0"
+}
+```
+
+The value that is signed by the user’s authentication private key and included in the `signature` field is `hash(origin)+hash(challenge)`. The hash function is used before concatenation to ensure field separation as the hash of a value is guaranteed to have a fixed length. Otherwise the origin `example.com` with challenge nonce `.eu1234` and another origin `example.com.eu` with challenge nonce `1234` would result in the same value after concatenation. The hash function `hash` is the same hash function that is used in the signature algorithm, for example SHA256 in case of RS256.
+
+## Supported token format versions
+
+This library validates both authentication token formats defined by the Web eID
+authentication protocol:
+
+- **`web-eid:1.0`** – the base authentication token format, without signing
+  certificate information. It is used both by the Web eID browser extension and by the
+  mobile application when signing certificate information is not requested.
+
+- **`web-eid:1.1`** – extends the base format with signing certificate information in
+  the `unverifiedSigningCertificates` field. It is used when the authentication request
+  asks for the signing certificate.
+
+Both formats follow the same validation principles; `web-eid:1.1` adds the verification
+steps for the signing certificates that are listed in *[Authentication token
+validation](#authentication-token-validation)*.
+
 # Authentication token validation
 
-The authentication token validation process consists of two stages:
+The authentication token validation process consists of the following stages:
 
 - First, **user certificate validation**: the validator parses the token and extracts the user certificate from the *unverifiedCertificate* field. Then it checks the certificate expiration, purpose and policies. Next it checks that the certificate is signed by a trusted CA and checks the certificate status with OCSP.
 - Second, **token signature validation**: the validator validates that the token signature was created using the provided user certificate by reconstructing the signed data `hash(origin)+hash(challenge)` and using the public key from the certificate to verify the signature in the `signature` field. If the signature verification succeeds, then the origin and challenge nonce have been implicitly and correctly verified without the need to implement any additional security checks.
+- Additional validation for **Web eID authentication tokens (format v1.1)**: the token must contain the `unverifiedSigningCertificates` field with at least one signing certificate entry. Each entry's `supportedSignatureAlgorithms` are validated against the set of allowed cryptographic algorithms, hash functions, and padding schemes. For each signing certificate, the following checks are performed:
+    - The subject must match the subject of the authentication certificate, ensuring both certificates belong to the same user.
+    - The issuing authority must match that of the authentication certificate, verified via the Authority Key Identifier (AKI) extension.
+    - The certificate must be within its validity period.
+    - The certificate must contain the non-repudiation key usage bit required for digital signatures.
+    - The certificate chain must validate against the configured trusted certificate authorities.
 
 The website backend must lookup the challenge nonce from its local store using an identifier specific to the browser session, to guarantee that the authentication token was received from the same browser to which the corresponding challenge nonce was issued. The website backend must guarantee that the challenge nonce lifetime is limited and that its expiration is checked, and that it can be used only once by removing it from the store during validation.
 
@@ -470,13 +585,13 @@ The `Validate()` method returns the validated user certificate object if validat
 
 ```cs
 using WebEid.Security.Util;
-...   
+...
 userCertificate.GetSubjectCn(); // "JÕEORG\\,JAAK-KRISTJAN\\,38001085718"
 userCertificate.GetSubjectIdCode(); // "PNOEE-38001085718"
 userCertificate.GetSubjectCountryCode(); // "EE"
 ```
 
-## Extended configuration  
+## Extended configuration
 
 The following additional configuration options are available in `AuthTokenValidatorBuilder`:
 
@@ -486,10 +601,9 @@ The following additional configuration options are available in `AuthTokenValida
 - `WithDisallowedCertificatePolicies(params string[] policies)` – adds the given policies to the list of disallowed user certificate policies. In order for the user certificate to be considered valid, it must not contain any policies present in this list. Contains the Estonian Mobile-ID policies by default as it must not be possible to authenticate with a Mobile-ID certificate when an eID smart card is expected.
 - `WithNonceDisabledOcspUrls(params Uri[] urls)` – adds the given URLs to the list of OCSP URLs for which the nonce protocol extension will be disabled. Some OCSP services don't support the nonce extension.
 - `WithAllowedOcspResponseTimeSkew(TimeSpan allowedTimeSkew)` - sets the allowed time skew for OCSP response's `thisUpdate` and `nextUpdate` times to allow discrepancies between the system clock and the OCSP responder's clock or revocation updates that are not published in real time. The default allowed time skew is 15 minutes. The relatively long default is specifically chosen to account for one particular OCSP responder that used CRLs for authoritative revocation info, these CRLs were updated every 15 minutes.
-- `WithMaxOcspResponseThisUpdateAge(TimeSpan maxThisUpdateAge)` - sets the maximum age for the OCSP response's `thisUpdate` time before it is considered too old to rely on. The default maximum age is 2 minutes.
-Extended configuration example:  
-
-```cs  
+- `WithMaxOcspResponseThisUpdateAge(TimeSpan maxThisUpdateAge)` - sets the maximum age for the OCSP response's `thisUpdate` time before it is considered too old to rely on. The default maximum age is 2 minutes.  
+Extended configuration example:
+```cs
 AuthTokenValidator validator = new AuthTokenValidatorBuilder(logger)
     .WithSiteOrigin("https://example.org")
     .WithTrustedCertificateAuthorities(TrustedCertificateAuthorities)
@@ -516,11 +630,11 @@ var loggerFactory = LoggerFactory.Create(builder =>
 });
 var logger = loggerFactory.CreateLogger("Logger name");
 AuthTokenValidator validator = new AuthTokenValidatorBuilder(logger)
-    ...	  
+    ...
     .Build();
 ```
 
-## Possible validation errors  
+## Possible validation errors
 
 The `Validate()` method of `AuthTokenValidator` returns the validated user certificate object if validation is successful or throws an exception if validation fails. All exceptions that can occur during validation derive from `AuthTokenException`, the list of available exceptions is available [here](src/WebEid.Security/Exceptions). Each exception file contains a documentation comment under which conditions the exception is thrown.
 
@@ -532,13 +646,13 @@ A common alternative to stateful authentication is stateless authentication with
 
 # Challenge nonce generation
 
-The authentication protocol requires support for generating challenge nonces,  large random numbers that can be used only once, and storing them for later use during token validation. The validation library uses the *System.Security.Cryptography.RandomNumberGenerator* API as the secure random source and provides *WebEid.Security.Cache.ICache* interface for storing issued challenge nonces. 
+The authentication protocol requires support for generating challenge nonces,  large random numbers that can be used only once, and storing them for later use during token validation. The validation library uses the *System.Security.Cryptography.RandomNumberGenerator* API as the secure random source and the `IChallengeNonceStore` interface for storing issued challenge nonces.
 
 The authentication protocol requires a REST endpoint that issues challenge nonces as described in section *[6. Add a REST endpoint for issuing challenge nonces](#6-add-a-rest-endpoint-for-issuing-challenge-nonces)*.
 
 Nonce usage is described in more detail in the [Web eID system architecture document](https://github.com/web-eid/web-eid-system-architecture-doc#authentication-1).
 
-## Basic usage  
+## Basic usage
 
 As described in section _[3. Configure the nonce generator](https://github.com/web-eid/web-eid-authtoken-validation-dotnet#3-configure-the-nonce-generator)_, the only mandatory configuration parameter of the challenge nonce generator is the challenge nonce store.
 
@@ -547,7 +661,7 @@ The challenge nonce store is used to save the nonce value along with the nonce e
 The nonce generator configuration and construction is described in more detail in section _[3. Configure the nonce generator](https://github.com/web-eid/web-eid-authtoken-validation-dotnet#3-configure-the-nonce-generator)_. Once the generator object has been constructed, it can be used for generating nonces as follows:
 
 ```cs
-ChallengeNonce challengeNonce = nonceGenerator.GenerateAndStoreNonce(timeToLive);  
+ChallengeNonce challengeNonce = nonceGenerator.GenerateAndStoreNonce(timeToLive);
 ```
 
 The `GenerateAndStoreNonce(TimeSpan ttl)` method both generates the nonce and stores it in the store. The `ttl` parameter defines nonce time-to-live duration. When the time-to-live passes, the nonce is considered to be expired.
