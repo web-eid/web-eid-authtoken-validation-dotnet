@@ -6,13 +6,6 @@ This project is an example ASP.NET web application that shows how to implement s
 
 More information about the Web eID project is available on the project [website](https://web-eid.eu/).
 
-The ASP.NET web application makes use of the following technologies:
-
--   ASP.NET MVC,
--   the Web eID authentication token validation library [_web-eid-authtoken-validation-dotnet_](https://github.com/web-eid/web-eid-authtoken-validation-dotnet),
--   the Web eID JavaScript library [_web-eid.js_](https://github.com/web-eid/web-eid.js),
--   the digital signing library [_libdigidocpp_](https://github.com/open-eid/libdigidocpp/tree/master/examples/DigiDocCSharp).
-
 ## Quickstart
 
 Complete the steps below to run the example application in order to test authentication and digital signing with Web eID.
@@ -152,7 +145,31 @@ This will activate the `https` profile in the `launchSettings.json` and launch t
 When the application has started, open your preferred web browser on the address defined in `launchSettings.json` on the `applicationUrl` field at `https` profile and follow instructions on the front page.
 By default the address is https://localhost:44391.
 
-## Overview of the source code
+## Table of contents
+
+* [Quickstart](#quickstart)
+* [Overview of the project](#overview-of-the-project)
+  + [Overview of the source code](#overview-of-the-source-code)
+  + [Requesting the signing certificate in a separate step](#requesting-the-signing-certificate-in-a-separate-step)
+* [More information](#more-information)
+  + [Frequently asked questions](#frequently-asked-questions)
+    - [Why do I get the `System.ApplicationException: Failed to verify OCSP Responder certificate` error during signing?](#why-do-i-get-the-systemapplicationexception-failed-to-verify-ocsp-responder-certificate-error-during-signing)
+* [Building and running with Docker on Ubuntu Linux](#building-and-running-with-docker-on-ubuntu-linux)
+    + [Prerequisites](#prerequisites)
+    + [Building the application](#building-the-application)
+    + [Building the Docker image](#building-the-docker-image)
+* [Running the Docker container with HTTPS support](#running-the-docker-container-with-https-support)
+
+## Overview of the project
+
+The ASP.NET web application makes use of the following technologies:
+
+-   ASP.NET MVC,
+-   the Web eID authentication token validation library [_web-eid-authtoken-validation-dotnet_](https://github.com/web-eid/web-eid-authtoken-validation-dotnet),
+-   the Web eID JavaScript library [_web-eid.js_](https://github.com/web-eid/web-eid.js),
+-   the digital signing library [_libdigidocpp_](https://github.com/open-eid/libdigidocpp/tree/master/examples/DigiDocCSharp).
+
+### Overview of the source code
 
 The `src\WebEid.AspNetCore.Example` directory contains the ASP.NET application source code and resources. The subdirectories therein have the following purpose:
 -   `wwwroot`: web server static content, including CSS and JavaScript files,
@@ -164,6 +181,16 @@ The `src\WebEid.AspNetCore.Example` directory contains the ASP.NET application s
 -   `DigiDoc`: contains the C# binding files of the `libdigidocpp` library; these files must be copied from the `libdigidocpp` installation directory `\include\digidocpp_csharp`,
 -   `Pages`: Razor pages,
 -   `Signing`: Web eID signing service implementation that uses `libdigidocpp`.
+
+### Requesting the signing certificate in a separate step
+
+In some deployments, the signing certificate is not reused from the authentication flow. Instead, it is retrieved directly from the user’s ID-card during the signing process itself.
+
+This approach is useful when the signing process is performed without a prior authentication step. For example, in a mobile flow, the user may start signing directly without authenticating beforehand. In such cases, the signing certificate must be requested separately from the user’s ID-card before the signature can be created.
+
+When this mode is enabled in the configuration, the backend issues a separate request for the signing certificate using the `MobileSigningService`. The service communicates with the client to obtain the certificate before the signing container is prepared, ensuring that the correct certificate chain is available for the signature.
+
+This behavior is controlled by the `RequestSigningCert` flag in the `appsettings.json` configuration files (`appsettings.json`, `appsettings.Development.json`). When the flag is set to **false**, the application explicitly requests the signing certificate during the signing process, demonstrating the separate signing certificate retrieval flow. When set to **true**, the signing uses the signing certificate that was already obtained during authentication, and no additional request is made.
 
 ## More information
 
