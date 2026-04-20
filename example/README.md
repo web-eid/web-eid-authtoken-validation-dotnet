@@ -219,7 +219,7 @@ To build the application, follow these steps:
 4. Update the `OriginUrl` in the `appsettings.json` to match your production environment:
 
     ```sh
-    sed -i 's#"OriginUrl": "https://localhost:44391"#"OriginUrl": "https://example.com"#' WebEid.AspNetCore.Example/bin/Release/net6.0/publish/appsettings.json
+    sed -i 's#"OriginUrl": "https://localhost:44391"#"OriginUrl": "https://example.com"#' WebEid.AspNetCore.Example/bin/Release/net8.0/publish/appsettings.json
     ```
 
 ### Building the Docker image
