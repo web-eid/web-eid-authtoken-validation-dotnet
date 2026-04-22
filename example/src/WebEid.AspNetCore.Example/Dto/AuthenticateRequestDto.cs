@@ -17,7 +17,7 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-﻿namespace WebEid.AspNetCore.Example.Dto
+namespace WebEid.AspNetCore.Example.Dto
 {
     using System.Text.Json.Serialization;
     using Security.AuthToken;
@@ -25,6 +25,6 @@
     public class AuthenticateRequestDto
     {
         [JsonPropertyName("auth_token")]
-        public WebEidAuthToken AuthToken { get; set; }
+        public required WebEidAuthToken AuthToken { get; set; }
     }
 }

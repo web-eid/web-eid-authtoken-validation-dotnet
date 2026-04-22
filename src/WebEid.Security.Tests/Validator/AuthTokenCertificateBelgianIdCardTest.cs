@@ -23,13 +23,12 @@ namespace WebEid.Security.Tests.Validator
 {
     using System;
     using NUnit.Framework;
-    using WebEid.Security.Exceptions;
     using WebEid.Security.Tests.TestUtils;
     using WebEid.Security.Util;
 
     public class AuthTokenCertificateBelgianIdCardTest : AbstractTestWithValidator
     {
-        private const string BelgianTestIdCardAuthTokenEcc = 
+        private const string BelgianTestIdCardAuthTokenEcc =
             "{" +
             "  \"action\": \"web-eid:authenticate-success\"," +
             "  \"algorithm\": \"ES384\"," +
@@ -39,7 +38,7 @@ namespace WebEid.Security.Tests.Validator
             "  \"unverifiedCertificate\": \"MIIDQDCCAsegAwIBAgIQEAAAAAAA8evx/gAAAAGKYTAKBggqhkjOPQQDAzAuMQswCQYDVQQGEwJCRTEfMB0GA1UEAwwWZUlEIFRFU1QgRUMgQ2l0aXplbiBDQTAeFw0yMDEwMjIyMjAwMDBaFw0zMDEwMjIyMjAwMDBaMHYxCzAJBgNVBAYTAkJFMScwJQYDVQQDDB5Ob3JhIFNwZWNpbWVuIChBdXRoZW50aWNhdGlvbikxETAPBgNVBAQMCFNwZWNpbWVuMRUwEwYDVQQqDAxOb3JhIEFuZ8OobGUxFDASBgNVBAUTCzAxMDUwMzk5ODY0MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAEPybypdwlvczyuKQtJ87s/RmB+hRFaP4BdtR/Sc8jfQTmKUYVn0KDYZPBllh928yMPxU7F+Za3FtFrAPCnDH75IquYsn0oc5olVO7Uas5gn61Y2EA5askyCljNVLA0Gquo4IBYDCCAVwwHwYDVR0jBBgwFoAU3bN/45oZjlnJEVYCLfX6nW/ehEswDgYDVR0PAQH/BAQDAgeAMEkGA1UdIARCMEAwPgYHYDgMAQECAjAzMDEGCCsGAQUFBwIBFiVodHRwOi8vZWlkZGV2Y2FyZHMuemV0ZXNjYXJkcy5iZS9jZXJ0MBMGA1UdJQQMMAoGCCsGAQUFBwMCMEUGA1UdHwQ+MDwwOqA4oDaGNGh0dHA6Ly9laWRkZXZjYXJkcy56ZXRlc2NhcmRzLmJlL2NybC9jaXRpemVuY2FFQy5jcmwwgYEGCCsGAQUFBwEBBHUwczA+BggrBgEFBQcwAoYyaHR0cDovL2VpZGRldmNhcmRzLnpldGVzY2FyZHMuYmUvY2VydC9yb290Y2FFQy5jcnQwMQYIKwYBBQUHMAGGJWh0dHA6Ly9laWRkZXZjYXJkcy56ZXRlc2NhcmRzLmJlOjg4ODgwCgYIKoZIzj0EAwMDZwAwZAIwE7uLOjrhXbid+tRKe/5wgE/R3rFVsE6HkpHJg+9+mqlBToLrLWvckmiPRmUot85BAjBNyxy48pVF+azJEnt0Z/hipToVhgJLlMkPFwZiL2+4B3w2WtNeSphEl3gjClos+Wg=\"" +
             "}";
 
-        private const string BelgianTestIdCardAuthTokenRsa = 
+        private const string BelgianTestIdCardAuthTokenRsa =
             "{" +
             "  \"action\": \"web-eid:authenticate-success\"," +
             "  \"algorithm\": \"RS256\"," +
@@ -68,6 +67,6 @@ namespace WebEid.Security.Tests.Validator
             var token = validator.Parse(BelgianTestIdCardAuthTokenRsa);
             Assert.DoesNotThrowAsync(() => validator.Validate(token, "YPVgYc7Qds0qmK/RilPLffnsIg7IIovM4BAWqGZWwiY="));
         }
-      
+
     }
 }

@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright © 2025-2025 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -22,13 +22,13 @@
 namespace WebEid.Security.Tests.Validator.VersionValidators
 {
     using System;
-    using NUnit.Framework;
-    using Exceptions;
-    using WebEid.Security.Validator;
     using System.Text.Json;
     using System.Text.Json.Nodes;
     using AuthToken;
+    using Exceptions;
+    using NUnit.Framework;
     using TestUtils;
+    using WebEid.Security.Validator;
 
     public class AuthTokenV11CertificateTest : AbstractTestWithValidator
     {
@@ -140,12 +140,12 @@ namespace WebEid.Security.Tests.Validator.VersionValidators
                 Validator.Validate(token, ValidChallengeNonce));
         }
 
+        private static readonly JsonSerializerOptions DefaultJsonSerializerOptions = new()
+        {
+            PropertyNameCaseInsensitive = true
+        };
+
         private static WebEidAuthToken DeserializeToken(string json) =>
-            JsonSerializer.Deserialize<WebEidAuthToken>(
-                json,
-                new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                })!;
+            JsonSerializer.Deserialize<WebEidAuthToken>(json, DefaultJsonSerializerOptions)!;
     }
 }

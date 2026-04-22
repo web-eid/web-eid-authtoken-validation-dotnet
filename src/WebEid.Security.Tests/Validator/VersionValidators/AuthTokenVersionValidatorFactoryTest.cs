@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright © 2025-2025 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -21,10 +21,9 @@
  */
 namespace WebEid.Security.Tests.Validator.VersionValidators
 {
-    using System.Collections.Generic;
-    using NUnit.Framework;
-    using Moq;
     using Exceptions;
+    using Moq;
+    using NUnit.Framework;
     using WebEid.Security.Validator.VersionValidators;
 
     public class AuthTokenVersionValidatorFactoryTest
@@ -36,7 +35,7 @@ namespace WebEid.Security.Tests.Validator.VersionValidators
             v11.Setup(v => v.Supports("web-eid:1.1")).Returns(true);
 
             var factory = new AuthTokenVersionValidatorFactory(
-                new List<IAuthTokenVersionValidator> { v11.Object }
+                [v11.Object]
             );
 
             Assert.That(factory.Supports("web-eid:1.1"), Is.True);
@@ -49,7 +48,7 @@ namespace WebEid.Security.Tests.Validator.VersionValidators
             v11.Setup(v => v.Supports("web-eid:1.1")).Returns(false);
 
             var factory = new AuthTokenVersionValidatorFactory(
-                new List<IAuthTokenVersionValidator> { v11.Object }
+                [v11.Object]
             );
 
             Assert.That(factory.Supports("web-eid:2"), Is.False);
@@ -62,7 +61,7 @@ namespace WebEid.Security.Tests.Validator.VersionValidators
         [TestCase("web-eid")]
         public void WhenUnsupportedFormatThenGetValidatorForThrows(string format)
         {
-            var factory = new AuthTokenVersionValidatorFactory(new List<IAuthTokenVersionValidator>());
+            var factory = new AuthTokenVersionValidatorFactory([]);
 
             Assert.Throws<AuthTokenParseException>(() =>
                 factory.GetValidatorFor(format)
@@ -79,7 +78,7 @@ namespace WebEid.Security.Tests.Validator.VersionValidators
             v1.Setup(v => v.Supports("web-eid:1")).Returns(true);
 
             var factory = new AuthTokenVersionValidatorFactory(
-                new List<IAuthTokenVersionValidator> { v11.Object, v1.Object }
+                [v11.Object, v1.Object]
             );
 
             var chosen = factory.GetValidatorFor("web-eid:1.1");
@@ -97,7 +96,7 @@ namespace WebEid.Security.Tests.Validator.VersionValidators
             v1.Setup(v => v.Supports("web-eid:1")).Returns(true);
 
             var factory = new AuthTokenVersionValidatorFactory(
-                new List<IAuthTokenVersionValidator> { v11.Object, v1.Object }
+                [v11.Object, v1.Object]
             );
 
             var chosen = factory.GetValidatorFor("web-eid:1");

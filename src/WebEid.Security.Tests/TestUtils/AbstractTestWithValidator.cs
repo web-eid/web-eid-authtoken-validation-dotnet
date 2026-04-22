@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright © 2020-2025 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -65,12 +65,5 @@ namespace WebEid.Security.Tests.TestUtils
 
         protected WebEidAuthToken ReplaceTokenField(string token, string field, string value) =>
             Validator.Parse(token.Replace(field, value));
-
-        protected string RemoveJsonField(string json, string fieldName)
-        {
-            var node = Newtonsoft.Json.Linq.JObject.Parse(json);
-            node.Remove(fieldName);
-            return node.ToString(Newtonsoft.Json.Formatting.None);
-        }
     }
 }

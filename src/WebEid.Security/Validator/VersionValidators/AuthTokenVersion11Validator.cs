@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright © 2025-2025 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -26,11 +26,11 @@ namespace WebEid.Security.Validator.VersionValidators
     using System.Linq;
     using System.Security.Cryptography.X509Certificates;
     using System.Threading.Tasks;
+    using AuthToken;
     using CertValidators;
+    using Exceptions;
     using Microsoft.Extensions.Logging;
     using Ocsp;
-    using AuthToken;
-    using Exceptions;
     using Org.BouncyCastle.Asn1;
     using Org.BouncyCastle.Asn1.X509;
     using Util;
@@ -44,14 +44,14 @@ namespace WebEid.Security.Validator.VersionValidators
         private const string V11_SUPPORTED_TOKEN_FORMAT_PREFIX = "web-eid:1.1";
 
         private static readonly HashSet<string> SupportedSigningCryptoAlgorithms =
-            new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            new(StringComparer.OrdinalIgnoreCase)
             {
                 "ECC",
                 "RSA"
             };
 
         private static readonly HashSet<string> SupportedSigningPaddingSchemes =
-            new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            new(StringComparer.OrdinalIgnoreCase)
             {
                 "NONE",
                 "PKCS1.5",
@@ -59,7 +59,7 @@ namespace WebEid.Security.Validator.VersionValidators
             };
 
         private static readonly HashSet<string> SupportedSigningHashFunctions =
-            new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            new(StringComparer.OrdinalIgnoreCase)
             {
                 "SHA-224",
                 "SHA-256",
@@ -121,7 +121,7 @@ namespace WebEid.Security.Validator.VersionValidators
                 throw new AuthTokenParseException("'supportedSignatureAlgorithms' field is missing");
             }
 
-            bool hasInvalid =
+            var hasInvalid =
                 algorithms.Any(algorithm =>
                     algorithm == null ||
                     algorithm.CryptoAlgorithm == null ||
@@ -225,8 +225,8 @@ namespace WebEid.Security.Validator.VersionValidators
 
         private static bool SubjectsMatch(X509Certificate2 subjectCert, X509Certificate2 signingCert)
         {
-            byte[] authRaw = subjectCert.SubjectName.RawData;
-            byte[] signRaw = signingCert.SubjectName.RawData;
+            var authRaw = subjectCert.SubjectName.RawData;
+            var signRaw = signingCert.SubjectName.RawData;
 
             var authAsn1 = Asn1Object.FromByteArray(authRaw);
             var signAsn1 = Asn1Object.FromByteArray(signRaw);
@@ -244,13 +244,13 @@ namespace WebEid.Security.Validator.VersionValidators
                 var akiExt = cert.Extensions["2.5.29.35"];
                 if (akiExt == null)
                 {
-                    return Array.Empty<byte>();
+                    return [];
                 }
 
                 var akiObj = Asn1Object.FromByteArray(akiExt.RawData);
                 var aki = AuthorityKeyIdentifier.GetInstance(akiObj);
 
-                return aki.GetKeyIdentifier() ?? Array.Empty<byte>();
+                return aki.GetKeyIdentifier() ?? [];
             }
             catch (Exception ex)
             {

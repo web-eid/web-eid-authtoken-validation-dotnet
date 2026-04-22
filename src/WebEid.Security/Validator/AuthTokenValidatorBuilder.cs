@@ -22,6 +22,7 @@
 namespace WebEid.Security.Validator
 {
     using System;
+    using System.Diagnostics.CodeAnalysis;
     using System.Linq;
     using System.Security.Cryptography.X509Certificates;
     using Microsoft.Extensions.Logging;
@@ -32,17 +33,16 @@ namespace WebEid.Security.Validator
     /// <summary>
     /// Represents a builder for configuring and creating an <see cref="AuthTokenValidator"/>.
     /// </summary>
-    public class AuthTokenValidatorBuilder
+    /// <remarks>
+    /// Initializes a new instance of the <see cref="AuthTokenValidatorBuilder"/> class.
+    /// </remarks>
+    /// <param name="logger">The logger for capturing log messages (optional).</param>
+    [SuppressMessage("Design", "CA1001:Types that own disposable fields should be disposable", Justification = "The builder passes the OCSP client to the created validator and does not own its lifetime after Build().")]
+    public class AuthTokenValidatorBuilder(ILogger logger = null)
     {
-        private readonly ILogger logger;
+        private readonly ILogger logger = logger;
         private IOcspClient ocspClient;
-        private readonly AuthTokenValidationConfiguration configuration = new AuthTokenValidationConfiguration();
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="AuthTokenValidatorBuilder"/> class.
-        /// </summary>
-        /// <param name="logger">The logger for capturing log messages (optional).</param>
-        public AuthTokenValidatorBuilder(ILogger logger = null) => this.logger = logger;
+        private readonly AuthTokenValidationConfiguration configuration = new();
 
         /// <summary>
         /// Sets the expected site origin, i.e. the domain that the application is running on.
@@ -53,8 +53,11 @@ namespace WebEid.Security.Validator
         /// <returns>the builder instance for method chaining></returns>
         public AuthTokenValidatorBuilder WithSiteOrigin(Uri origin)
         {
-            this.configuration.SiteOrigin = origin;
-            this.logger?.LogDebug("Origin set to {0}", this.configuration.SiteOrigin);
+            configuration.SiteOrigin = origin;
+            if (logger?.IsEnabled(LogLevel.Debug) == true)
+            {
+                logger.LogDebug("Origin set to {Origin}", configuration.SiteOrigin);
+            }
             return this;
         }
 
@@ -68,9 +71,12 @@ namespace WebEid.Security.Validator
         /// <returns>the builder instance for method chaining</returns>
         public AuthTokenValidatorBuilder WithTrustedCertificateAuthorities(params X509Certificate2[] certificates)
         {
-            this.configuration.TrustedCaCertificates.AddRange(certificates);
-            this.logger?.LogDebug("Trusted intermediate certificate authorities set to {0}",
-                this.configuration.TrustedCaCertificates.Select(c => c.GetSubjectCn()));
+            configuration.TrustedCaCertificates.AddRange(certificates);
+            if (logger?.IsEnabled(LogLevel.Debug) == true)
+            {
+                logger.LogDebug("Trusted intermediate certificate authorities set to {TrustedCaCertificates}",
+                    configuration.TrustedCaCertificates.Select(c => c.GetSubjectCn()));
+            }
             return this;
         }
 
@@ -85,10 +91,13 @@ namespace WebEid.Security.Validator
         {
             foreach (var policy in policies)
             {
-                this.configuration.DisallowedSubjectCertificatePolicies.Add(policy);
+                configuration.DisallowedSubjectCertificatePolicies.Add(policy);
             }
-            this.logger?.LogDebug("Disallowed subject certificate policies set to {0}",
-                string.Join(", ", this.configuration.DisallowedSubjectCertificatePolicies));
+            if (logger?.IsEnabled(LogLevel.Debug) == true)
+            {
+                logger.LogDebug("Disallowed subject certificate policies set to {Policies}",
+                    string.Join(", ", configuration.DisallowedSubjectCertificatePolicies));
+            }
             return this;
         }
 
@@ -100,8 +109,8 @@ namespace WebEid.Security.Validator
         /// <returns>the builder instance for method chaining</returns>
         public AuthTokenValidatorBuilder WithoutUserCertificateRevocationCheckWithOcsp()
         {
-            this.configuration.IsUserCertificateRevocationCheckWithOcspEnabled = false;
-            this.logger?.LogDebug(
+            configuration.IsUserCertificateRevocationCheckWithOcspEnabled = false;
+            logger?.LogDebug(
                 "User certificate revocation check with OCSP is disabled, you should turn off the revocation check only in exceptional circumstances");
             return this;
         }
@@ -114,8 +123,11 @@ namespace WebEid.Security.Validator
         /// <returns>the builder instance for method chaining</returns>
         public AuthTokenValidatorBuilder WithOcspRequestTimeout(TimeSpan ocspRequestTimeout)
         {
-            this.configuration.OcspRequestTimeout = ocspRequestTimeout;
-            this.logger?.LogDebug("OCSP request timeout set to {0}.", ocspRequestTimeout);
+            configuration.OcspRequestTimeout = ocspRequestTimeout;
+            if (logger?.IsEnabled(LogLevel.Debug) == true)
+            {
+                logger.LogDebug("OCSP request timeout set to {OcspRequestTimeout}.", ocspRequestTimeout);
+            }
             return this;
         }
 
@@ -131,8 +143,11 @@ namespace WebEid.Security.Validator
         /// <returns>the builder instance for method chaining</returns>
         public AuthTokenValidatorBuilder WithAllowedOcspResponseTimeSkew(TimeSpan allowedTimeSkew)
         {
-            this.configuration.AllowedOcspResponseTimeSkew = allowedTimeSkew;
-            this.logger?.LogDebug("Allowed OCSP response time skew set to {0}.", allowedTimeSkew);
+            configuration.AllowedOcspResponseTimeSkew = allowedTimeSkew;
+            if (logger?.IsEnabled(LogLevel.Debug) == true)
+            {
+                logger.LogDebug("Allowed OCSP response time skew set to {AllowedTimeSkew}.", allowedTimeSkew);
+            }
             return this;
         }
 
@@ -144,8 +159,11 @@ namespace WebEid.Security.Validator
         /// <returns>the builder instance for method chaining</returns>
         public AuthTokenValidatorBuilder WithMaxOcspResponseThisUpdateAge(TimeSpan maxThisUpdateAge)
         {
-            this.configuration.MaxOcspResponseThisUpdateAge = maxThisUpdateAge;
-            this.logger?.LogDebug("Maximum OCSP response thisUpdate age set to {0}.", maxThisUpdateAge);
+            configuration.MaxOcspResponseThisUpdateAge = maxThisUpdateAge;
+            if (logger?.IsEnabled(LogLevel.Debug) == true)
+            {
+                logger.LogDebug("Maximum OCSP response thisUpdate age set to {MaxThisUpdateAge}.", maxThisUpdateAge);
+            }
             return this;
         }
 
@@ -157,8 +175,13 @@ namespace WebEid.Security.Validator
         /// <returns>the builder instance for method chaining</returns>
         public AuthTokenValidatorBuilder WithNonceDisabledOcspUrls(params Uri[] urls)
         {
-            this.configuration.NonceDisabledOcspUrls.AddRange(urls);
-            this.logger?.LogDebug("OCSP URLs for which the nonce protocol extension is disabled set to {0}", this.configuration.NonceDisabledOcspUrls);
+            configuration.NonceDisabledOcspUrls.AddRange(urls);
+            if (logger?.IsEnabled(LogLevel.Debug) == true)
+            {
+                logger.LogDebug(
+                    "OCSP URLs for which the nonce protocol extension is disabled set to {NonceDisabledOcspUrls}",
+                    configuration.NonceDisabledOcspUrls);
+            }
             return this;
         }
 
@@ -172,8 +195,8 @@ namespace WebEid.Security.Validator
         /// <returns>the builder instance for method chaining</returns>
         public AuthTokenValidatorBuilder WithDesignatedOcspServiceConfiguration(DesignatedOcspServiceConfiguration serviceConfiguration)
         {
-            this.configuration.DesignatedOcspServiceConfiguration = serviceConfiguration;
-            this.logger?.LogDebug("Using designated OCSP service configuration");
+            configuration.DesignatedOcspServiceConfiguration = serviceConfiguration;
+            logger?.LogDebug("Using designated OCSP service configuration");
             return this;
         }
 

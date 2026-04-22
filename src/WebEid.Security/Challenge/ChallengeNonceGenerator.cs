@@ -28,22 +28,16 @@ namespace WebEid.Security.Challenge
     /// <summary>
     /// Generates and stores cryptographic nonces for the Web eID system.
     /// </summary>
-    public sealed class ChallengeNonceGenerator : IChallengeNonceGenerator
+    /// <remarks>
+    /// Initializes a new instance of the <see cref="ChallengeNonceGenerator"/> class.
+    /// </remarks>
+    /// <param name="randomNumberGenerator">The source of random bytes for generating nonces.</param>
+    /// <param name="store">The store where generated nonce values will be stored.</param>
+    /// <exception cref="ArgumentNullException">Thrown when either randomNumberGenerator or store is null.</exception>
+    public sealed class ChallengeNonceGenerator(RandomNumberGenerator randomNumberGenerator, IChallengeNonceStore store) : IChallengeNonceGenerator
     {
-        private readonly IChallengeNonceStore store;
-        private readonly RandomNumberGenerator randomNumberGenerator;
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="ChallengeNonceGenerator"/> class.
-        /// </summary>
-        /// <param name="randomNumberGenerator">The source of random bytes for generating nonces.</param>
-        /// <param name="store">The store where generated nonce values will be stored.</param>
-        /// <exception cref="ArgumentNullException">Thrown when either randomNumberGenerator or store is null.</exception>
-        public ChallengeNonceGenerator(RandomNumberGenerator randomNumberGenerator, IChallengeNonceStore store)
-        {
-            this.randomNumberGenerator = randomNumberGenerator ?? throw new ArgumentNullException(nameof(randomNumberGenerator), "Secure random generator must not be null");
-            this.store = store ?? throw new ArgumentNullException(nameof(store), "Challenge nonce store must not be null");
-        }
+        private readonly IChallengeNonceStore store = store ?? throw new ArgumentNullException(nameof(store), "Challenge nonce store must not be null");
+        private readonly RandomNumberGenerator randomNumberGenerator = randomNumberGenerator ?? throw new ArgumentNullException(nameof(randomNumberGenerator), "Secure random generator must not be null");
 
         /// <summary>
         /// Generates a cryptographic nonce, a large random number that can be used only once,
@@ -60,11 +54,11 @@ namespace WebEid.Security.Challenge
             }
 
             var nonceBytes = new byte[IChallengeNonceGenerator.NonceLength];
-            this.randomNumberGenerator.GetBytes(nonceBytes);
+            randomNumberGenerator.GetBytes(nonceBytes);
             var base64StringNonce = Convert.ToBase64String(nonceBytes);
             var expirationTime = DateTimeProvider.UtcNow.Add(ttl);
             var challengeNonce = new ChallengeNonce(base64StringNonce, expirationTime);
-            this.store.Put(challengeNonce);
+            store.Put(challengeNonce);
             return challengeNonce;
         }
     }

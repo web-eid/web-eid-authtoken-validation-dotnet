@@ -23,20 +23,12 @@ namespace WebEid.AspNetCore.Example.Services
     using Microsoft.Extensions.Options;
     using Options;
 
-    public class MobileRequestUriBuilder
+    public class MobileRequestUriBuilder(IOptions<WebEidMobileOptions> options)
     {
-        private readonly string baseUri;
+        private readonly string baseUri = options.Value.BaseRequestUri;
 
-        public MobileRequestUriBuilder(IOptions<WebEidMobileOptions> options)
-        {
-            baseUri = options.Value.BaseRequestUri;
-        }
-
-        public string Build(string path, string encodedPayload)
-        {
-            return baseUri.StartsWith("http", StringComparison.OrdinalIgnoreCase)
+        public string Build(string path, string encodedPayload) => baseUri.StartsWith("http", StringComparison.OrdinalIgnoreCase)
                 ? $"{baseUri.TrimEnd('/')}/{path}#{encodedPayload}"
                 : $"{baseUri}{path}#{encodedPayload}";
-        }
     }
 }

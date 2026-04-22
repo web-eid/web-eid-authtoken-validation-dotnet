@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright © 2020-2025 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -175,7 +175,7 @@ namespace WebEid.Security.Tests.Validator
 
                 var signatureValidator = new AuthTokenSignatureValidator(new Uri("https://ria.ee"));
 
-                signatureValidator.Validate( "RS256", publicKey, authToken.Signature, ValidChallengeNonce);
+                signatureValidator.Validate("RS256", publicKey, authToken.Signature, ValidChallengeNonce);
             });
 
 

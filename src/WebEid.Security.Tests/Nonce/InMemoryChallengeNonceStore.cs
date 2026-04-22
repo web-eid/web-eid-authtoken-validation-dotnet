@@ -29,8 +29,8 @@ namespace WebEid.Security.Tests.Nonce
 
         public ChallengeNonce GetAndRemoveImpl()
         {
-            var result = this.challengeNonce;
-            this.challengeNonce = null;
+            var result = challengeNonce;
+            challengeNonce = null;
             return result;
         }
 

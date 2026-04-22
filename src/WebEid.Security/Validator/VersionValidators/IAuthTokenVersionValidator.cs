@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright © 2025-2025 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -35,7 +35,7 @@ namespace WebEid.Security.Validator.VersionValidators
         /// Whether this validator supports the specified token format,
         /// e.g. "web-eid:1.0" or "web-eid:1.1".
         /// </summary>
-        bool Supports(string format);
+        public bool Supports(string format);
 
         /// <summary>
         /// Validates the Web eID authentication token according to the
@@ -45,6 +45,6 @@ namespace WebEid.Security.Validator.VersionValidators
         /// <param name="currentChallengeNonce">Server-issued challenge nonce.</param>
         /// <returns>Validated authentication certificate.</returns>
         /// <exception cref="AuthTokenException">If validation fails.</exception>
-        Task<X509Certificate2> Validate(WebEidAuthToken authToken, string currentChallengeNonce);
+        public Task<X509Certificate2> Validate(WebEidAuthToken authToken, string currentChallengeNonce);
     }
 }

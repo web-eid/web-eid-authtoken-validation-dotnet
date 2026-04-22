@@ -8,94 +8,97 @@
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1"/>
-    <meta http-equiv="Cache-Control" content="no-store"/>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="Cache-Control" content="no-store" />
     <meta id="csrftoken" name="csrftoken" content="@tokens.RequestToken" />
     <meta id="csrfheadername" name="csrfheadername" content="@tokens.HeaderName" />
     <title>Completing signing…</title>
-    <link rel="stylesheet" href="/css/bootstrap.min.css"/>
-    <link rel="stylesheet" href="/css/main.css"/>
+    <link rel="stylesheet" href="/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="/css/main.css" />
 </head>
 
 <body class="loading-page">
-<div id="spinner-message">
-    <h2>Completing signing…</h2>
-    <div class="spinner"></div>
-</div>
-<div id="error-message" class="alert alert-danger" style="display: none;" role="alert">
-    <div class="message"></div>
-    <pre class="details"></pre>
-</div>
+    <div id="spinner-message">
+        <h2>Completing signing…</h2>
+        <div class="spinner"></div>
+    </div>
+    <div id="error-message" class="alert alert-danger" style="display: none;" role="alert">
+        <div class="message"></div>
+        <pre class="details"></pre>
+    </div>
 
-<p class="text-center p-4" style="display: none;" id="error-actions">
-    <button id="back-button" class="btn btn-primary">Back</button>
-</p>
+    <p class="text-center p-4" style="display: none;" id="error-actions">
+        <button id="back-button" class="btn btn-primary">Back</button>
+    </p>
 
-<script type="module">
-    import {showErrorMessage, checkHttpError} from '/js/errors.js';
-    import { parsePayload } from "/js/payload.js";
+    <div id="continue-actions" style="display: none">
+        <h2>Signing certificate received</h2>
+        <p class="text-center p-4">
+            <button id="continue-button" class="btn btn-primary">Continue signing</button>
+        </p>
+    </div>
 
-    // Using an async IIFE for mobile WebView compatibility:
-    // top-level await is not supported in some mobile browsers/WebViews.
-    (async () => {
-        const payload = parsePayload("Signing");
-        const path = window.location.pathname;
-        const allowedEndpoints = ["/sign/mobile/certificate", "/sign/mobile/signature"];
-        if (!allowedEndpoints.includes(path)) {
-            const error = new Error("Unexpected callback path: " + path);
-            error.code = "INVALID_CALLBACK_PATH";
-            throw error;
-        }
+    <script type="module">
+            import { showErrorMessage, checkHttpError } from '/js/errors.js';
+            import { parsePayload } from "/js/payload.js";
 
-        const endpoint = path;
-        const csrfHeaderName = document.querySelector('#csrfheadername').content;
-        const csrfToken = document.querySelector('#csrftoken').content;
+            // Using an async IIFE for mobile WebView compatibility:
+            // top-level await is not supported in some mobile browsers/WebViews.
+            (async () => {
+                const payload = parsePayload("Signing");
+                const path = window.location.pathname;
+                const allowedEndpoints = ["/sign/mobile/certificate", "/sign/mobile/signature"];
+                if (!allowedEndpoints.includes(path)) {
+                    const error = new Error("Unexpected callback path: " + path);
+                    error.code = "INVALID_CALLBACK_PATH";
+                    throw error;
+                }
 
-        // The mobile Web eID app always returns this value as a plain string (e.g. "ES256"),
-        // but .NET backend expects an object { id, name }. Normalize the string form
-        // into the object form for consistent handling in .NET.
-        if (payload.signatureAlgorithm && typeof payload.signatureAlgorithm === "string") {
-            payload.signatureAlgorithm = {
-                id: payload.signatureAlgorithm,
-                name: payload.signatureAlgorithm
-            };
-        }
-        
-        const response = await fetch(endpoint, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                [csrfHeaderName]: csrfToken,
-            },
-            credentials: "include",
-            body: JSON.stringify(payload),
-        });
-        await checkHttpError(response);
+                const endpoint = path;
+                const csrfHeaderName = document.querySelector('#csrfheadername').content;
+                const csrfToken = document.querySelector('#csrftoken').content;
+                const response = await fetch(endpoint, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        [csrfHeaderName]: csrfToken,
+                    },
+                    credentials: "include",
+                    body: JSON.stringify(payload),
+                });
+                await checkHttpError(response);
 
-        const result = await response.json();
-        if (endpoint.endsWith("/certificate")) {
-            const {requestUri} = result;
-            window.location.replace(requestUri);
-            return;
-        }
+                const result = await response.json();
+                if (endpoint.endsWith("/certificate")) {
+                    const { requestUri } = result;
+                    document.querySelector("#spinner-message").style.display = "none";
+                    const continueActions = document.getElementById("continue-actions");
+                    continueActions.style.display = "block";
+                    document.getElementById("continue-button").addEventListener("click", () => {
+                        window.location.replace(requestUri);
+                    });
+                    return;
+                }
 
-        window.location.replace(
-            "/welcome?signed=" + encodeURIComponent(result.name)
-        );
-    })().catch((error) => {
-        console.error(error);
-        showErrorMessage(error, "Signing failed");
-        const spinner = document.querySelector("#spinner-message")
-        spinner.style.display = "none";
-        const actions = document.getElementById("error-actions");
-        const goBackButton = document.getElementById("back-button");
-        actions.style.display = "block";
-        goBackButton.addEventListener("click", () => {
-            window.location.replace("/welcome?error=webeid-callback");
-        });
-    });
-</script>
+                window.location.replace(
+                    "/welcome?signed=" + encodeURIComponent(result.name)
+                );
+            })().catch((error) => {
+                console.error(error);
+                showErrorMessage(error, "Signing failed");
+                const spinner = document.querySelector("#spinner-message");
+                spinner.style.display = "none";
+                const actions = document.getElementById("error-actions");
+                const goBackButton = document.getElementById("back-button");
+                actions.style.display = "block";
+                goBackButton.addEventListener("click", () => {
+                    window.location.replace("/welcome?error=webeid-callback");
+                });
+            });
+    </script>
 </body>
+
 </html>

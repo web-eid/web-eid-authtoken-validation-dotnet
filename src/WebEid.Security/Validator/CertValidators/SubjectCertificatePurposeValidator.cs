@@ -32,16 +32,14 @@ namespace WebEid.Security.Validator.CertValidators
     /// <summary>
     /// Validates the purpose of the user certificate from the authentication token.
     /// </summary>
-    internal sealed class SubjectCertificatePurposeValidator : ISubjectCertificateValidator
+    /// <remarks>
+    /// Creates an instance of SubjectCertificatePurposeValidator.
+    /// </remarks>
+    /// <param name="logger">Logger instance to log validation results.</param>
+    internal sealed class SubjectCertificatePurposeValidator(ILogger logger = null) : ISubjectCertificateValidator
     {
-        private readonly ILogger logger;
+        private readonly ILogger logger = logger;
         private const string ExtendedKeyUsageClientAuthentication = "1.3.6.1.5.5.7.3.2";
-
-        /// <summary>
-        /// Creates an instance of SubjectCertificatePurposeValidator.
-        /// </summary>
-        /// <param name="logger">Logger instance to log validation results.</param>
-        public SubjectCertificatePurposeValidator(ILogger logger = null) => this.logger = logger;
 
         /// <summary>
         /// Validates that the purpose of the user certificate from the authentication token contains client authentication.
@@ -53,21 +51,17 @@ namespace WebEid.Security.Validator.CertValidators
         {
             try
             {
-                var keyUsage = subjectCertificate.Extensions.OfType<X509KeyUsageExtension>().FirstOrDefault();
-                if (keyUsage == null)
-                {
-                    throw new UserCertificateMissingPurposeException();
-                }
+                var keyUsage = subjectCertificate.Extensions.OfType<X509KeyUsageExtension>().FirstOrDefault() ?? throw new UserCertificateMissingPurposeException();
                 if ((keyUsage.KeyUsages & X509KeyUsageFlags.DigitalSignature) != X509KeyUsageFlags.DigitalSignature)
                 {
                     throw new UserCertificateWrongPurposeException();
                 }
                 var usages = subjectCertificate.Extensions.OfType<X509EnhancedKeyUsageExtension>().ToArray();
-                if (!usages.Any())
+                if (usages.Length == 0)
                 {
                     // Digital Signature extension present, but Extended Key Usage extension not present,
                     // assume it is an authentication certificate (e.g. Luxembourg eID).
-                    this.logger?.LogDebug("User certificate has Digital Signature key usage and no Extended Key Usage extension, this means that it can be used for client authentication.");
+                    logger?.LogDebug("User certificate has Digital Signature key usage and no Extended Key Usage extension, this means that it can be used for client authentication.");
                     return Task.CompletedTask;
                 }
 
@@ -77,7 +71,7 @@ namespace WebEid.Security.Validator.CertValidators
                     throw new UserCertificateWrongPurposeException();
                 }
 
-                this.logger?.LogDebug("User certificate can be used for client authentication.");
+                logger?.LogDebug("User certificate can be used for client authentication.");
             }
             catch (CryptographicException ex)
             {

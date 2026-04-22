@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright © 2020-2025 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -41,7 +41,7 @@ namespace WebEid.Security.Validator.CertValidators
         /// Creates a new <see cref="SubjectCertificateValidatorBatch"/> from the provided validators.
         /// </summary>
         internal static SubjectCertificateValidatorBatch CreateFrom(params ISubjectCertificateValidator[] validatorList) =>
-            new SubjectCertificateValidatorBatch(new List<ISubjectCertificateValidator>(validatorList));
+            new([.. validatorList]);
 
         /// <summary>
         /// Executes all validators in this batch for the specified subject certificate.
