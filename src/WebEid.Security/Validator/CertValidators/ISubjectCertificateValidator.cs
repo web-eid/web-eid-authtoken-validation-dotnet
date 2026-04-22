@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright © 2020-2025 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -30,6 +30,6 @@ namespace WebEid.Security.Validator.CertValidators
     /// </summary>
     internal interface ISubjectCertificateValidator
     {
-        Task Validate(X509Certificate2 subjectCertificate);
+        public Task Validate(X509Certificate2 subjectCertificate);
     }
 }

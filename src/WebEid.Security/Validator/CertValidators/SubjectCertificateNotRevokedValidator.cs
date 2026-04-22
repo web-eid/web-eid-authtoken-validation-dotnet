@@ -35,30 +35,20 @@ namespace WebEid.Security.Validator.CertValidators
     using Org.BouncyCastle.Security;
     using WebEid.Security.Util;
 
-    internal sealed class SubjectCertificateNotRevokedValidator : ISubjectCertificateValidator
+    internal sealed class SubjectCertificateNotRevokedValidator(SubjectCertificateTrustedValidator trustValidator,
+        IOcspClient ocspClient,
+        OcspServiceProvider ocspServiceProvider,
+        TimeSpan allowedOcspTimeSkew,
+        TimeSpan maxOcspResponseThisUpdateAge,
+        ILogger logger = null) : ISubjectCertificateValidator
     {
-        private readonly SubjectCertificateTrustedValidator trustValidator;
-        private readonly IOcspClient ocspClient;
-        private readonly OcspServiceProvider ocspServiceProvider;
-        private readonly ILogger logger;
+        private readonly SubjectCertificateTrustedValidator trustValidator = trustValidator;
+        private readonly IOcspClient ocspClient = ocspClient;
+        private readonly OcspServiceProvider ocspServiceProvider = ocspServiceProvider;
+        private readonly ILogger logger = logger;
 
-        private readonly TimeSpan allowedOcspTimeSkew;
-        private readonly TimeSpan maxOcspResponseThisUpdateAge;
-
-        public SubjectCertificateNotRevokedValidator(SubjectCertificateTrustedValidator trustValidator,
-            IOcspClient ocspClient,
-            OcspServiceProvider ocspServiceProvider,
-            TimeSpan allowedOcspTimeSkew,
-            TimeSpan maxOcspResponseThisUpdateAge,
-            ILogger logger = null)
-        {
-            this.trustValidator = trustValidator;
-            this.ocspClient = ocspClient;
-            this.ocspServiceProvider = ocspServiceProvider;
-            this.logger = logger;
-            this.allowedOcspTimeSkew = allowedOcspTimeSkew;
-            this.maxOcspResponseThisUpdateAge = maxOcspResponseThisUpdateAge;
-        }
+        private readonly TimeSpan allowedOcspTimeSkew = allowedOcspTimeSkew;
+        private readonly TimeSpan maxOcspResponseThisUpdateAge = maxOcspResponseThisUpdateAge;
 
         /// <summary>
         /// Validates that the user certificate from the authentication token is not revoked with OCSP.
@@ -70,15 +60,15 @@ namespace WebEid.Security.Validator.CertValidators
             try
             {
                 var certificate = DotNetUtilities.FromX509Certificate(subjectCertificate);
-                var ocspService = this.ocspServiceProvider.GetService(certificate);
+                var ocspService = ocspServiceProvider.GetService(certificate);
 
                 if (!ocspService.DoesSupportNonce)
                 {
-                    this.logger?.LogDebug("Disabling OCSP nonce extension");
+                    logger?.LogDebug("Disabling OCSP nonce extension");
                 }
 
                 var certificateId = new CertificateID(CertificateID.HashSha1,
-                    DotNetUtilities.FromX509Certificate(this.trustValidator.SubjectCertificateIssuerCertificate),
+                    DotNetUtilities.FromX509Certificate(trustValidator.SubjectCertificateIssuerCertificate),
                     certificate.SerialNumber);
 
                 var request = new OcspRequestBuilder()
@@ -86,8 +76,8 @@ namespace WebEid.Security.Validator.CertValidators
                     .WithCertificateId(certificateId)
                     .Build();
 
-                this.logger?.LogDebug("Sending OCSP request");
-                var response = await this.ocspClient.Request(ocspService.AccessLocation, request);
+                logger?.LogDebug("Sending OCSP request");
+                var response = await ocspClient.Request(ocspService.AccessLocation, request);
                 if (response.Status != OcspResponseStatus.Successful)
                 {
                     throw new UserCertificateOcspCheckFailedException(
@@ -95,13 +85,13 @@ namespace WebEid.Security.Validator.CertValidators
                 }
 
                 var basicOcspResponse = (BasicOcspResp)response.GetResponseObject();
-                this.VerifyOcspResponse(basicOcspResponse, ocspService, certificateId);
+                VerifyOcspResponse(basicOcspResponse, ocspService, certificateId);
                 if (ocspService.DoesSupportNonce)
                 {
                     VerifyOcspResponseNonce(request, basicOcspResponse);
                 }
             }
-            catch (Exception ex) when (!(ex is UserCertificateOcspCheckFailedException))
+            catch (Exception ex) when (ex is not UserCertificateOcspCheckFailedException)
             {
                 throw new UserCertificateOcspCheckFailedException(ex);
             }
@@ -169,7 +159,7 @@ namespace WebEid.Security.Validator.CertValidators
             // Now we can accept the signed response as valid and validate the certificate status.
             OcspResponseValidator.ValidateOcspResponseStatus(certStatusResponse);
 
-            this.logger?.LogDebug("OCSP check result is GOOD");
+            logger?.LogDebug("OCSP check result is GOOD");
         }
 
         private static void VerifyOcspResponseNonce(OcspReq request, BasicOcspResp response)

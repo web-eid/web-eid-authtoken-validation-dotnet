@@ -23,11 +23,11 @@ namespace WebEid.Security.Validator
 {
     using System;
     using System.Security.Cryptography.X509Certificates;
+    using System.Text.Json;
     using System.Threading.Tasks;
+    using AuthToken;
     using Exceptions;
     using Microsoft.Extensions.Logging;
-    using Newtonsoft.Json;
-    using AuthToken;
     using Ocsp;
     using VersionValidators;
 
@@ -88,11 +88,7 @@ namespace WebEid.Security.Validator
         /// <returns>A task representing the validation result with the user certificate.</returns>
         public Task<X509Certificate2> Validate(WebEidAuthToken authToken, string currentChallengeNonce)
         {
-            if (authToken == null)
-            {
-                throw new ArgumentNullException(nameof(authToken), "authToken must not be null");
-            }
-
+            ArgumentNullException.ThrowIfNull(authToken, nameof(authToken));
             logger?.LogInformation("Starting token validation");
 
             try
@@ -119,11 +115,17 @@ namespace WebEid.Security.Validator
             }
         }
 
+        private static readonly JsonSerializerOptions SerializerOptions = new()
+        {
+            PropertyNameCaseInsensitive = true,
+            AllowTrailingCommas = true,
+        };
+
         private static WebEidAuthToken ParseToken(string authToken)
         {
             try
             {
-                return JsonConvert.DeserializeObject<WebEidAuthToken>(authToken)
+                return JsonSerializer.Deserialize<WebEidAuthToken>(authToken, SerializerOptions)
                        ?? throw new AuthTokenParseException("Web eID authentication token is null");
             }
             catch (JsonException ex)

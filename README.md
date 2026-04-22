@@ -544,6 +544,16 @@ ChallengeNonce challengeNonce = nonceGenerator.GenerateAndStoreNonce(timeToLive)
 
 The `GenerateAndStoreNonce(TimeSpan ttl)` method both generates the nonce and stores it in the store. The `ttl` parameter defines nonce time-to-live duration. When the time-to-live passes, the nonce is considered to be expired.
 
+# Code formatting
+
+The project uses `.editorconfig` for .NET code formatting rules.
+
+To format the library code, run:
+
+```bash
+dotnet format src/WebEid.Security.sln --no-restore
+```
+
 ## Feedback
 
 For technical support or to report issues, please submit a [support ticket](https://github.com/web-eid/web-eid-authtoken-validation-dotnet/issues) or contact our support team at [help@ria.ee](mailto:help@ria.ee).
