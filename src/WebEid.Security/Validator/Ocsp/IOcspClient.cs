@@ -36,6 +36,6 @@ namespace WebEid.Security.Validator.Ocsp
         /// <param name="uri">The URI of the OCSP responder.</param>
         /// <param name="ocspReq">The OCSP request to be sent.</param>
         /// <returns>The OCSP response.</returns>
-        Task<OcspResp> Request(Uri uri, OcspReq ocspReq);
+        public Task<OcspResp> Request(Uri uri, OcspReq ocspReq);
     }
 }

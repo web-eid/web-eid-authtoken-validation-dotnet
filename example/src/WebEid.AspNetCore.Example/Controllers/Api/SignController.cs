@@ -22,34 +22,30 @@ namespace WebEid.AspNetCore.Example.Controllers.Api
     using System;
     using System.Security.Claims;
     using System.Threading.Tasks;
+    using Dto;
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.Extensions.Logging;
-    using Dto;
     using Services;
     using Signing;
 
     [Route("[controller]")]
     [ApiController]
     [Authorize(Policy = "LoggedInOnly")]
-    public class SignController : BaseController
+    public class SignController(SigningService signingService, MobileSigningService mobileSigningService, ILogger logger) : BaseController
     {
         private const string SignedFile = "example-for-signing.asice";
-        private readonly SigningService signingService;
-        private readonly MobileSigningService mobileSigningService;
-        private readonly ILogger logger;
-
-        public SignController(SigningService signingService, MobileSigningService mobileSigningService, ILogger logger)
-        {
-            this.signingService = signingService;
-            this.mobileSigningService = mobileSigningService;
-            this.logger = logger;
-        }
+        private readonly SigningService signingService = signingService;
+        private readonly MobileSigningService mobileSigningService = mobileSigningService;
+        private readonly ILogger logger = logger;
 
         [HttpPost("prepare")]
         public DigestDto Prepare([FromBody] CertificateDto data)
         {
-            return signingService.PrepareContainer(data, (ClaimsIdentity)HttpContext.User.Identity, GetUserContainerName());
+            var identity = HttpContext.User.Identity as ClaimsIdentity
+                ?? throw new InvalidOperationException("User identity is missing or invalid.");
+
+            return signingService.PrepareContainer(data, identity, GetUserContainerName());
         }
 
         [HttpPost("sign")]
@@ -62,7 +58,9 @@ namespace WebEid.AspNetCore.Example.Controllers.Api
         [HttpPost("mobile/init")]
         public MobileSigningService.MobileInitRequest MobileInit()
         {
-            var identity = (ClaimsIdentity)HttpContext.User.Identity;
+            var identity = HttpContext.User.Identity as ClaimsIdentity
+                ?? throw new InvalidOperationException("User identity is missing or invalid.");
+
             var container = GetUserContainerName();
             return mobileSigningService.InitCertificateOrSigningRequest(identity, container);
         }
@@ -70,7 +68,9 @@ namespace WebEid.AspNetCore.Example.Controllers.Api
         [HttpPost("mobile/certificate")]
         public MobileSigningService.MobileInitRequest CertificatePost([FromBody] CertificateDto certificateDto)
         {
-            var identity = (ClaimsIdentity)HttpContext.User.Identity;
+            var identity = HttpContext.User.Identity as ClaimsIdentity
+                ?? throw new InvalidOperationException("User identity is missing or invalid.");
+
             var containerName = GetUserContainerName();
 
             return mobileSigningService.InitSigningRequest(

@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright © 2025-2025 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -22,18 +22,17 @@
 namespace WebEid.Security.Tests.Validator.VersionValidators
 {
     using System;
-    using System.Collections.Generic;
     using System.Security.Cryptography.X509Certificates;
     using AuthToken;
-    using NUnit.Framework;
     using Exceptions;
+    using Microsoft.Extensions.Logging;
+    using Moq;
+    using NUnit.Framework;
     using WebEid.Security.Validator;
-    using WebEid.Security.Validator.VersionValidators;
     using WebEid.Security.Validator.CertValidators;
     using WebEid.Security.Validator.Ocsp;
     using WebEid.Security.Validator.Ocsp.Service;
-    using Microsoft.Extensions.Logging;
-    using Moq;
+    using WebEid.Security.Validator.VersionValidators;
 
     public class AuthTokenVersion1ValidatorTest
     {
@@ -53,9 +52,9 @@ namespace WebEid.Security.Tests.Validator.VersionValidators
             {
                 SiteOrigin = new Uri("https://example.com")
             };
-            #pragma warning disable SYSLIB0026
+#pragma warning disable SYSLIB0026
             configuration.TrustedCaCertificates.Add(new X509Certificate2());
-            #pragma warning disable SYSLIB0026
+#pragma warning disable SYSLIB0026
 
             signatureValidator = new Mock<AuthTokenSignatureValidator>(
                 new Uri("https://ria.ee")
@@ -64,8 +63,8 @@ namespace WebEid.Security.Tests.Validator.VersionValidators
             ocspClient = new Mock<IOcspClient>().Object;
 
             var aiaConfig = new AiaOcspServiceConfiguration(
-                new List<Uri>(),
-                new List<X509Certificate2>()
+                [],
+                []
             );
 
             ocspServiceProvider = new OcspServiceProvider(
@@ -87,10 +86,7 @@ namespace WebEid.Security.Tests.Validator.VersionValidators
         [TestCase("web-eid:1.0")]
         [TestCase("web-eid:1.1")]
         [TestCase("web-eid:1.10")]
-        public void WhenFormatIsAnyMajorV1VariantThenSupportsReturnsTrue(string format)
-        {
-            Assert.That(validator.Supports(format), Is.True);
-        }
+        public void WhenFormatIsAnyMajorV1VariantThenSupportsReturnsTrue(string format) => Assert.That(validator.Supports(format), Is.True);
 
         [TestCase(null)]
         [TestCase("")]
@@ -98,10 +94,7 @@ namespace WebEid.Security.Tests.Validator.VersionValidators
         [TestCase("web-eid:0.9")]
         [TestCase("web-eid:2")]
         [TestCase("webauthn:1")]
-        public void WhenFormatIsNullEmptyOrNotV1ThenSupportsReturnsFalse(string format)
-        {
-            Assert.That(validator.Supports(format), Is.False);
-        }
+        public void WhenFormatIsNullEmptyOrNotV1ThenSupportsReturnsFalse(string format) => Assert.That(validator.Supports(format), Is.False);
 
         [Test]
         public void WhenUnverifiedCertificateMissingThenValidationFails()
@@ -125,10 +118,10 @@ namespace WebEid.Security.Tests.Validator.VersionValidators
             var token = new WebEidAuthToken
             {
                 Format = "web-eid:1",
-                UnverifiedSigningCertificates = new List<UnverifiedSigningCertificate>
-                {
-                    new UnverifiedSigningCertificate()
-                }
+                UnverifiedSigningCertificates =
+                [
+                    new()
+                ]
             };
 
             var ex = Assert.ThrowsAsync<AuthTokenParseException>(() =>

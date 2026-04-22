@@ -129,7 +129,7 @@ namespace WebEid.Security.Util
 
                 return chainElement.Certificate;
             }
-            catch (Exception ex) when (!(ex is CertificateNotTrustedException))
+            catch (Exception ex) when (ex is not CertificateNotTrustedException)
             {
                 throw new CertificateNotTrustedException(certificate, ex);
             }
@@ -147,7 +147,7 @@ namespace WebEid.Security.Util
             try
             {
                 var certificateBytes = Convert.FromBase64String(certificateInBase64);
-                return new X509Certificate2(certificateBytes);
+                return X509CertificateLoader.LoadCertificate(certificateBytes);
             }
             catch (Exception ex)
             {

@@ -53,7 +53,9 @@ namespace WebEid.Security.Exceptions
         /// </summary>
         /// <param name="info">The <see cref="SerializationInfo"/> that holds the serialized object data.</param>
         /// <param name="context">The <see cref="StreamingContext"/> that contains contextual information about the source or destination.</param>
+#pragma warning disable SYSLIB0051
         [ExcludeFromCodeCoverage]
         protected AuthTokenException(SerializationInfo info, StreamingContext context) : base(info, context) { }
+#pragma warning restore SYSLIB0051
     }
 }

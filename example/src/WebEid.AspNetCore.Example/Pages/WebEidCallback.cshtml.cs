@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2025-2025 Estonian Information System Authority
+// Copyright (c) 2025-2025 Estonian Information System Authority
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -20,7 +20,7 @@
 namespace WebEid.AspNetCore.Example.Pages
 {
     using Microsoft.AspNetCore.Mvc.RazorPages;
-    
+
     public class WebEidCallbackModel : PageModel
     {
         public void OnGet()

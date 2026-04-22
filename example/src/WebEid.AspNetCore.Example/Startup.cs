@@ -19,71 +19,55 @@
 
 namespace WebEid.AspNetCore.Example
 {
+    using System;
+    using System.Configuration;
+    using System.Security.Cryptography;
+    using System.Threading.Tasks;
     using Certificates;
     using Microsoft.AspNetCore.Authentication.Cookies;
+    using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Hosting;
+    using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.HttpOverrides;
+    using Microsoft.AspNetCore.Mvc;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Hosting;
     using Microsoft.Extensions.Logging;
-    using Services;
-    using System;
-    using System.Security.Cryptography;
+    using Options;
     using Security.Challenge;
     using Security.Validator;
-    using System.Configuration;
-    using Microsoft.AspNetCore.Authorization;
-    using System.Threading.Tasks;
-    using Microsoft.AspNetCore.Http;
-    using Microsoft.AspNetCore.Mvc;
-    using Options;
+    using Services;
     using Signing;
 
-    public class Startup
+    public class Startup(IConfiguration configuration, IWebHostEnvironment environment)
     {
-        public Startup(IConfiguration configuration, IWebHostEnvironment environment)
-        {
-            Configuration = configuration;
-            CurrentEnvironment = environment;
-        }
-
-        private IConfiguration Configuration { get; }
-        private IWebHostEnvironment CurrentEnvironment { get; }
+        private IConfiguration Configuration { get; } = configuration;
+        private IWebHostEnvironment CurrentEnvironment { get; } = environment;
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            var loggerFactory = LoggerFactory.Create(builder =>
-            {
-                builder.AddConsole();
-            });
+            var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
             var logger = loggerFactory.CreateLogger("Web-eId ASP.NET Core Example");
             services.AddSingleton(logger);
 
-            services.AddRazorPages(options =>
-            {
-                options.Conventions.AuthorizePage("/welcome", "LoggedInOnly");
-            });
+            services.AddRazorPages(options => options.Conventions.AuthorizePage("/welcome", "LoggedInOnly"));
 
-            services.AddAuthorization(options =>
-            {
-                options.AddPolicy("LoggedInOnly", policy =>
+            services
+                .AddAuthorizationBuilder()
+                .AddPolicy("LoggedInOnly", policy =>
                 {
                     policy.AuthenticationSchemes.Add(CookieAuthenticationDefaults.AuthenticationScheme);
                     policy.RequireAuthenticatedUser();
                     policy.Requirements.Add(new LoggedInRequirement());
                 });
-            });
 
             services.AddSingleton<IAuthorizationHandler, LoggedInAuthorizationHandler>();
 
             services.AddControllers();
-            services.AddMvc(options =>
-            {
-                options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute());
-            });
+            services.AddMvc(options => options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute()));
 
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
@@ -115,7 +99,7 @@ namespace WebEid.AspNetCore.Example
                 options.IdleTimeout = TimeSpan.FromSeconds(60);
                 options.Cookie.IsEssential = true;
             });
-            
+
             services.AddOptions<WebEidMobileOptions>()
                 .Bind(Configuration.GetSection("WebEidMobile"))
                 .ValidateDataAnnotations()
@@ -138,17 +122,14 @@ namespace WebEid.AspNetCore.Example
             services.AddSingleton<IChallengeNonceStore, SessionBackedChallengeNonceStore>();
             services.AddSingleton<IChallengeNonceGenerator, ChallengeNonceGenerator>();
 
-            services.AddAntiforgery(options =>
-            {
-                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-            });
+            services.AddAntiforgery(options => options.Cookie.SecurePolicy = CookieSecurePolicy.Always);
 
             // Add support for running behind a TLS terminating proxy.
             services.Configure<ForwardedHeadersOptions>(options =>
             {
                 options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
                 // Only use this if you're behind a known proxy:
-                options.KnownNetworks.Clear();
+                options.KnownIPNetworks.Clear();
                 options.KnownProxies.Clear();
             });
         }
