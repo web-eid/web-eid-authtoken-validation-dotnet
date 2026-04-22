@@ -65,12 +65,5 @@ namespace WebEid.Security.Tests.TestUtils
 
         protected WebEidAuthToken ReplaceTokenField(string token, string field, string value) =>
             Validator.Parse(token.Replace(field, value));
-
-        protected string RemoveJsonField(string json, string fieldName)
-        {
-            var node = Newtonsoft.Json.Linq.JObject.Parse(json);
-            node.Remove(fieldName);
-            return node.ToString(Newtonsoft.Json.Formatting.None);
-        }
     }
 }

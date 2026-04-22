@@ -17,7 +17,7 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-﻿namespace WebEid.AspNetCore.Example.Services
+namespace WebEid.AspNetCore.Example.Services
 {
     using System;
     using System.Collections.Generic;
@@ -51,14 +51,16 @@
 
         public DigestDto PrepareContainer(CertificateDto data, ClaimsIdentity identity, string tempContainerName)
         {
-            var certificate = new X509Certificate(Convert.FromBase64String(data.CertificateBase64String));
+            var certificateBytes = Convert.FromBase64String(data.CertificateBase64String);
+            var certificate = X509CertificateLoader.LoadCertificate(certificateBytes);
+
             if (identity.GetIdCode() != certificate.GetSubjectIdCode())
             {
                 throw new ArgumentException(
                     "Authenticated subject ID code differs from signing certificate subject ID code");
             }
 
-            this.logger?.LogDebug("Creating container file: '{0}'", tempContainerName);
+            logger?.LogDebug("Creating container file: '{0}'", tempContainerName);
             Container container = Container.create(tempContainerName);
             container.addDataFile(FileToSign, "application/octet-stream");
             logger?.LogInformation("Preparing container for signing for file '{0}'", tempContainerName);
@@ -85,8 +87,8 @@
 
         private static string GetSupportedHashAlgorithm(IList<SignatureAlgorithmDto> supportedSignatureAlgorithms, string signatureMethod)
         {
-            var framgment = new Uri(signatureMethod).Fragment;
-            if (supportedSignatureAlgorithms.FirstOrDefault(algo => FragmentEquals(framgment, algo), null) is SignatureAlgorithmDto algo)
+            var fragment = new Uri(signatureMethod).Fragment;
+            if (supportedSignatureAlgorithms.FirstOrDefault(algo => FragmentEquals(fragment, algo)) is SignatureAlgorithmDto algo)
             {
                 return algo.HashFunction;
             }

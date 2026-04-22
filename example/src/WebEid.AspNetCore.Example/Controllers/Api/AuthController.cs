@@ -50,15 +50,13 @@ namespace WebEid.AspNetCore.Example.Controllers.Api
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] AuthenticateRequestDto dto)
         {
-            try
-            {
-                await SignInUser(dto?.AuthToken);
-                return Ok();
-            }
-            catch (ArgumentNullException)
+            if (dto?.AuthToken is null)
             {
                 return BadRequest(new { error = "Missing auth_token" });
             }
+
+            await SignInUser(dto.AuthToken);
+            return Ok();
         }
 
         [HttpPost("logout")]
@@ -108,13 +106,13 @@ namespace WebEid.AspNetCore.Example.Controllers.Api
                 CookieAuthenticationDefaults.AuthenticationScheme,
                 new ClaimsPrincipal(identity),
                 new AuthenticationProperties { AllowRefresh = true });
-            
+
             // Assign a unique ID within the session to enable the use of a unique temporary container name across successive requests.
             // A unique temporary container name is required to facilitate simultaneous signing from multiple browsers.
             SetUniqueIdInSession();
         }
 
-        private static void AddNewClaimIfCertificateHasData(List<Claim> claims, string claimType, Func<string> dataGetter) 
+        private static void AddNewClaimIfCertificateHasData(List<Claim> claims, string claimType, Func<string> dataGetter)
         {
             var claimData = dataGetter();
             if (!string.IsNullOrEmpty(claimData))

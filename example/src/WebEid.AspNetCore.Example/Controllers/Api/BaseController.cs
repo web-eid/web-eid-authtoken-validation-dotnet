@@ -17,7 +17,7 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-﻿namespace WebEid.AspNetCore.Example.Controllers.Api
+namespace WebEid.AspNetCore.Example.Controllers.Api
 {
     using System;
     using Microsoft.AspNetCore.Http;
@@ -32,14 +32,15 @@
             System.IO.File.Delete(GetUserContainerName());
         }
 
-        protected void SetUniqueIdInSession() 
+        protected void SetUniqueIdInSession()
         {
             HttpContext.Session.SetString(uniqueIdKey, Guid.NewGuid().ToString());
         }
 
-        private string GetUniqueIdFromSession() 
+        private string GetUniqueIdFromSession()
         {
-            return HttpContext.Session.GetString(uniqueIdKey);
+            return HttpContext.Session.GetString(uniqueIdKey)
+                ?? throw new InvalidOperationException("Unique ID not found in session.");
         }
 
         protected string GetUserContainerName()

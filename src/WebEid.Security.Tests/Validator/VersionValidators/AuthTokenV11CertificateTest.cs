@@ -140,12 +140,12 @@ namespace WebEid.Security.Tests.Validator.VersionValidators
                 Validator.Validate(token, ValidChallengeNonce));
         }
 
+        private static readonly JsonSerializerOptions DefaultJsonSerializerOptions = new()
+        {
+            PropertyNameCaseInsensitive = true
+        };
+
         private static WebEidAuthToken DeserializeToken(string json) =>
-            JsonSerializer.Deserialize<WebEidAuthToken>(
-                json,
-                new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                })!;
+            JsonSerializer.Deserialize<WebEidAuthToken>(json, DefaultJsonSerializerOptions)!;
     }
 }

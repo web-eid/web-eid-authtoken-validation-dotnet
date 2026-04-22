@@ -29,7 +29,7 @@
         public static X509Certificate2[] LoadTrustedCaCertificatesFromDisk(bool isTest = false)
         {
             return new FileReader(GetCertPath(isTest), "*.cer").ReadFiles()
-                .Select(file => new X509Certificate2(file))
+                .Select(X509CertificateLoader.LoadCertificate)
                 .ToArray();
         }
 
@@ -42,9 +42,9 @@
     internal class FileReader
     {
         private readonly string path;
-        private readonly string searchPattern;
+        private readonly string? searchPattern;
 
-        public FileReader(string path, string searchPattern = null)
+        public FileReader(string path, string? searchPattern = null)
         {
             this.path = path;
             this.searchPattern = searchPattern;
@@ -52,7 +52,7 @@
 
         public IEnumerable<byte[]> ReadFiles()
         {
-            foreach (var file in Directory.EnumerateFiles(this.path, this.searchPattern))
+            foreach (var file in Directory.EnumerateFiles(this.path, this.searchPattern ?? "*"))
             {
                 yield return File.ReadAllBytes(file);
             }

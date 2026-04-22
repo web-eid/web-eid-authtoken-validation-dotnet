@@ -24,9 +24,9 @@ namespace WebEid.Security.Tests.Validator.VersionValidators
     using System;
     using System.Collections.Generic;
     using System.Security.Cryptography.X509Certificates;
-    using AuthToken;
     using NUnit.Framework;
     using Exceptions;
+    using WebEid.Security.Tests.TestUtils;
     using WebEid.Security.Validator;
     using WebEid.Security.Validator.VersionValidators;
     using WebEid.Security.Validator.Ocsp;
@@ -35,27 +35,29 @@ namespace WebEid.Security.Tests.Validator.VersionValidators
     using Security.Validator.CertValidators;
     using Security.Validator.Ocsp.Service;
 
-    public class AuthTokenVersion11ValidatorTest
+    public class AuthTokenVersion11ValidatorTest : AbstractTestWithValidator
     {
         private SubjectCertificateValidatorBatch subjectValidators;
         private AuthTokenSignatureValidator signatureValidator;
         private AuthTokenValidationConfiguration configuration;
         private IOcspClient ocspClient;
         private OcspServiceProvider ocspServiceProvider;
-        private AuthTokenVersion11Validator validator;
+        private AuthTokenVersion11Validator v11Validator;
 
         [SetUp]
-        public void SetUp()
+        public new void SetUp()
         {
+            base.SetUp();
+
             subjectValidators = SubjectCertificateValidatorBatch.CreateFrom();
 
             configuration = new AuthTokenValidationConfiguration
             {
                 SiteOrigin = new Uri("https://example.com")
             };
-            #pragma warning disable SYSLIB0026
+#pragma warning disable SYSLIB0026
             configuration.TrustedCaCertificates.Add(new X509Certificate2());
-            #pragma warning disable SYSLIB0026
+#pragma warning disable SYSLIB0026
 
             signatureValidator = new Mock<AuthTokenSignatureValidator>(
                 new Uri("https://ria.ee")
@@ -73,14 +75,14 @@ namespace WebEid.Security.Tests.Validator.VersionValidators
                 aiaOcspServiceConfiguration: aiaConfig
             );
 
-            validator = new AuthTokenVersion11Validator(
-                subjectValidators,
-                signatureValidator,
-                configuration,
-                ocspClient,
-                ocspServiceProvider,
-                Mock.Of<ILogger>()
-            );
+            v11Validator = new AuthTokenVersion11Validator(
+                            subjectValidators,
+                            signatureValidator,
+                            configuration,
+                            ocspClient,
+                            ocspServiceProvider,
+                            Mock.Of<ILogger>()
+                        );
         }
 
         [TestCase("web-eid:1.1")]
@@ -88,7 +90,7 @@ namespace WebEid.Security.Tests.Validator.VersionValidators
         [TestCase("web-eid:1.10")]
         public void WhenFormatIsV11OrPrefixedVariantThenSupportsReturnsTrue(string format)
         {
-            Assert.That(validator.Supports(format), Is.True);
+            Assert.That(v11Validator.Supports(format), Is.True);
         }
 
         [TestCase(null)]
@@ -99,40 +101,28 @@ namespace WebEid.Security.Tests.Validator.VersionValidators
         [TestCase("webauthn:1.1")]
         public void WhenFormatIsNullEmptyOrNotV11ThenSupportsReturnsFalse(string format)
         {
-            Assert.That(validator.Supports(format), Is.False);
+            Assert.That(v11Validator.Supports(format), Is.False);
         }
 
         [Test]
         public void WhenUnverifiedSigningCertificatesMissingThenValidationFails()
         {
-            var token = new WebEidAuthToken
-            {
-                Format = "web-eid:1.1",
-                UnverifiedSigningCertificates = null
-            };
+            var token = Validator.Parse(ValidV11AuthTokenStr);
+            token.UnverifiedSigningCertificates = null;
 
-            Assert.ThrowsAsync<AuthTokenParseException>(() =>
-                validator.Validate(token, "nonce"));
+            var ex = Assert.ThrowsAsync<AuthTokenParseException>(() => Validator.Validate(token, ValidChallengeNonce));
+            Assert.That(ex!.Message, Is.EqualTo(
+                "'unverifiedSigningCertificates' field is missing, null or empty for format 'web-eid:1.1'"));
         }
 
         [Test]
         public void WhenSupportedSignatureAlgorithmsMissingThenValidationFails()
         {
-            var token = new WebEidAuthToken
-            {
-                Format = "web-eid:1.1",
-                UnverifiedSigningCertificates = new List<UnverifiedSigningCertificate>
-                {
-                    new UnverifiedSigningCertificate
-                    {
-                        Certificate = "ABC123",
-                        SupportedSignatureAlgorithms = null
-                    }
-                }
-            };
+            var token = Validator.Parse(ValidV11AuthTokenStr);
+            token.UnverifiedSigningCertificates[0].SupportedSignatureAlgorithms = null;
 
-            Assert.ThrowsAsync<AuthTokenParseException>(() =>
-                validator.Validate(token, "nonce"));
+            var ex = Assert.ThrowsAsync<AuthTokenParseException>(() => Validator.Validate(token, ValidChallengeNonce));
+            Assert.That(ex!.Message, Is.EqualTo("'supportedSignatureAlgorithms' field is missing"));
         }
     }
 }

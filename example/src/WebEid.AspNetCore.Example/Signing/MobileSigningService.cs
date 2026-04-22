@@ -34,7 +34,6 @@ namespace WebEid.AspNetCore.Example.Signing
 
     public class MobileSigningService(
         SigningService signingService,
-        IOptions<WebEidMobileOptions> mobileOptions,
         IHttpContextAccessor httpContextAccessor,
         MobileRequestUriBuilder uriBuilder
     )
@@ -72,7 +71,7 @@ namespace WebEid.AspNetCore.Example.Signing
             var request = httpContextAccessor.HttpContext!.Request;
             var baseUrl = $"{request.Scheme}://{request.Host}";
             var responseUri = $"{baseUrl}{CertificateResponsePath}";
-            
+
             var requestObj = new RequestObject
             {
                 ResponseUri = responseUri

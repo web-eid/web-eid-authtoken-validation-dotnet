@@ -44,11 +44,12 @@ namespace WebEid.Security.Tests.Validator
         }
 
         [Test]
-        public void WhenAlgorithmInvalidThenParsingFailsAsync()
+        public void WhenAlgorithmInvalidThenParsingFails()
         {
-            var authToken = ReplaceTokenField(ValidAuthTokenStr, "ES384", "\u0000\t\ninvalid");
-            Assert.ThrowsAsync<AuthTokenParseException>(() => Validator.Validate(authToken, ValidChallengeNonce))
-                .WithMessage("Unsupported signature algorithm");
+            var authToken = ValidAuthTokenStr.Replace("\"ES384\"", "\"\u0000\t\ninvalid\"");
+
+            Assert.Throws<AuthTokenParseException>(() => Validator.Parse(authToken))
+                .WithMessage("Error parsing Web eID authentication token");
         }
 
         [Test]
@@ -74,7 +75,7 @@ namespace WebEid.Security.Tests.Validator
         [Test]
         public void WhenV11TokenHasInvalidHashFunctionThenValidationFailsAsync()
         {
-            var token = ReplaceTokenField( ValidV11AuthTokenStr, "\"hashFunction\":\"SHA-256\"", "\"hashFunction\":\"NOT_A_HASH\"");
+            var token = ReplaceTokenField(ValidV11AuthTokenStr, "\"hashFunction\":\"SHA-256\"", "\"hashFunction\":\"NOT_A_HASH\"");
             Assert.ThrowsAsync<AuthTokenParseException>(() => Validator.Validate(token, ValidChallengeNonce))
                 .WithMessage("Unsupported signature algorithm");
         }
@@ -82,7 +83,7 @@ namespace WebEid.Security.Tests.Validator
         [Test]
         public void WhenV11TokenHasInvalidPaddingSchemeThenValidationFailsAsync()
         {
-            var token = ReplaceTokenField( ValidV11AuthTokenStr, "\"paddingScheme\":\"PKCS1.5\"", "\"paddingScheme\":\"BAD_PADDING\"");
+            var token = ReplaceTokenField(ValidV11AuthTokenStr, "\"paddingScheme\":\"PKCS1.5\"", "\"paddingScheme\":\"BAD_PADDING\"");
             Assert.ThrowsAsync<AuthTokenParseException>(() => Validator.Validate(token, ValidChallengeNonce))
                 .WithMessage("Unsupported signature algorithm");
         }
@@ -90,7 +91,7 @@ namespace WebEid.Security.Tests.Validator
         [Test]
         public void WhenV11TokenHasEmptySupportedAlgorithmsThenValidationFailsAsync()
         {
-            var token = ReplaceTokenField( ValidV11AuthTokenStr, "\"supportedSignatureAlgorithms\":[{\"cryptoAlgorithm\":\"RSA\",\"hashFunction\":\"SHA-256\",\"paddingScheme\":\"PKCS1.5\"}]", "\"supportedSignatureAlgorithms\":[]");
+            var token = ReplaceTokenField(ValidV11AuthTokenStr, "\"supportedSignatureAlgorithms\":[{\"cryptoAlgorithm\":\"RSA\",\"hashFunction\":\"SHA-256\",\"paddingScheme\":\"PKCS1.5\"}]", "\"supportedSignatureAlgorithms\":[]");
             Assert.ThrowsAsync<AuthTokenParseException>(() => Validator.Validate(token, ValidChallengeNonce))
                 .WithMessage("'supportedSignatureAlgorithms' field is missing");
         }

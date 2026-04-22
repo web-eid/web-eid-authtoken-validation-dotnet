@@ -17,14 +17,14 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-﻿namespace WebEid.AspNetCore.Example
+namespace WebEid.AspNetCore.Example
 {
     using System.Linq;
     using System.Security.Claims;
 
     public static class ClaimsIdentityExtensions
     {
-        public static string GetIdCode(this ClaimsIdentity identity)
+        public static string? GetIdCode(this ClaimsIdentity identity)
         {
             return identity.Claims.SingleOrDefault(claim => claim.Type == ClaimTypes.NameIdentifier)?.Value;
         }

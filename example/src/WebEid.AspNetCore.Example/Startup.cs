@@ -41,16 +41,10 @@ namespace WebEid.AspNetCore.Example
     using Options;
     using Signing;
 
-    public class Startup
+    public class Startup(IConfiguration configuration, IWebHostEnvironment environment)
     {
-        public Startup(IConfiguration configuration, IWebHostEnvironment environment)
-        {
-            Configuration = configuration;
-            CurrentEnvironment = environment;
-        }
-
-        private IConfiguration Configuration { get; }
-        private IWebHostEnvironment CurrentEnvironment { get; }
+        private IConfiguration Configuration { get; } = configuration;
+        private IWebHostEnvironment CurrentEnvironment { get; } = environment;
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
@@ -115,7 +109,7 @@ namespace WebEid.AspNetCore.Example
                 options.IdleTimeout = TimeSpan.FromSeconds(60);
                 options.Cookie.IsEssential = true;
             });
-            
+
             services.AddOptions<WebEidMobileOptions>()
                 .Bind(Configuration.GetSection("WebEidMobile"))
                 .ValidateDataAnnotations()
@@ -148,7 +142,7 @@ namespace WebEid.AspNetCore.Example
             {
                 options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
                 // Only use this if you're behind a known proxy:
-                options.KnownNetworks.Clear();
+                options.KnownIPNetworks.Clear();
                 options.KnownProxies.Clear();
             });
         }

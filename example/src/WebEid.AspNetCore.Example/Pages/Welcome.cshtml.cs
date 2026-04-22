@@ -25,10 +25,15 @@ namespace WebEid.AspNetCore.Example.Pages
 
     public class WelcomeModel : PageModel
     {
-        public string PrincipalName => GetPrincipalName((ClaimsIdentity)this.User.Identity);
+        public string PrincipalName => GetPrincipalName(this.User.Identity as ClaimsIdentity);
 
-        private static string GetPrincipalName(ClaimsIdentity identity)
+        private static string GetPrincipalName(ClaimsIdentity? identity)
         {
+            if (identity is null)
+            {
+                return string.Empty;
+            }
+
             var givenName = identity.Claims.Where(claim => claim.Type == ClaimTypes.GivenName)
                 .Select(claim => claim.Value)
                 .SingleOrDefault();
@@ -40,12 +45,10 @@ namespace WebEid.AspNetCore.Example.Pages
             {
                 return $"{givenName} {surname}";
             }
-            else
-            {
-                return identity.Claims.Where(claim => claim.Type == ClaimTypes.Name)
-                    .Select(claim => claim.Value)
-                    .SingleOrDefault();
-            }
+
+            return identity.Claims.Where(claim => claim.Type == ClaimTypes.Name)
+                .Select(claim => claim.Value)
+                .SingleOrDefault() ?? string.Empty;
         }
     }
 }

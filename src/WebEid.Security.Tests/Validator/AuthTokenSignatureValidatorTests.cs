@@ -175,7 +175,7 @@ namespace WebEid.Security.Tests.Validator
 
                 var signatureValidator = new AuthTokenSignatureValidator(new Uri("https://ria.ee"));
 
-                signatureValidator.Validate( "RS256", publicKey, authToken.Signature, ValidChallengeNonce);
+                signatureValidator.Validate("RS256", publicKey, authToken.Signature, ValidChallengeNonce);
             });
 
 

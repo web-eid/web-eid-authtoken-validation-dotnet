@@ -74,11 +74,11 @@ namespace WebEid.Security.Tests.Validator
                 .WithMessage("Error parsing Web eID authentication token");
 
         [Test]
-        public void WhenCertificateFieldIsNumberThenParsingFailsAsync()
+        public void WhenCertificateFieldIsNumberThenParsingFails()
         {
-            var authToken = this.ReplaceTokenField(AuthToken, "\"X5C\"", "1234");
-            Assert.ThrowsAsync<AuthTokenParseException>(() => this.Validator.Validate(authToken, ValidChallengeNonce))
-                .WithMessage("'unverifiedCertificate' field must contain a valid certificate");
+            var authToken = AuthToken.Replace("\"X5C\"", "1234");
+            Assert.Throws<AuthTokenParseException>(() => this.Validator.Parse(authToken))
+                .WithMessage("Error parsing Web eID authentication token");
         }
 
         [Test]
