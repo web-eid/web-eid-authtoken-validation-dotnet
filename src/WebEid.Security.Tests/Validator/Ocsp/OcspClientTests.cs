@@ -77,6 +77,27 @@ namespace WebEid.Security.Tests.Validator.Ocsp
             Assert.DoesNotThrowAsync(async () => await serverTask);
         }
 
+        [Test]
+        public void WhenResponseContentTypeIsNullThenAttemptsToParseResponse()
+        {
+            using var listener = CreateListener(out var uri);
+            var serverTask = RespondOnceWithoutContentType(listener, HttpStatusCode.OK, Encoding.UTF8.GetBytes("not-a-valid-ocsp-response"));
+
+            using var ocspClient = new OcspClient(TimeSpan.FromSeconds(5));
+            var request = CreateOcspRequest();
+
+            Assert.ThrowsAsync<IOException>(async () => _ = await ocspClient.Request(uri, request));
+            Assert.DoesNotThrowAsync(async () => await serverTask);
+        }
+
+        [Test]
+        public void WhenDisposedThenDoesNotThrow()
+        {
+            var ocspClient = new OcspClient(TimeSpan.FromSeconds(5));
+
+            Assert.DoesNotThrow(() => ocspClient.Dispose());
+        }
+
         private static OcspReq CreateOcspRequest()
         {
             var generator = new OcspReqGenerator();
@@ -120,6 +141,24 @@ namespace WebEid.Security.Tests.Validator.Ocsp
             var port = ((IPEndPoint)tcpListener.LocalEndpoint).Port;
             tcpListener.Stop();
             return port;
+        }
+
+        private static async Task RespondOnceWithoutContentType(HttpListener listener, HttpStatusCode statusCode, byte[] body)
+        {
+            try
+            {
+                var context = await listener.GetContextAsync();
+                context.Response.StatusCode = (int)statusCode;
+                context.Response.ContentLength64 = body.Length;
+
+                await context.Response.OutputStream.WriteAsync(body);
+                context.Response.OutputStream.Close();
+                context.Response.Close();
+            }
+            finally
+            {
+                listener.Stop();
+            }
         }
     }
 }
