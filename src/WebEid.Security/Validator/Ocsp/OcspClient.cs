@@ -65,7 +65,13 @@ namespace WebEid.Security.Validator.Ocsp
             {
                 throw new HttpRequestException($"OCSP request was not successful, response: {response}");
             }
-            this.logger?.LogDebug("OCSP response: {0}", response);
+
+            if (this.logger?.IsEnabled(LogLevel.Debug) == true)
+            {
+            #pragma warning disable CA1848
+                this.logger.LogDebug("OCSP response: {Response}", response);
+            #pragma warning restore CA1848
+            }
 
             if (response.Content.Headers.ContentType != null &&
                 response.Content.Headers.ContentType.MediaType != OcspResponseType)

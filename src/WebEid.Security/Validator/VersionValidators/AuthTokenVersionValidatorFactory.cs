@@ -25,7 +25,6 @@ namespace WebEid.Security.Validator.VersionValidators
     using System.Collections.Generic;
     using System.Linq;
     using System.Security.Cryptography;
-    using System.Security.Cryptography.X509Certificates;
     using CertValidators;
     using Exceptions;
     using Microsoft.Extensions.Logging;
@@ -36,15 +35,12 @@ namespace WebEid.Security.Validator.VersionValidators
     /// Provides a factory for selecting the correct authentication token validator
     /// based on the token format version.
     /// </summary>
-    public sealed class AuthTokenVersionValidatorFactory
+    /// <remarks>
+    /// Creates a new instance of the <see cref="AuthTokenVersionValidatorFactory"/> class.
+    /// </remarks>
+    public sealed class AuthTokenVersionValidatorFactory(IList<IAuthTokenVersionValidator> validators)
     {
-        private readonly IReadOnlyList<IAuthTokenVersionValidator> validators;
-
-        /// <summary>
-        /// Creates a new instance of the <see cref="AuthTokenVersionValidatorFactory"/> class.
-        /// </summary>
-        public AuthTokenVersionValidatorFactory(IList<IAuthTokenVersionValidator> validators) =>
-            this.validators = validators?.ToList()
+        private readonly IReadOnlyList<IAuthTokenVersionValidator> validators = validators?.ToList()
                               ?? throw new ArgumentNullException(nameof(validators));
 
         /// <summary>
@@ -58,13 +54,8 @@ namespace WebEid.Security.Validator.VersionValidators
         /// </summary>
         public IAuthTokenVersionValidator GetValidatorFor(string format)
         {
-            var validator = validators.FirstOrDefault(v => v.Supports(format));
-
-            if (validator == null)
-            {
-                throw new AuthTokenParseException(
+            var validator = validators.FirstOrDefault(v => v.Supports(format)) ?? throw new AuthTokenParseException(
                     $"Token format version '{format}' is currently not supported");
-            }
 
             return validator;
         }
@@ -78,10 +69,7 @@ namespace WebEid.Security.Validator.VersionValidators
             IOcspClient ocspClient,
             ILogger logger = null)
         {
-            if (configuration == null)
-            {
-                throw new ArgumentNullException(nameof(configuration));
-            }
+            ArgumentNullException.ThrowIfNull(configuration);
 
             var validationConfig = configuration.Copy();
             var trustedCaCertificates = validationConfig.TrustedCaCertificates;
@@ -89,7 +77,7 @@ namespace WebEid.Security.Validator.VersionValidators
             var simpleSubjectValidators = SubjectCertificateValidatorBatch.CreateFrom(
                 new SubjectCertificatePurposeValidator(logger),
                 new SubjectCertificatePolicyValidator(
-                    validationConfig.DisallowedSubjectCertificatePolicies.Select(x => new Oid(x)).ToArray(),
+                    [.. validationConfig.DisallowedSubjectCertificatePolicies.Select(x => new Oid(x))],
                     logger)
             );
 
@@ -125,11 +113,11 @@ namespace WebEid.Security.Validator.VersionValidators
                 logger
             );
 
-            return new AuthTokenVersionValidatorFactory(new List<IAuthTokenVersionValidator>
-            {
+            return new AuthTokenVersionValidatorFactory(
+            [
                 validatorV11,
                 validatorV10
-            });
+            ]);
         }
     }
 }

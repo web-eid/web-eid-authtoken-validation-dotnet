@@ -38,13 +38,11 @@ namespace WebEid.Security.Validator.Ocsp.Service
         public AiaOcspService(AiaOcspServiceConfiguration configuration,
             Org.BouncyCastle.X509.X509Certificate certificate)
         {
-            if (configuration == null)
-            {
-                throw new ArgumentNullException(nameof(configuration));
-            }
-            this.AccessLocation = GetOcspAiaUrlFromCertificate(certificate);
-            this.trustedCaCertificates = configuration.TrustedCaCertificates;
-            this.DoesSupportNonce = !configuration.NonceDisabledOcspUrls.Contains(this.AccessLocation);
+            ArgumentNullException.ThrowIfNull(configuration);
+
+            AccessLocation = GetOcspAiaUrlFromCertificate(certificate);
+            trustedCaCertificates = configuration.TrustedCaCertificates;
+            DoesSupportNonce = !configuration.NonceDisabledOcspUrls.Contains(AccessLocation);
         }
 
         public bool DoesSupportNonce { get; }
@@ -52,8 +50,7 @@ namespace WebEid.Security.Validator.Ocsp.Service
 
         private static Uri GetOcspAiaUrlFromCertificate(Org.BouncyCastle.X509.X509Certificate certificate)
         {
-            if (certificate == null)
-            { throw new ArgumentNullException(nameof(certificate)); }
+            ArgumentNullException.ThrowIfNull(certificate);
 
             return certificate.GetOcspUri() ??
                    throw new UserCertificateOcspCheckFailedException("Getting the AIA OCSP responder field " +
@@ -68,7 +65,7 @@ namespace WebEid.Security.Validator.Ocsp.Service
                 // Trusted certificates validity has been already verified in ValidateCertificateExpiry().
                 OcspResponseValidator.ValidateHasSigningExtension(responderCertificate);
                 _ = new X509Certificate2(DotNetUtilities.ToX509Certificate(responderCertificate))
-                    .ValidateIsValidAndSignedByTrustedCa(this.trustedCaCertificates);
+                    .ValidateIsValidAndSignedByTrustedCa(trustedCaCertificates);
             }
             catch (Exception ex) when (!(ex is CertificateNotTrustedException) && !(ex is CertificateExpiredException))
             {

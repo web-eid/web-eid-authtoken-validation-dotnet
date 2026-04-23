@@ -60,7 +60,7 @@ namespace WebEid.Security.Validator.Ocsp
         /// <returns>The builder instance.</returns>
         public OcspRequestBuilder EnableOcspNonce(bool enable)
         {
-            this.ocspNonceEnabled = enable;
+            ocspNonceEnabled = enable;
             return this;
         }
 
@@ -71,40 +71,34 @@ namespace WebEid.Security.Validator.Ocsp
         /// <returns>An instance of <see cref="OcspReq"/> object</returns>
         public OcspReq Build()
         {
-            ValidateParameters(this.certificateId);
+            ValidateParameters(certificateId);
 
             var generator = new OcspReqGenerator();
-            generator.AddRequest(this.certificateId);
+            generator.AddRequest(certificateId);
 
-            if (this.ocspNonceEnabled)
+            if (ocspNonceEnabled)
             {
-                this.AddNonce(generator);
+                AddNonce(generator);
             }
 
             return generator.Generate();
         }
 
-        private static void ValidateParameters(CertificateID certificateId)
-        {
-            if (certificateId == null)
-            {
-                throw new ArgumentNullException(nameof(certificateId));
-            }
-        }
+        private static void ValidateParameters(CertificateID certificateId) => ArgumentNullException.ThrowIfNull(certificateId);
 
         private void AddNonce(OcspReqGenerator builder)
         {
-            this.Nonce = new byte[32];
+            Nonce = new byte[32];
 
             using (var rndGenerator = RandomNumberGenerator.Create())
             {
-                rndGenerator.GetBytes(this.Nonce);
+                rndGenerator.GetBytes(Nonce);
             }
 
             IDictionary extensions = new Hashtable
             {
                 { OcspObjectIdentifiers.PkixOcspNonce,
-                    new X509Extension(false, new DerOctetString(new DerOctetString(this.Nonce))) }
+                    new X509Extension(false, new DerOctetString(new DerOctetString(Nonce))) }
             };
             builder.SetRequestExtensions(new X509Extensions(extensions));
         }

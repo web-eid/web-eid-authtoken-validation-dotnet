@@ -32,17 +32,11 @@ namespace WebEid.Security.Validator.CertValidators
     using Org.BouncyCastle.Asn1.X509;
     using Org.BouncyCastle.Security;
 
-    internal sealed class SubjectCertificatePolicyValidator : ISubjectCertificateValidator
+    internal sealed class SubjectCertificatePolicyValidator(ICollection<Oid> disallowedSubjectCertificatePolicies, ILogger logger) : ISubjectCertificateValidator
     {
-        private readonly ICollection<Oid> disallowedSubjectCertificatePolicies;
-        private readonly ILogger logger;
-
-        public SubjectCertificatePolicyValidator(ICollection<Oid> disallowedSubjectCertificatePolicies, ILogger logger)
-        {
-            this.disallowedSubjectCertificatePolicies = disallowedSubjectCertificatePolicies
+        private readonly ICollection<Oid> disallowedSubjectCertificatePolicies = disallowedSubjectCertificatePolicies
                                                         ?? throw new ArgumentNullException(nameof(disallowedSubjectCertificatePolicies));
-            this.logger = logger;
-        }
+        private readonly ILogger logger = logger;
 
         /// <summary>
         /// Validates that the user certificate policies match the configured policies.
@@ -59,18 +53,21 @@ namespace WebEid.Security.Validator.CertValidators
                 var certificatePolicies = CertificatePolicies.GetInstance(extensionValue?.GetOctets());
                 if (certificatePolicies?.GetPolicyInformation()
                     .Any(policy =>
-                        this.disallowedSubjectCertificatePolicies
+                        disallowedSubjectCertificatePolicies
                         .Any(disallowedPolicy =>
                             disallowedPolicy.Value == policy.PolicyIdentifier.Id)) ?? false)
                 {
                     throw new UserCertificateDisallowedPolicyException();
                 }
             }
-            catch (Exception ex) when (!(ex is UserCertificateDisallowedPolicyException))
+            catch (Exception ex) when (ex is not UserCertificateDisallowedPolicyException)
             {
                 throw new UserCertificateParseException(ex);
             }
-            this.logger?.LogDebug("User certificate does not contain disallowed policies.");
+
+#pragma warning disable CA1848
+            logger?.LogDebug("User certificate does not contain disallowed policies.");
+#pragma warning restore CA1848
 
             return Task.CompletedTask;
         }

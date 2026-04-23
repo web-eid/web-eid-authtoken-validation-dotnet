@@ -65,7 +65,9 @@ namespace WebEid.Security.Validator
         /// <returns>A parsed <see cref="WebEidAuthToken"/> instance.</returns>
         public WebEidAuthToken Parse(string authToken)
         {
+#pragma warning disable CA1848
             logger?.LogInformation("Starting token parsing");
+#pragma warning restore CA1848
 
             try
             {
@@ -75,7 +77,9 @@ namespace WebEid.Security.Validator
             catch (Exception ex)
             {
                 // Generally "log and rethrow" is an anti-pattern, but it fits with the surrounding logging style.
+#pragma warning disable CA1848
                 logger?.LogWarning(ex, "Token parsing was interrupted");
+#pragma warning restore CA1848
                 throw;
             }
         }
@@ -88,12 +92,11 @@ namespace WebEid.Security.Validator
         /// <returns>A task representing the validation result with the user certificate.</returns>
         public Task<X509Certificate2> Validate(WebEidAuthToken authToken, string currentChallengeNonce)
         {
-            if (authToken == null)
-            {
-                throw new ArgumentNullException(nameof(authToken), "authToken must not be null");
-            }
+            ArgumentNullException.ThrowIfNull(authToken, nameof(authToken));
 
+#pragma warning disable CA1848
             logger?.LogInformation("Starting token validation");
+#pragma warning restore CA1848
 
             try
             {
@@ -102,7 +105,9 @@ namespace WebEid.Security.Validator
             }
             catch (Exception ex)
             {
+#pragma warning disable CA1848
                 logger?.LogWarning(ex, "Token validation was interrupted");
+#pragma warning restore CA1848
                 throw;
             }
         }
