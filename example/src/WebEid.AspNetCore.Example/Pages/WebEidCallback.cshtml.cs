@@ -20,7 +20,7 @@
 namespace WebEid.AspNetCore.Example.Pages
 {
     using Microsoft.AspNetCore.Mvc.RazorPages;
-    
+
     public class WebEidCallbackModel : PageModel
     {
         public void OnGet()
