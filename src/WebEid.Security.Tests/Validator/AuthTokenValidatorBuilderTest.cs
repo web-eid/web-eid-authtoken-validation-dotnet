@@ -26,6 +26,7 @@ namespace WebEid.Security.Tests.Validator
     using System.Security.Cryptography.X509Certificates;
     using Moq;
     using NUnit.Framework;
+    using Microsoft.Extensions.Logging;
     using WebEid.Security.Tests.TestUtils;
     using WebEid.Security.Validator;
     using WebEid.Security.Validator.Ocsp;
@@ -34,9 +35,19 @@ namespace WebEid.Security.Tests.Validator
     public class AuthTokenValidatorBuilderTest
     {
         private AuthTokenValidatorBuilder builder;
+        private Mock<ILogger> loggerMock;
+        private AuthTokenValidatorBuilder builderWithLogger;
 
         [SetUp]
-        public void SetUp() => builder = new AuthTokenValidatorBuilder();
+        public void SetUp()
+        {
+            builder = new AuthTokenValidatorBuilder();
+
+            loggerMock = new Mock<ILogger>();
+            loggerMock.Setup(x => x.IsEnabled(LogLevel.Debug)).Returns(true);
+
+            builderWithLogger = new AuthTokenValidatorBuilder(loggerMock.Object);
+        }
 
         [Test]
         public void WhenOriginMissingThenBuildingFails() =>
@@ -232,6 +243,93 @@ namespace WebEid.Security.Tests.Validator
             Assert.That(validator, Is.Not.Null);
         }
 
+        [Test]
+        public void WhenWithSiteOriginCalledWithDebugLoggerThenDebugLogIsWritten()
+        {
+            builderWithLogger.WithSiteOrigin(new Uri("https://ria.ee"));
+
+            VerifyDebugLogWasWritten(Times.Once());
+        }
+
+        [Test]
+        public void WhenWithTrustedCertificateAuthoritiesCalledWithDebugLoggerThenDebugLogIsWritten()
+        {
+            builderWithLogger.WithTrustedCertificateAuthorities(CreateTestCertificate());
+
+            VerifyDebugLogWasWritten(Times.Once());
+        }
+
+        [Test]
+        public void WhenWithDisallowedCertificatePoliciesCalledWithDebugLoggerThenDebugLogIsWritten()
+        {
+            builderWithLogger.WithDisallowedCertificatePolicies("1.2.3.4.5");
+
+            VerifyDebugLogWasWritten(Times.Once());
+        }
+
+        [Test]
+        public void WhenWithoutUserCertificateRevocationCheckWithOcspCalledWithLoggerThenDebugLogIsWritten()
+        {
+            builderWithLogger.WithoutUserCertificateRevocationCheckWithOcsp();
+
+            VerifyDebugLogWasWritten(Times.Once());
+        }
+
+        [Test]
+        public void WhenWithOcspRequestTimeoutCalledWithDebugLoggerThenDebugLogIsWritten()
+        {
+            builderWithLogger.WithOcspRequestTimeout(TimeSpan.FromSeconds(10));
+
+            VerifyDebugLogWasWritten(Times.Once());
+        }
+
+        [Test]
+        public void WhenWithAllowedOcspResponseTimeSkewCalledWithDebugLoggerThenDebugLogIsWritten()
+        {
+            builderWithLogger.WithAllowedOcspResponseTimeSkew(TimeSpan.FromMinutes(3));
+
+            VerifyDebugLogWasWritten(Times.Once());
+        }
+
+        [Test]
+        public void WhenWithMaxOcspResponseThisUpdateAgeCalledWithDebugLoggerThenDebugLogIsWritten()
+        {
+            builderWithLogger.WithMaxOcspResponseThisUpdateAge(TimeSpan.FromMinutes(1));
+
+            VerifyDebugLogWasWritten(Times.Once());
+        }
+
+        [Test]
+        public void WhenWithNonceDisabledOcspUrlsCalledWithDebugLoggerThenDebugLogIsWritten()
+        {
+            builderWithLogger.WithNonceDisabledOcspUrls(new Uri("https://ocsp.ria.ee"));
+
+            VerifyDebugLogWasWritten(Times.Once());
+        }
+
+        [Test]
+        public void WhenWithDesignatedOcspServiceConfigurationCalledWithLoggerThenDebugLogIsWritten()
+        {
+            var serviceConfiguration = new DesignatedOcspServiceConfiguration(
+                new Uri("https://ocsp.ria.ee"),
+                CreateOcspResponderCertificate(),
+                []);
+
+            builderWithLogger.WithDesignatedOcspServiceConfiguration(serviceConfiguration);
+
+            VerifyDebugLogWasWritten(Times.Once());
+        }
+
+        [Test]
+        public void WhenWithOcspClientCalledWithLoggerThenDebugLogIsWritten()
+        {
+            var ocspClient = new Mock<IOcspClient>().Object;
+
+            builderWithLogger.WithOcspClient(ocspClient);
+
+            VerifyDebugLogWasWritten(Times.Once());
+        }
+
         private static X509Certificate2 CreateTestCertificate()
         {
             using var rsa = RSA.Create(2048);
@@ -271,5 +369,16 @@ namespace WebEid.Security.Tests.Validator
 
             return Org.BouncyCastle.Security.DotNetUtilities.FromX509Certificate(certificate);
         }
+
+#pragma warning disable CA1873
+        private void VerifyDebugLogWasWritten(Times times) => loggerMock.Verify(
+                x => x.Log(
+                    It.Is<LogLevel>(l => l == LogLevel.Debug),
+                    It.IsAny<EventId>(),
+                    It.IsAny<It.IsAnyType>(),
+                    It.IsAny<Exception>(),
+                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+                times);
+#pragma warning restore CA1873
     }
 }
