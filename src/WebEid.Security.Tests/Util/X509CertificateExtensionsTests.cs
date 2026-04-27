@@ -36,58 +36,58 @@ namespace WebEid.Security.Tests.Util
 
         [OneTimeSetUp]
         public void SetUp() =>
-            this.certificate = Certificates.CertificateLoader.LoadCertificateFromResource("Karl-Kristjan-Joeorg.cer");
+            certificate = Certificates.CertificateLoader.LoadCertificateFromResource("Karl-Kristjan-Joeorg.cer");
 
         [Test]
         public void GetSubjectIdCodeReturnsCorrectValue() =>
-            Assert.That("PNOEE-38001085718", Is.EqualTo(this.certificate.GetSubjectIdCode()));
+            Assert.That("PNOEE-38001085718", Is.EqualTo(certificate.GetSubjectIdCode()));
 
         [Test]
         public void GetSubjectCnReturnsCorrectValue() =>
-            Assert.That("JÕEORG,JAAK-KRISTJAN,38001085718", Is.EqualTo(this.certificate.GetSubjectCn()));
+            Assert.That("JÕEORG,JAAK-KRISTJAN,38001085718", Is.EqualTo(certificate.GetSubjectCn()));
 
         [Test]
         public void GetSubjectGivenNameReturnsCorrectValue() =>
-            Assert.That("JAAK-KRISTJAN", Is.EqualTo(this.certificate.GetSubjectGivenName()));
+            Assert.That("JAAK-KRISTJAN", Is.EqualTo(certificate.GetSubjectGivenName()));
 
         [Test]
         public void GetSubjectSurnameReturnsCorrectValue() =>
-            Assert.That("JÕEORG", Is.EqualTo(this.certificate.GetSubjectSurname()));
+            Assert.That("JÕEORG", Is.EqualTo(certificate.GetSubjectSurname()));
 
         [Test]
         public void GetSubjectCountryCodeReturnsCorrectValue() =>
-            Assert.That("EE", Is.EqualTo(this.certificate.GetSubjectCountryCode()));
+            Assert.That("EE", Is.EqualTo(certificate.GetSubjectCountryCode()));
 
         [Test]
         public void ValidateBcNotYetValidCertificateExpiryThrowsException() =>
             Assert.Throws<CertificateNotYetValidException>(() =>
-                DotNetUtilities.FromX509Certificate(this.certificate)
+                DotNetUtilities.FromX509Certificate(certificate)
                     .ValidateCertificateExpiry(new DateTime(2000, 1, 1), "Test"));
 
         [Test]
         public void ValidateBcExpiredCertificateExpiryThrowsException() =>
             Assert.Throws<CertificateExpiredException>(() =>
-                DotNetUtilities.FromX509Certificate(this.certificate)
+                DotNetUtilities.FromX509Certificate(certificate)
                     .ValidateCertificateExpiry(new DateTime(2030, 1, 1), "Test"));
 
         [Test]
         public void ValidateBcValidCertificateExpiryDoesNotThrowException() => Assert.DoesNotThrow(() =>
-                                                                                 DotNetUtilities.FromX509Certificate(this.certificate)
+                                                                                 DotNetUtilities.FromX509Certificate(certificate)
                                                                                      .ValidateCertificateExpiry(new DateTime(2021, 08, 1), "Test"));
 
         [Test]
         public void ValidateNotYetValidCertificateExpiryThrowsException() => Assert.Throws<CertificateNotYetValidException>(() =>
-                                                                               new X509Certificate2(this.certificate)
+                                                                               new X509Certificate2(certificate)
                                                                                    .ValidateCertificateExpiry(new DateTime(2000, 1, 1), "Test"));
 
         [Test]
         public void ValidateExpiredCertificateExpiryThrowsException() => Assert.Throws<CertificateExpiredException>(() =>
-                                                                           new X509Certificate2(this.certificate)
+                                                                           new X509Certificate2(certificate)
                                                                                .ValidateCertificateExpiry(new DateTime(2030, 1, 1), "Test"));
 
         [Test]
         public void ValidateValidCertificateExpiryDoesNotThrowException() => Assert.DoesNotThrow(() =>
-                                                                               new X509Certificate2(this.certificate)
+                                                                               new X509Certificate2(certificate)
                                                                                    .ValidateCertificateExpiry(new DateTime(2021, 08, 1), "Test"));
     }
 }

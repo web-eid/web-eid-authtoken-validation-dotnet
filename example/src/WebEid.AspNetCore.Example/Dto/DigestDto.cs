@@ -17,11 +17,11 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-﻿namespace WebEid.AspNetCore.Example.Dto
+namespace WebEid.AspNetCore.Example.Dto
 {
     public class DigestDto
     {
-        public string Hash { get; set; }
-        public string HashFunction { get; set; }
+        public required string Hash { get; set; }
+        public required string HashFunction { get; set; }
     }
 }

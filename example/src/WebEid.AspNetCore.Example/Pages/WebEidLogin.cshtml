@@ -3,11 +3,12 @@
 @inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Xsrf
 
 @{
-var tokens = Xsrf.GetAndStoreTokens(HttpContext);
+    var tokens = Xsrf.GetAndStoreTokens(HttpContext);
 }
 
 <!doctype html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -19,6 +20,7 @@ var tokens = Xsrf.GetAndStoreTokens(HttpContext);
     <link rel="stylesheet" href="/css/bootstrap.min.css" />
     <link rel="stylesheet" href="/css/main.css" />
 </head>
+
 <body class="loading-page">
     <div id="spinner-message">
         <h2>Signing you in…</h2>
@@ -34,41 +36,42 @@ var tokens = Xsrf.GetAndStoreTokens(HttpContext);
         <button id="back-button" class="btn btn-primary">Back</button>
     </p>
 
-<script type="module">
-    import { showErrorMessage, checkHttpError } from "/js/errors.js";
-    import { parsePayload } from "/js/payload.js";
+    <script type="module">
+            import { showErrorMessage, checkHttpError } from "/js/errors.js";
+            import { parsePayload } from "/js/payload.js";
 
-    // Using an async IIFE for mobile WebView compatibility:
-    // top-level await is not supported in some mobile browsers/WebViews.
-    (async function () {
-        const payload = parsePayload("Authentication");
-        const authToken = payload["authToken"];
-        const csrf = document.querySelector('meta[name="csrf-token"]').content;
-        const csrfHeaderName = document.querySelector('meta[name="csrf-header-name"]').content;
-        const response = await fetch("/auth/login", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                [csrfHeaderName]: csrf
-            },
-            body: JSON.stringify({ auth_token: authToken }),
-            credentials: "include"
-        });
+            // Using an async IIFE for mobile WebView compatibility:
+            // top-level await is not supported in some mobile browsers/WebViews.
+            (async function () {
+                const payload = parsePayload("Authentication");
+                const authToken = payload["authToken"];
+                const csrf = document.querySelector('meta[name="csrf-token"]').content;
+                const csrfHeaderName = document.querySelector('meta[name="csrf-header-name"]').content;
+                const response = await fetch("/auth/login", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        [csrfHeaderName]: csrf
+                    },
+                    body: JSON.stringify({ auth_token: authToken }),
+                    credentials: "include"
+                });
 
-        await checkHttpError(response);
-        window.location.replace("/welcome");
-    })().catch((error) => {
-        console.error(error);
-        showErrorMessage(error);
-        document.getElementById("spinner-message").style.display = "none";
+                await checkHttpError(response);
+                window.location.replace("/welcome");
+            })().catch((error) => {
+                console.error(error);
+                showErrorMessage(error);
+                document.getElementById("spinner-message").style.display = "none";
 
-        const actions = document.getElementById("error-actions");
-        actions.style.display = "block";
+                const actions = document.getElementById("error-actions");
+                actions.style.display = "block";
 
-        document.getElementById("back-button").addEventListener("click", () => {
-            window.location.replace("/");
-        });
-    });
-</script>
+                document.getElementById("back-button").addEventListener("click", () => {
+                    window.location.replace("/");
+                });
+            });
+    </script>
 </body>
+
 </html>

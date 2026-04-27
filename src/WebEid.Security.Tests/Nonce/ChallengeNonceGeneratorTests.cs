@@ -23,8 +23,8 @@ namespace WebEid.Security.Tests.Nonce
 {
     using System;
     using System.Security.Cryptography;
-    using NUnit.Framework;
     using Challenge;
+    using NUnit.Framework;
 
     [TestFixture]
     public class ChallengeNonceGeneratorTests
@@ -37,20 +37,20 @@ namespace WebEid.Security.Tests.Nonce
         [SetUp]
         protected void SetUp()
         {
-            this.store = new InMemoryChallengeNonceStore();
-            this.ttl = TimeSpan.FromMinutes(5);
+            store = new InMemoryChallengeNonceStore();
+            ttl = TimeSpan.FromMinutes(5);
         }
 
         [Test]
         public void NonceIsGeneratedAndStored()
         {
             using var rndGenerator = RandomNumberGenerator.Create();
-            var nonceGenerator = new ChallengeNonceGenerator(rndGenerator, this.store);
+            var nonceGenerator = new ChallengeNonceGenerator(rndGenerator, store);
 
-            var nonce1 = nonceGenerator.GenerateAndStoreNonce(this.ttl);
-            var nonce2 = nonceGenerator.GenerateAndStoreNonce(this.ttl);
+            var nonce1 = nonceGenerator.GenerateAndStoreNonce(ttl);
+            var nonce2 = nonceGenerator.GenerateAndStoreNonce(ttl);
 
-            var nonce2FromStore = this.store.GetAndRemove();
+            var nonce2FromStore = store.GetAndRemove();
 
             // Validate that generated nonce was put into the store.
             Assert.That(nonce2, Is.EqualTo(nonce2FromStore));
@@ -78,7 +78,7 @@ namespace WebEid.Security.Tests.Nonce
         public void BuildNonceGeneratorWithNegativeTtlThrowsArgumentOutOfRangeException()
         {
             using var rndGenerator = RandomNumberGenerator.Create();
-            var generator = new ChallengeNonceGenerator(rndGenerator, this.store);
+            var generator = new ChallengeNonceGenerator(rndGenerator, store);
             Assert.Throws<ArgumentOutOfRangeException>(() =>
                 generator.GenerateAndStoreNonce(TimeSpan.FromMinutes(1).Negate()));
         }
@@ -87,7 +87,7 @@ namespace WebEid.Security.Tests.Nonce
         public void BuildNonceGeneratorWithZeroTtlThrowsArgumentOutOfRangeException()
         {
             using var rndGenerator = RandomNumberGenerator.Create();
-            var generator = new ChallengeNonceGenerator(rndGenerator, this.store);
+            var generator = new ChallengeNonceGenerator(rndGenerator, store);
             Assert.Throws<ArgumentOutOfRangeException>(() =>
                 generator.GenerateAndStoreNonce(TimeSpan.Zero));
         }
@@ -96,14 +96,14 @@ namespace WebEid.Security.Tests.Nonce
         public void BuildNonceGeneratorWithRandomNumberGeneratorAndCacheDoesNotThrowException()
         {
             using var rndGenerator = RandomNumberGenerator.Create();
-            Assert.DoesNotThrow(() => new ChallengeNonceGenerator(rndGenerator, this.store));
+            Assert.DoesNotThrow(() => new ChallengeNonceGenerator(rndGenerator, store));
         }
 
         [Test]
         public void BuildNonceGeneratorWithRandomNumberGeneratorAndCacheAndPositiveTtlDoesNotThrowException()
         {
             using var rndGenerator = RandomNumberGenerator.Create();
-            var generator = new ChallengeNonceGenerator(rndGenerator, this.store);
+            var generator = new ChallengeNonceGenerator(rndGenerator, store);
             Assert.DoesNotThrow(() => generator.GenerateAndStoreNonce(TimeSpan.FromMinutes(1)));
         }
     }

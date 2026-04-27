@@ -23,9 +23,9 @@ namespace WebEid.Security.Validator
 {
     using System.Security.Cryptography.X509Certificates;
     using System.Threading.Tasks;
+    using AuthToken;
     using Exceptions;
     using Util;
-    using AuthToken;
 
     /// <summary>
     /// Interface for validating Web eID authentication tokens.
@@ -38,7 +38,7 @@ namespace WebEid.Security.Validator
         /// <param name="authToken">the Web eID authentication token string, in Web eID JSON format</param>
         /// <returns>the Web eID authentication token</returns>
         /// <exception cref="AuthTokenException">When parsing fails</exception>
-        WebEidAuthToken Parse(string authToken);
+        public WebEidAuthToken Parse(string authToken);
 
         /// <summary>
         /// Validates the Web eID authentication token signed by the subject and returns
@@ -50,6 +50,6 @@ namespace WebEid.Security.Validator
         /// <param name="currentChallengeNonce"></param>
         /// <returns>validated subject certificate</returns>
         /// <exception cref="AuthTokenException">When validation fails</exception>
-        Task<X509Certificate2> Validate(WebEidAuthToken authToken, string currentChallengeNonce);
+        public Task<X509Certificate2> Validate(WebEidAuthToken authToken, string currentChallengeNonce);
     }
 }
