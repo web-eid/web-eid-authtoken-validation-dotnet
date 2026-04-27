@@ -22,7 +22,6 @@
 namespace WebEid.Security.AuthToken
 {
     using System.Collections.Generic;
-    using System.Text.Json.Serialization;
 
     /// <summary>
     /// Unverified signing certificate and its supported signature algorithms.

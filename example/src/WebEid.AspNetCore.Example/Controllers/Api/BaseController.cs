@@ -25,27 +25,15 @@ namespace WebEid.AspNetCore.Example.Controllers.Api
 
     public abstract class BaseController : ControllerBase
     {
-        const string uniqueIdKey = "UniqueId";
+        private const string UniqueIdKey = "UniqueId";
 
-        protected void RemoveUserContainerFile()
-        {
-            System.IO.File.Delete(GetUserContainerName());
-        }
+        protected void RemoveUserContainerFile() => System.IO.File.Delete(GetUserContainerName());
 
-        protected void SetUniqueIdInSession()
-        {
-            HttpContext.Session.SetString(uniqueIdKey, Guid.NewGuid().ToString());
-        }
+        protected void SetUniqueIdInSession() => HttpContext.Session.SetString(UniqueIdKey, Guid.NewGuid().ToString());
 
-        private string GetUniqueIdFromSession()
-        {
-            return HttpContext.Session.GetString(uniqueIdKey)
+        private string GetUniqueIdFromSession() => HttpContext.Session.GetString(UniqueIdKey)
                 ?? throw new InvalidOperationException("Unique ID not found in session.");
-        }
 
-        protected string GetUserContainerName()
-        {
-            return $"container_{GetUniqueIdFromSession()}";
-        }
+        protected string GetUserContainerName() => $"container_{GetUniqueIdFromSession()}";
     }
 }

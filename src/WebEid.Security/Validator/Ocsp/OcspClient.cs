@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright © 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -42,8 +42,8 @@ namespace WebEid.Security.Validator.Ocsp
 
         public OcspClient(TimeSpan ocspRequestTimeout, ILogger logger = null)
         {
-            this.httpClientHandler = new HttpClientHandler { AutomaticDecompression = DecompressionMethods.GZip };
-            this.httpClient = new HttpClient(this.httpClientHandler) { Timeout = ocspRequestTimeout };
+            httpClientHandler = new HttpClientHandler { AutomaticDecompression = DecompressionMethods.GZip };
+            httpClient = new HttpClient(httpClientHandler) { Timeout = ocspRequestTimeout };
             this.logger = logger;
         }
 
@@ -60,17 +60,17 @@ namespace WebEid.Security.Validator.Ocsp
             var content = new ByteArrayContent(data);
             content.Headers.ContentType = new MediaTypeHeaderValue(OcspRequestType);
             content.Headers.ContentLength = data.Length;
-            var response = await this.httpClient.PostAsync(uri, content);
+            var response = await httpClient.PostAsync(uri, content);
             if (!response.IsSuccessStatusCode)
             {
                 throw new HttpRequestException($"OCSP request was not successful, response: {response}");
             }
 
-            if (this.logger?.IsEnabled(LogLevel.Debug) == true)
+            if (logger?.IsEnabled(LogLevel.Debug) == true)
             {
-            #pragma warning disable CA1848
-                this.logger.LogDebug("OCSP response: {Response}", response);
-            #pragma warning restore CA1848
+#pragma warning disable CA1848
+                logger.LogDebug("OCSP response: {Response}", response);
+#pragma warning restore CA1848
             }
 
             if (response.Content.Headers.ContentType != null &&
@@ -85,8 +85,8 @@ namespace WebEid.Security.Validator.Ocsp
 
         public void Dispose()
         {
-            this.httpClient?.Dispose();
-            this.httpClientHandler?.Dispose();
+            httpClient?.Dispose();
+            httpClientHandler?.Dispose();
         }
     }
 }

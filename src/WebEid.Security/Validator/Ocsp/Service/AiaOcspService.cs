@@ -67,7 +67,7 @@ namespace WebEid.Security.Validator.Ocsp.Service
                 _ = new X509Certificate2(DotNetUtilities.ToX509Certificate(responderCertificate))
                     .ValidateIsValidAndSignedByTrustedCa(trustedCaCertificates);
             }
-            catch (Exception ex) when (!(ex is CertificateNotTrustedException) && !(ex is CertificateExpiredException))
+            catch (Exception ex) when (ex is not CertificateNotTrustedException and not CertificateExpiredException)
             {
                 throw new OcspCertificateException("Invalid certificate", ex);
             }

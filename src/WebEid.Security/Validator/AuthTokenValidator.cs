@@ -23,11 +23,11 @@ namespace WebEid.Security.Validator
 {
     using System;
     using System.Security.Cryptography.X509Certificates;
+    using System.Text.Json;
     using System.Threading.Tasks;
+    using AuthToken;
     using Exceptions;
     using Microsoft.Extensions.Logging;
-    using System.Text.Json;
-    using AuthToken;
     using Ocsp;
     using VersionValidators;
 

@@ -21,8 +21,8 @@ namespace WebEid.AspNetCore.Example.Services
 {
     using System;
     using System.Collections.Generic;
-    using System.Linq;
     using System.IO;
+    using System.Linq;
     using System.Security.Claims;
     using System.Security.Cryptography.X509Certificates;
     using digidoc;
@@ -33,13 +33,11 @@ namespace WebEid.AspNetCore.Example.Services
     public class SigningService : IDisposable
     {
         private static readonly string FileToSign = Path.Combine("wwwroot", "files", "example-for-signing.txt");
-        private readonly DigiDocConfiguration configuration;
         private readonly ILogger logger;
-        private bool _disposedValue;
+        private bool disposedValue;
 
         public SigningService(DigiDocConfiguration configuration, ILogger logger)
         {
-            this.configuration = configuration;
             this.logger = logger;
 
             // The current implementation of the static DigiDoc library assumes that SigningService is used as a singleton.
@@ -60,10 +58,17 @@ namespace WebEid.AspNetCore.Example.Services
                     "Authenticated subject ID code differs from signing certificate subject ID code");
             }
 
-            logger?.LogDebug("Creating container file: '{0}'", tempContainerName);
-            Container container = Container.create(tempContainerName);
+#pragma warning disable CA1848, CA1873
+            logger?.LogDebug("Creating container file: '{ContainerName}'", tempContainerName);
+#pragma warning restore CA1848, CA1873
+
+            var container = Container.create(tempContainerName);
             container.addDataFile(FileToSign, "application/octet-stream");
-            logger?.LogInformation("Preparing container for signing for file '{0}'", tempContainerName);
+
+#pragma warning disable CA1848, CA1873
+            logger?.LogInformation("Preparing container for signing for file '{ContainerName}'", tempContainerName);
+#pragma warning restore CA1848, CA1873
+
             var signature =
                 container.prepareWebSignature(certificate.Export(X509ContentType.Cert), "time-stamp");
             var hashFunction = GetSupportedHashAlgorithm(data.SupportedSignatureAlgorithms, signature.signatureMethod());
@@ -123,7 +128,7 @@ namespace WebEid.AspNetCore.Example.Services
 
         private void Dispose(bool disposing)
         {
-            if (!_disposedValue)
+            if (!disposedValue)
             {
                 if (disposing)
                 {
@@ -131,7 +136,7 @@ namespace WebEid.AspNetCore.Example.Services
                 }
 
                 digidoc.terminate();
-                _disposedValue = true;
+                disposedValue = true;
             }
         }
     }

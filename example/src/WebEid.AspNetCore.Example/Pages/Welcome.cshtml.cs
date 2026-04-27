@@ -25,7 +25,7 @@ namespace WebEid.AspNetCore.Example.Pages
 
     public class WelcomeModel : PageModel
     {
-        public string PrincipalName => GetPrincipalName(this.User.Identity as ClaimsIdentity);
+        public string PrincipalName => GetPrincipalName(User.Identity as ClaimsIdentity);
 
         private static string GetPrincipalName(ClaimsIdentity? identity)
         {

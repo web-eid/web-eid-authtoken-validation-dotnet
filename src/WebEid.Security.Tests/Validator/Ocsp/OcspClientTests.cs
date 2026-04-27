@@ -95,7 +95,7 @@ namespace WebEid.Security.Tests.Validator.Ocsp
         {
             var ocspClient = new OcspClient(TimeSpan.FromSeconds(5));
 
-            Assert.DoesNotThrow(() => ocspClient.Dispose());
+            Assert.DoesNotThrow(ocspClient.Dispose);
         }
 
         private static OcspReq CreateOcspRequest()

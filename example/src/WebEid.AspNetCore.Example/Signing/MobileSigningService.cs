@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2025-2025 Estonian Information System Authority
+// Copyright (c) 2025-2025 Estonian Information System Authority
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -19,17 +19,14 @@
 
 namespace WebEid.AspNetCore.Example.Signing
 {
-    using System;
     using System.Collections.Generic;
     using System.Security.Claims;
     using System.Text;
     using System.Text.Json;
     using System.Text.Json.Serialization;
-    using Microsoft.Extensions.Options;
+    using Dto;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.WebUtilities;
-    using Dto;
-    using Options;
     using Services;
 
     public class MobileSigningService(

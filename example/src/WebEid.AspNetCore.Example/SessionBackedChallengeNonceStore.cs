@@ -17,26 +17,21 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-using System;
-using System.Text.Json;
-using Microsoft.AspNetCore.Http;
-using WebEid.Security.Challenge;
-
 namespace WebEid.AspNetCore.Example
 {
-    public class SessionBackedChallengeNonceStore : IChallengeNonceStore
+    using System;
+    using System.Text.Json;
+    using Microsoft.AspNetCore.Http;
+    using WebEid.Security.Challenge;
+
+    public class SessionBackedChallengeNonceStore(IHttpContextAccessor httpContextAccessor) : IChallengeNonceStore
     {
         private const string ChallengeNonceKey = "challenge-nonce";
-        private readonly IHttpContextAccessor httpContextAccessor;
-
-        public SessionBackedChallengeNonceStore(IHttpContextAccessor httpContextAccessor)
-        {
-            this.httpContextAccessor = httpContextAccessor;
-        }
+        private readonly IHttpContextAccessor httpContextAccessor = httpContextAccessor;
 
         public void Put(ChallengeNonce challengeNonce)
         {
-            var httpContext = this.httpContextAccessor.HttpContext
+            var httpContext = httpContextAccessor.HttpContext
                 ?? throw new InvalidOperationException("HttpContext is not available.");
 
             httpContext.Session.SetString(ChallengeNonceKey, JsonSerializer.Serialize(challengeNonce));
@@ -44,7 +39,7 @@ namespace WebEid.AspNetCore.Example
 
         public ChallengeNonce? GetAndRemoveImpl()
         {
-            var httpContext = this.httpContextAccessor.HttpContext;
+            var httpContext = httpContextAccessor.HttpContext;
             if (httpContext is null)
             {
                 return null;

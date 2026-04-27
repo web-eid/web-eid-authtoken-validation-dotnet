@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright © 2025-2025 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -24,12 +24,12 @@ namespace WebEid.Security.Validator.VersionValidators
     using System;
     using System.Security.Cryptography.X509Certificates;
     using System.Threading.Tasks;
-    using CertValidators;
     using AuthToken;
+    using CertValidators;
     using Exceptions;
-    using Util;
-    using Ocsp;
     using Microsoft.Extensions.Logging;
+    using Ocsp;
+    using Util;
 
     /// <summary>
     /// Validator for token format web-eid:1.0.
@@ -124,5 +124,5 @@ namespace WebEid.Security.Validator.VersionValidators
         private static bool IsExactV10Format(string format) =>
             V1_SUPPORTED_TOKEN_FORMAT_PREFIX.Equals(format, StringComparison.OrdinalIgnoreCase) ||
             "web-eid:1.0".Equals(format, StringComparison.OrdinalIgnoreCase);
-        }
+    }
 }

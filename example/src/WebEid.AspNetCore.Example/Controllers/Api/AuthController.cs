@@ -19,33 +19,27 @@
 
 namespace WebEid.AspNetCore.Example.Controllers.Api
 {
-    using Microsoft.AspNetCore.Authentication;
-    using Microsoft.AspNetCore.Authentication.Cookies;
-    using Microsoft.AspNetCore.Mvc;
-    using Microsoft.AspNetCore.Http;
-    using Security.Util;
-    using Security.Validator;
+    using System;
     using System.Collections.Generic;
     using System.Security.Claims;
     using System.Text.Json;
     using System.Threading.Tasks;
+    using Microsoft.AspNetCore.Authentication;
+    using Microsoft.AspNetCore.Authentication.Cookies;
+    using Microsoft.AspNetCore.Http;
+    using Microsoft.AspNetCore.Mvc;
     using Security.Challenge;
+    using Security.Util;
+    using Security.Validator;
     using WebEid.AspNetCore.Example.Dto;
     using WebEid.Security.AuthToken;
-    using System;
 
     [Route("[controller]")]
     [ApiController]
-    public class AuthController : BaseController
+    public class AuthController(IAuthTokenValidator authTokenValidator, IChallengeNonceStore challengeNonceStore) : BaseController
     {
-        private readonly IAuthTokenValidator authTokenValidator;
-        private readonly IChallengeNonceStore challengeNonceStore;
-
-        public AuthController(IAuthTokenValidator authTokenValidator, IChallengeNonceStore challengeNonceStore)
-        {
-            this.authTokenValidator = authTokenValidator;
-            this.challengeNonceStore = challengeNonceStore;
-        }
+        private readonly IAuthTokenValidator authTokenValidator = authTokenValidator;
+        private readonly IChallengeNonceStore challengeNonceStore = challengeNonceStore;
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] AuthenticateRequestDto dto)

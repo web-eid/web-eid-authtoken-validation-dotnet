@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2025-2025 Estonian Information System Authority
+// Copyright (c) 2025-2025 Estonian Information System Authority
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -21,13 +21,13 @@ namespace WebEid.AspNetCore.Example.Controllers.Api
 {
     using System;
     using System.Text;
-    using Microsoft.AspNetCore.Mvc;
-    using Microsoft.Extensions.Options;
     using System.Text.Json;
     using System.Text.Json.Serialization;
+    using Microsoft.AspNetCore.Mvc;
+    using Microsoft.Extensions.Options;
     using Options;
-    using Services;
     using Security.Challenge;
+    using Services;
 
     [ApiController]
     [Route("auth/mobile")]

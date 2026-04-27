@@ -22,10 +22,10 @@ namespace WebEid.AspNetCore.Example.Controllers.Api
     using System;
     using System.Security.Claims;
     using System.Threading.Tasks;
+    using Dto;
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.Extensions.Logging;
-    using Dto;
     using Services;
     using Signing;
 
@@ -96,7 +96,9 @@ namespace WebEid.AspNetCore.Example.Controllers.Api
             }
             catch (Exception ex)
             {
+#pragma warning disable CA1848
                 logger?.LogError(ex, "Error occurred while downloading user container file");
+#pragma warning disable CA1848
                 return BadRequest();
             }
         }

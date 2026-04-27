@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright © 2020-2025 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -21,8 +21,8 @@
  */
 namespace WebEid.Security.Tests.Validator
 {
-    using NUnit.Framework;
     using Exceptions;
+    using NUnit.Framework;
     using TestUtils;
 
     public class AuthTokenAlgorithmTest : AbstractTestWithValidator

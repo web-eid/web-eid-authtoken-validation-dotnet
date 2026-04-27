@@ -24,9 +24,9 @@ namespace WebEid.Security.Tests.Validator
     using System;
     using System.Security.Cryptography;
     using System.Security.Cryptography.X509Certificates;
+    using Microsoft.Extensions.Logging;
     using Moq;
     using NUnit.Framework;
-    using Microsoft.Extensions.Logging;
     using WebEid.Security.Tests.TestUtils;
     using WebEid.Security.Validator;
     using WebEid.Security.Validator.Ocsp;

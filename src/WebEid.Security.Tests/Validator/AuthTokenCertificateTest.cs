@@ -54,103 +54,103 @@ namespace WebEid.Security.Tests.Validator
         [Test]
         public void WhenCertificateFieldIsMissingThenParsingFailsAsync()
         {
-            var authToken = this.ReplaceTokenField(AuthToken, "\"unverifiedCertificate\":\"X5C\",", "");
-            Assert.ThrowsAsync<AuthTokenParseException>(() => this.Validator.Validate(authToken, ValidChallengeNonce))
+            var authToken = ReplaceTokenField(AuthToken, "\"unverifiedCertificate\":\"X5C\",", "");
+            Assert.ThrowsAsync<AuthTokenParseException>(() => Validator.Validate(authToken, ValidChallengeNonce))
                 .WithMessage("'unverifiedCertificate' field is missing, null or empty");
         }
 
         [Test]
         public void WhenCertificateFieldIsEmptyThenParsingFailsAsync()
         {
-            var authToken = this.ReplaceTokenField(AuthToken, "X5C", "");
-            Assert.ThrowsAsync<AuthTokenParseException>(() => this.Validator.Validate(authToken, ValidChallengeNonce))
+            var authToken = ReplaceTokenField(AuthToken, "X5C", "");
+            Assert.ThrowsAsync<AuthTokenParseException>(() => Validator.Validate(authToken, ValidChallengeNonce))
                 .WithMessage("'unverifiedCertificate' field is missing, null or empty");
         }
 
         [Test]
         public void WhenCertificateFieldIsArrayThenParsingFails() =>
             Assert.Throws<AuthTokenParseException>(() =>
-            this.ReplaceTokenField(AuthToken, "\"X5C\"", "[1,2,3,4]"))
+            ReplaceTokenField(AuthToken, "\"X5C\"", "[1,2,3,4]"))
                 .WithMessage("Error parsing Web eID authentication token");
 
         [Test]
         public void WhenCertificateFieldIsNumberThenParsingFails()
         {
             var authToken = AuthToken.Replace("\"X5C\"", "1234");
-            Assert.Throws<AuthTokenParseException>(() => this.Validator.Parse(authToken))
+            Assert.Throws<AuthTokenParseException>(() => Validator.Parse(authToken))
                 .WithMessage("Error parsing Web eID authentication token");
         }
 
         [Test]
         public void WhenCertificateFieldIsNotBase64ThenParsingFailsAsync()
         {
-            var authToken = this.ReplaceTokenField(AuthToken, "X5C", "This is not a certificate");
-            Assert.ThrowsAsync<AuthTokenParseException>(() => this.Validator.Validate(authToken, ValidChallengeNonce))
+            var authToken = ReplaceTokenField(AuthToken, "X5C", "This is not a certificate");
+            Assert.ThrowsAsync<AuthTokenParseException>(() => Validator.Validate(authToken, ValidChallengeNonce))
                 .WithMessage("'unverifiedCertificate' field must contain a valid certificate");
         }
 
         [Test]
         public void WhenCertificateFieldIsNotCertificateThenParsingFailsAsync()
         {
-            var authToken = this.ReplaceTokenField(AuthToken, "X5C", "VGhpcyBpcyBub3QgYSBjZXJ0aWZpY2F0ZQ");
-            Assert.ThrowsAsync<AuthTokenParseException>(() => this.Validator.Validate(authToken, ValidChallengeNonce))
+            var authToken = ReplaceTokenField(AuthToken, "X5C", "VGhpcyBpcyBub3QgYSBjZXJ0aWZpY2F0ZQ");
+            Assert.ThrowsAsync<AuthTokenParseException>(() => Validator.Validate(authToken, ValidChallengeNonce))
                 .WithMessage("'unverifiedCertificate' field must contain a valid certificate");
         }
 
         [Test]
         public void WhenCertificateKeyUsageIsMissingThenValidationFailsAsync()
         {
-            var authToken = this.ReplaceTokenField(AuthToken, "X5C", MissingKeyUsageCert);
-            Assert.ThrowsAsync<UserCertificateMissingPurposeException>(() => this.Validator.Validate(authToken, ValidChallengeNonce));
+            var authToken = ReplaceTokenField(AuthToken, "X5C", MissingKeyUsageCert);
+            Assert.ThrowsAsync<UserCertificateMissingPurposeException>(() => Validator.Validate(authToken, ValidChallengeNonce));
         }
 
         [Test]
         public void WhenCertificatePurposeIsWrongThenValidationFailsAsync()
         {
-            var authToken = this.ReplaceTokenField(AuthToken, "X5C", WrongPurposeCert);
-            Assert.ThrowsAsync<UserCertificateWrongPurposeException>(() => this.Validator.Validate(authToken, ValidChallengeNonce));
+            var authToken = ReplaceTokenField(AuthToken, "X5C", WrongPurposeCert);
+            Assert.ThrowsAsync<UserCertificateWrongPurposeException>(() => Validator.Validate(authToken, ValidChallengeNonce));
         }
 
         [Test]
         public void WhenCertificatePolicyIsWrongThenValidationFailsAsync()
         {
-            var authToken = this.ReplaceTokenField(AuthToken, "X5C", WrongPolicyCert);
-            Assert.ThrowsAsync<UserCertificateDisallowedPolicyException>(() => this.Validator.Validate(authToken, ValidChallengeNonce));
+            var authToken = ReplaceTokenField(AuthToken, "X5C", WrongPolicyCert);
+            Assert.ThrowsAsync<UserCertificateDisallowedPolicyException>(() => Validator.Validate(authToken, ValidChallengeNonce));
         }
 
         [Test]
         public void WhenCertificatePolicyIsDisallowedThenValidationFailsAsync()
         {
             var authTokenValidator = AuthTokenValidators.GetAuthTokenValidatorWithDisallowedEsteidPolicy();
-            Assert.ThrowsAsync<UserCertificateDisallowedPolicyException>(() => authTokenValidator.Validate(this.ValidAuthToken, ValidChallengeNonce));
+            Assert.ThrowsAsync<UserCertificateDisallowedPolicyException>(() => authTokenValidator.Validate(ValidAuthToken, ValidChallengeNonce));
         }
 
         [Test]
         public void WhenUsingOldMobileIdCertificateThenValidationFailsAsync()
         {
-            var authToken = this.ReplaceTokenField(AuthToken, "X5C", OldMobileIdCert);
-            Assert.ThrowsAsync<UserCertificateDisallowedPolicyException>(() => this.Validator.Validate(authToken, ValidChallengeNonce));
+            var authToken = ReplaceTokenField(AuthToken, "X5C", OldMobileIdCert);
+            Assert.ThrowsAsync<UserCertificateDisallowedPolicyException>(() => Validator.Validate(authToken, ValidChallengeNonce));
         }
 
         [Test]
         public void WhenUsingNewMobileIdCertificateThenValidationFailsAsync()
         {
-            var authToken = this.ReplaceTokenField(AuthToken, "X5C", NewMobileIdCert);
-            Assert.ThrowsAsync<UserCertificateDisallowedPolicyException>(() => this.Validator.Validate(authToken, ValidChallengeNonce));
+            var authToken = ReplaceTokenField(AuthToken, "X5C", NewMobileIdCert);
+            Assert.ThrowsAsync<UserCertificateDisallowedPolicyException>(() => Validator.Validate(authToken, ValidChallengeNonce));
         }
 
         [Test]
         public void WhenCertificateIsExpiredRsaThenValidationFailsAsync()
         {
-            var authToken = this.ReplaceTokenField(AuthToken, "X5C", ExpiredRsaCert);
-            Assert.ThrowsAsync<CertificateExpiredException>(() => this.Validator.Validate(authToken, ValidChallengeNonce));
+            var authToken = ReplaceTokenField(AuthToken, "X5C", ExpiredRsaCert);
+            Assert.ThrowsAsync<CertificateExpiredException>(() => Validator.Validate(authToken, ValidChallengeNonce));
         }
 
         [Test]
         public void WhenCertificateIsExpiredEcdsaThenValidationFailsAsync()
         {
-            var authToken = this.ReplaceTokenField(AuthToken, "X5C", ExpiredEcdsaCert);
-            Assert.ThrowsAsync<CertificateExpiredException>(() => this.Validator.Validate(authToken, ValidChallengeNonce));
+            var authToken = ReplaceTokenField(AuthToken, "X5C", ExpiredEcdsaCert);
+            Assert.ThrowsAsync<CertificateExpiredException>(() => Validator.Validate(authToken, ValidChallengeNonce));
         }
 
         // Subject certificate validity:
@@ -164,7 +164,7 @@ namespace WebEid.Security.Tests.Validator
         public void WhenUserCertificateIsNotYetValidThenValidationFailsAsync()
         {
             using var _ = DateTimeProvider.OverrideUtcNow(new DateTime(2018, 10, 17));
-            Assert.ThrowsAsync<CertificateNotYetValidException>(() => this.Validator.Validate(this.ValidAuthToken, ValidChallengeNonce))
+            Assert.ThrowsAsync<CertificateNotYetValidException>(() => Validator.Validate(ValidAuthToken, ValidChallengeNonce))
                 .WithMessage("User certificate is not yet valid");
         }
 
@@ -172,8 +172,8 @@ namespace WebEid.Security.Tests.Validator
         public void WhenTrustedCACertificateIsNotYetValidThenUserCertValidationFailsAsync()
         {
             using var _ = DateTimeProvider.OverrideUtcNow(new DateTime(2018, 8, 17));
-            Assert.ThrowsAsync<CertificateNotYetValidException>(() => this.Validator
-                .Validate(this.ValidAuthToken, ValidChallengeNonce))
+            Assert.ThrowsAsync<CertificateNotYetValidException>(() => Validator
+                .Validate(ValidAuthToken, ValidChallengeNonce))
                 .WithMessage("User certificate is not yet valid");
         }
 
@@ -181,7 +181,7 @@ namespace WebEid.Security.Tests.Validator
         public void WhenUserCertificateIsNoLongerValidThenValidationFailsAsync()
         {
             using var _ = DateTimeProvider.OverrideUtcNow(new DateTime(2026, 10, 19));
-            Assert.ThrowsAsync<CertificateExpiredException>(() => this.Validator.Validate(this.ValidAuthToken, ValidChallengeNonce))
+            Assert.ThrowsAsync<CertificateExpiredException>(() => Validator.Validate(ValidAuthToken, ValidChallengeNonce))
                 .WithMessage("User certificate has expired");
         }
 
@@ -190,8 +190,8 @@ namespace WebEid.Security.Tests.Validator
         public void WhenTrustedCACertificateIsNoLongerValidThenUserCertValidationFailsAsync()
         {
             using var _ = DateTimeProvider.OverrideUtcNow(new DateTime(2033, 10, 19));
-            Assert.ThrowsAsync<CertificateExpiredException>(() => this.Validator
-                .Validate(this.ValidAuthToken, ValidChallengeNonce))
+            Assert.ThrowsAsync<CertificateExpiredException>(() => Validator
+                .Validate(ValidAuthToken, ValidChallengeNonce))
                 .WithMessage("User certificate has expired");
         }
 
@@ -201,7 +201,7 @@ namespace WebEid.Security.Tests.Validator
         public void WhenUnrelatedCACertificateIsExpiredThenValidationSucceeds()
         {
             using var _ = DateTimeProvider.OverrideUtcNow(new DateTime(2024, 7, 1));
-            var authToken = this.Validator.Parse(ValidUntil2026TokenStr);
+            var authToken = Validator.Parse(ValidUntil2026TokenStr);
             var validatorWithExpiredUnrelatedTrustedCA = AuthTokenValidators.GetAuthTokenValidatorWthJuly2024ExpiredUnrelatedTrustedCA();
 
             Assert.DoesNotThrowAsync(() => validatorWithExpiredUnrelatedTrustedCA.Validate(authToken, ValidChallengeNonce));
@@ -212,7 +212,7 @@ namespace WebEid.Security.Tests.Validator
         public void WhenCertificateIsRevokedThenOcspCheckFailsAsync()
         {
             var authTokenValidator = AuthTokenValidators.GetAuthTokenValidatorWithOcspCheck();
-            var authToken = this.ReplaceTokenField(AuthToken, "X5C", RevokedCert);
+            var authToken = ReplaceTokenField(AuthToken, "X5C", RevokedCert);
             using var _ = DateTimeProvider.OverrideUtcNow(new DateTime(2019, 1, 1));
             Assert.ThrowsAsync<UserCertificateOcspCheckFailedException>(() => authTokenValidator.Validate(authToken, ValidChallengeNonce))
                 .InnerException.IsInstanceOf<UserCertificateRevokedException>();
@@ -223,7 +223,7 @@ namespace WebEid.Security.Tests.Validator
         public void WhenCertificateIsRevokedThenOcspCheckWithDesignatedServiceFailsAsync()
         {
             var authTokenValidator = AuthTokenValidators.GetAuthTokenValidatorWithDesignatedOcspCheck();
-            var authToken = this.ReplaceTokenField(AuthToken, "X5C", RevokedCert);
+            var authToken = ReplaceTokenField(AuthToken, "X5C", RevokedCert);
             using var _ = DateTimeProvider.OverrideUtcNow(new DateTime(2019, 1, 1));
             Assert.ThrowsAsync<UserCertificateOcspCheckFailedException>(() => authTokenValidator.Validate(authToken, ValidChallengeNonce))
                 .InnerException.IsInstanceOf<UserCertificateRevokedException>();
@@ -233,7 +233,7 @@ namespace WebEid.Security.Tests.Validator
         public void WhenCertificateCaIsNotPartOfTrustChainThenValidationFailsAsync()
         {
             var authTokenValidator = AuthTokenValidators.GetAuthTokenValidatorWithWrongTrustedCa();
-            Assert.ThrowsAsync<CertificateNotTrustedException>(() => authTokenValidator.Validate(this.ValidAuthToken, ValidChallengeNonce));
+            Assert.ThrowsAsync<CertificateNotTrustedException>(() => authTokenValidator.Validate(ValidAuthToken, ValidChallengeNonce));
         }
     }
 }

@@ -22,7 +22,6 @@
 namespace WebEid.Security.Tests.Validator
 {
     using System;
-    using System.Collections.Generic;
     using System.Security.Cryptography;
     using System.Security.Cryptography.X509Certificates;
     using NUnit.Framework;
@@ -30,7 +29,6 @@ namespace WebEid.Security.Tests.Validator
     using Security.Validator;
     using Security.Validator.Ocsp.Service;
     using TestUtils;
-    using X509Certificate = Org.BouncyCastle.X509.X509Certificate;
 
     [TestFixture]
     public class AuthTokenValidationConfigurationTests
@@ -127,11 +125,10 @@ namespace WebEid.Security.Tests.Validator
             configuration.DesignatedOcspServiceConfiguration = new DesignatedOcspServiceConfiguration(
                 new Uri("http://ocsp.ee"),
                 DotNetUtilities.FromX509Certificate(Certificates.GetTestEsteid2018Ca()),
-                new List<X509Certificate>
-                {
+                [
                         DotNetUtilities.FromX509Certificate(Certificates.GetTestEsteid2015Ca()),
                         DotNetUtilities.FromX509Certificate(Certificates.GetTestEsteid2018Ca())
-                });
+                ]);
 
             var copyOfConfiguration = configuration.Copy();
             Assert.That(configuration, Is.EqualTo(copyOfConfiguration));

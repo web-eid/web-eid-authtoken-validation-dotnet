@@ -19,8 +19,8 @@
 
 namespace WebEid.AspNetCore.Example
 {
-    using Microsoft.AspNetCore.Authorization;
     using System.Threading.Tasks;
+    using Microsoft.AspNetCore.Authorization;
 
     public class LoggedInAuthorizationHandler : AuthorizationHandler<LoggedInRequirement>
     {

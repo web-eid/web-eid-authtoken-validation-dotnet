@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright © 2025-2025 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -22,18 +22,17 @@
 namespace WebEid.Security.Tests.Validator.VersionValidators
 {
     using System;
-    using System.Collections.Generic;
     using System.Security.Cryptography.X509Certificates;
-    using NUnit.Framework;
     using Exceptions;
-    using WebEid.Security.Tests.TestUtils;
-    using WebEid.Security.Validator;
-    using WebEid.Security.Validator.VersionValidators;
-    using WebEid.Security.Validator.Ocsp;
     using Microsoft.Extensions.Logging;
     using Moq;
+    using NUnit.Framework;
     using Security.Validator.CertValidators;
     using Security.Validator.Ocsp.Service;
+    using WebEid.Security.Tests.TestUtils;
+    using WebEid.Security.Validator;
+    using WebEid.Security.Validator.Ocsp;
+    using WebEid.Security.Validator.VersionValidators;
 
     public class AuthTokenVersion11ValidatorTest : AbstractTestWithValidator
     {
@@ -66,8 +65,8 @@ namespace WebEid.Security.Tests.Validator.VersionValidators
             ocspClient = new Mock<IOcspClient>().Object;
 
             var aiaConfig = new AiaOcspServiceConfiguration(
-                new List<Uri>(),
-                new List<X509Certificate2>()
+                [],
+                []
             );
 
             ocspServiceProvider = new OcspServiceProvider(
@@ -88,10 +87,7 @@ namespace WebEid.Security.Tests.Validator.VersionValidators
         [TestCase("web-eid:1.1")]
         [TestCase("web-eid:1.1.0")]
         [TestCase("web-eid:1.10")]
-        public void WhenFormatIsV11OrPrefixedVariantThenSupportsReturnsTrue(string format)
-        {
-            Assert.That(v11Validator.Supports(format), Is.True);
-        }
+        public void WhenFormatIsV11OrPrefixedVariantThenSupportsReturnsTrue(string format) => Assert.That(v11Validator.Supports(format), Is.True);
 
         [TestCase(null)]
         [TestCase("")]
@@ -99,10 +95,7 @@ namespace WebEid.Security.Tests.Validator.VersionValidators
         [TestCase("web-eid:1.0")]
         [TestCase("web-eid:2")]
         [TestCase("webauthn:1.1")]
-        public void WhenFormatIsNullEmptyOrNotV11ThenSupportsReturnsFalse(string format)
-        {
-            Assert.That(v11Validator.Supports(format), Is.False);
-        }
+        public void WhenFormatIsNullEmptyOrNotV11ThenSupportsReturnsFalse(string format) => Assert.That(v11Validator.Supports(format), Is.False);
 
         [Test]
         public void WhenUnverifiedSigningCertificatesMissingThenValidationFails()
