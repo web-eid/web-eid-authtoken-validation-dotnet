@@ -266,3 +266,13 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
 By default, this middleware is already enabled in the application.
 
 A Docker Compose configuration file `docker-compose.yml` is available in the `src` directory for running the Docker image `web-eid-asp-dotnet-example` on port 8480 behind a reverse proxy.
+
+# Code formatting
+
+The project uses `.editorconfig` for .NET code formatting rules.
+
+To format the library code, run:
+
+```bash
+dotnet format example/src/WebEid.AspNetCore.Example.sln --no-restore
+```
