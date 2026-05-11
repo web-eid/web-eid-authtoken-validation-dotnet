@@ -33,6 +33,7 @@ namespace WebEid.AspNetCore.Example.Controllers.Api
     using Security.Validator;
     using WebEid.AspNetCore.Example.Dto;
     using WebEid.Security.AuthToken;
+    using WebEid.Security.Exceptions;
 
     [Route("[controller]")]
     [ApiController]
@@ -49,14 +50,25 @@ namespace WebEid.AspNetCore.Example.Controllers.Api
                 return BadRequest(new { error = "Missing auth_token" });
             }
 
-            await SignInUser(dto.AuthToken);
-            return Ok();
+            try
+            {
+                await SignInUser(dto.AuthToken);
+                return Ok();
+            }
+            catch (Exception ex) when (ex is InvalidOperationException or ChallengeNonceNotFoundException or ChallengeNonceExpiredException)
+            {
+                return Unauthorized(new { error = "challenge_nonce_not_found_or_expired" });
+            }
         }
 
         [HttpPost("logout")]
         public async Task Logout()
         {
-            RemoveUserContainerFile();
+            if (HasActiveSession())
+            {
+                RemoveUserContainerFile();
+            }
+
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
         }
 
