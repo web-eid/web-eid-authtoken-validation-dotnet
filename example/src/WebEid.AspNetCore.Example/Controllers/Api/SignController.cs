@@ -20,68 +20,111 @@
 namespace WebEid.AspNetCore.Example.Controllers.Api
 {
     using System;
+    using System.IO;
     using System.Security.Claims;
     using System.Threading.Tasks;
     using Dto;
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Mvc;
-    using Microsoft.Extensions.Logging;
     using Services;
     using Signing;
 
     [Route("[controller]")]
     [ApiController]
     [Authorize(Policy = "LoggedInOnly")]
-    public class SignController(SigningService signingService, MobileSigningService mobileSigningService, ILogger logger) : BaseController
+    public class SignController(SigningService signingService, MobileSigningService mobileSigningService) : BaseController
     {
         private const string SignedFile = "example-for-signing.asice";
         private readonly SigningService signingService = signingService;
         private readonly MobileSigningService mobileSigningService = mobileSigningService;
-        private readonly ILogger logger = logger;
 
         [HttpPost("prepare")]
-        public DigestDto Prepare([FromBody] CertificateDto data)
+        public ActionResult<DigestDto> Prepare([FromBody] CertificateDto data)
         {
+            if (!HasActiveSession())
+            {
+                return SessionExpired();
+            }
+
             var identity = HttpContext.User.Identity as ClaimsIdentity
                 ?? throw new InvalidOperationException("User identity is missing or invalid.");
 
-            return signingService.PrepareContainer(data, identity, GetUserContainerName());
+            try
+            {
+                return signingService.PrepareContainer(data, identity, GetUserContainerName());
+            }
+            catch (ArgumentException)
+            {
+                return BadRequest(new { error = "signing_certificate_mismatch" });
+            }
         }
 
         [HttpPost("sign")]
-        public FileDto Sign([FromBody] SignatureDto data)
+        public ActionResult<FileDto> Sign([FromBody] SignatureDto data)
         {
+            if (!HasActiveSession())
+            {
+                return SessionExpired();
+            }
+
             signingService.SignContainer(data, GetUserContainerName());
             return new FileDto(SignedFile);
         }
 
         [HttpPost("mobile/init")]
-        public MobileSigningService.MobileInitRequest MobileInit()
+        public ActionResult<MobileSigningService.MobileInitRequest> MobileInit()
         {
+            if (!HasActiveSession())
+            {
+                return SessionExpired();
+            }
+
             var identity = HttpContext.User.Identity as ClaimsIdentity
                 ?? throw new InvalidOperationException("User identity is missing or invalid.");
 
             var container = GetUserContainerName();
-            return mobileSigningService.InitCertificateOrSigningRequest(identity, container);
+
+            try
+            {
+                return mobileSigningService.InitCertificateOrSigningRequest(identity, container);
+            }
+            catch (ArgumentException)
+            {
+                return BadRequest(new { error = "signing_certificate_mismatch" });
+            }
         }
 
         [HttpPost("mobile/certificate")]
-        public MobileSigningService.MobileInitRequest CertificatePost([FromBody] CertificateDto certificateDto)
+        public ActionResult<MobileSigningService.MobileInitRequest> CertificatePost([FromBody] CertificateDto certificateDto)
         {
+            if (!HasActiveSession())
+            {
+                return SessionExpired();
+            }
+
             var identity = HttpContext.User.Identity as ClaimsIdentity
                 ?? throw new InvalidOperationException("User identity is missing or invalid.");
 
             var containerName = GetUserContainerName();
 
-            return mobileSigningService.InitSigningRequest(
-                identity,
-                certificateDto,
-                containerName);
+            try
+            {
+                return mobileSigningService.InitSigningRequest(identity, certificateDto, containerName);
+            }
+            catch (ArgumentException)
+            {
+                return BadRequest(new { error = "signing_certificate_mismatch" });
+            }
         }
 
         [HttpPost("mobile/signature")]
-        public FileDto SignaturePost([FromBody] SignatureDto signatureDto)
+        public ActionResult<FileDto> SignaturePost([FromBody] SignatureDto signatureDto)
         {
+            if (!HasActiveSession())
+            {
+                return SessionExpired();
+            }
+
             signingService.SignContainer(signatureDto, GetUserContainerName());
             return new FileDto(SignedFile);
         }
@@ -89,15 +132,23 @@ namespace WebEid.AspNetCore.Example.Controllers.Api
         [HttpGet("download")]
         public async Task<IActionResult> Download()
         {
+            if (!HasActiveSession())
+            {
+                return SessionExpired();
+            }
+
             try
             {
                 var content = await System.IO.File.ReadAllBytesAsync(GetUserContainerName());
                 return File(content, "application/vnd.etsi.asic-e+zip", SignedFile);
             }
-            catch (Exception ex)
+            catch (InvalidOperationException)
             {
-                logger?.LogError(ex, "Error occurred while downloading user container file");
-                return BadRequest();
+                return SessionExpired();
+            }
+            catch (FileNotFoundException)
+            {
+                return NotFound();
             }
         }
     }
