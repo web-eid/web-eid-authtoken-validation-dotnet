@@ -96,7 +96,7 @@ namespace WebEid.AspNetCore.Example
                 // Set to "strict" if Web eID for Mobile flow is not used - this would restrict sending back the
                 // authentication response in the Web eID for Mobile flow.
                 options.Cookie.SameSite = SameSiteMode.Lax;
-                options.IdleTimeout = TimeSpan.FromSeconds(60);
+                options.IdleTimeout = TimeSpan.FromSeconds(300);
                 options.Cookie.IsEssential = true;
             });
 
@@ -124,6 +124,8 @@ namespace WebEid.AspNetCore.Example
 
             services.AddAntiforgery(options => options.Cookie.SecurePolicy = CookieSecurePolicy.Always);
 
+            services.AddHostedService<ContainerCleanupService>();
+
             // Add support for running behind a TLS terminating proxy.
             services.Configure<ForwardedHeadersOptions>(options =>
             {
@@ -148,6 +150,9 @@ namespace WebEid.AspNetCore.Example
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            // Add support for running behind a TLS terminating proxy.
+            app.UseForwardedHeaders();
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -155,8 +160,6 @@ namespace WebEid.AspNetCore.Example
             }
             else
             {
-                // Add support for running behind a TLS terminating proxy.
-                app.UseForwardedHeaders();
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }

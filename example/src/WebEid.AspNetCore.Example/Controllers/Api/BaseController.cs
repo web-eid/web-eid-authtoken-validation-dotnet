@@ -31,8 +31,11 @@ namespace WebEid.AspNetCore.Example.Controllers.Api
 
         protected void SetUniqueIdInSession() => HttpContext.Session.SetString(UniqueIdKey, Guid.NewGuid().ToString());
 
-        private string GetUniqueIdFromSession() => HttpContext.Session.GetString(UniqueIdKey)
-                ?? throw new InvalidOperationException("Unique ID not found in session.");
+        protected bool HasActiveSession() => GetUniqueIdFromSession() is not null;
+
+        protected UnauthorizedObjectResult SessionExpired() => Unauthorized(new { error = "session_expired" });
+
+        private string? GetUniqueIdFromSession() => HttpContext.Session.GetString(UniqueIdKey);
 
         protected string GetUserContainerName() => $"container_{GetUniqueIdFromSession()}";
     }
