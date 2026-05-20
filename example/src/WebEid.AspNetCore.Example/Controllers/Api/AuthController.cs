@@ -55,9 +55,13 @@ namespace WebEid.AspNetCore.Example.Controllers.Api
                 await SignInUser(dto.AuthToken);
                 return Ok();
             }
-            catch (Exception ex) when (ex is InvalidOperationException or ChallengeNonceNotFoundException or ChallengeNonceExpiredException)
+            catch (Exception ex) when (ex is ChallengeNonceNotFoundException or ChallengeNonceExpiredException)
             {
                 return Unauthorized(new { error = "challenge_nonce_not_found_or_expired" });
+            }
+            catch (AuthTokenException)
+            {
+                return Unauthorized(new { error = "authentication_failed" });
             }
         }
 
