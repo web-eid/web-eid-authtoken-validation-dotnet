@@ -73,7 +73,7 @@ To configure the origin URL, add `OriginUrl` field in the application settings f
   "OriginUrl": "https://example.org"
 }
 ```
-Note that the URL **must not end with a slash** `/` and the URL must be the same as the `applicationUrl` in `launchSettings.json`. When you change the `OriginUrl`, also change the `applicationUrl` in `launchSettings.json`.
+Note that the URL **must not end with a slash** `/` and the URL must be the same as the `applicationUrl` in `launchSettings.json`. When you change the `OriginUrl`, also change the `applicationUrl` in `launchSettings.json`. For internationalized domain names, use the ASCII/Punycode origin form in `OriginUrl`, for example `https://xn--pike-loa.ee` for `https://päike.ee`.
 
 ### 3. Configure the trusted certificate authority certificates
 

@@ -181,6 +181,14 @@ return new AuthTokenValidatorBuilder()
 ...
 ```
 
+The site origin configured with `WithSiteOrigin()` must match the origin string
+signed by the Web eID application. Use the [ASCII serialization of the
+origin](https://html.spec.whatwg.org/multipage/browsers.html#ascii-serialisation-of-an-origin)
+as specified by the [Web eID architecture
+document](https://github.com/web-eid/web-eid-system-architecture-doc#web-eid-authentication-token-specification).
+For internationalized domain names, configure the Punycode form, for example
+`https://xn--pike-loa.ee` for `https://päike.ee`.
+
 ## 6. Add a REST endpoint for issuing challenge nonces
 
 A REST endpoint that issues challenge nonces is required for authentication. The endpoint must support `GET` requests.
@@ -334,7 +342,7 @@ The website backend must lookup the challenge nonce from its local store using a
 
 As described in section *[5. Configure the authentication token validator](#5-configure-the-authentication-token-validator)*, the mandatory configuration parameters are the website origin and trusted certificate authorities.
 
-**Origin** must be the URL serving the web application. Origin URL must be in the form of `"https://" <hostname> [ ":" <port> ]` as defined in [MDN](https://developer.mozilla.org/en-US/docs/Web/API/Location/origin) and not contain path or query components. Note that the `origin` URL must not end with a slash `/`.
+**Origin** must be the URL serving the web application. Origin URL must be in the form of `"https://" <hostname> [ ":" <port> ]` as defined in [MDN](https://developer.mozilla.org/en-US/docs/Web/API/Location/origin) and not contain path or query components. Note that the `origin` URL must not end with a slash `/`. The configured origin must use the ASCII serialization that is signed by the Web eID application. For internationalized domain names, use the Punycode form, for example `https://xn--pike-loa.ee` instead of `https://päike.ee`.
 
 The **trusted certificate authority certificates** are used to validate that the user certificate from the authentication token is signed by a trusted certificate authority. Intermediate CA certificates must be used instead of the root CA certificates so that revoked CA certificates can be detected. Trusted certificate authority certificates configuration is described in more detail in section *[4. Add trusted certificate authority certificates](#4-add-trusted-certificate-authority-certificates)*.
 
