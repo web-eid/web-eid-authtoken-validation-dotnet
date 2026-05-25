@@ -14,7 +14,7 @@ Additional information regarding the Web eID project can be found on the officia
 
 Complete the steps below to add support for secure authentication with eID cards to your ASP.NET Core web application backend. Instructions for the frontend are available [here](https://github.com/web-eid/web-eid.js).
 
-See full example [here](https://github.com/web-eid/web-eid-asp-dotnet-example).
+See full example [here](https://github.com/web-eid/web-eid-authtoken-validation-dotnet/tree/main/example).
 
 ## 1. Add the library to your project
 
@@ -185,7 +185,7 @@ return new AuthTokenValidatorBuilder()
 
 A REST endpoint that issues challenge nonces is required for authentication. The endpoint must support `GET` requests.
 
-In the following example, we are using the [ASP.NET Web APIs RESTful Web Services framework](https://dotnet.microsoft.com/apps/aspnet/apis) to implement the endpoint, see also full implementation [here](https://github.com/web-eid/web-eid-asp-dotnet-example/blob/main/src/WebEid.AspNetCore.Example/Controllers/Api/AuthController.cs).
+In the following example, we are using the [ASP.NET Web APIs RESTful Web Services framework](https://dotnet.microsoft.com/apps/aspnet/apis) to implement the endpoint, see also full implementation [here](https://github.com/web-eid/web-eid-authtoken-validation-dotnet/blob/main/example/src/WebEid.AspNetCore.Example/Controllers/Api/AuthController.cs).
 
 ```cs
 using Microsoft.AspNetCore.Mvc;
