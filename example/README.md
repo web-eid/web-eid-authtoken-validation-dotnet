@@ -69,7 +69,7 @@ Note that the URL **must not end with a slash** `/` and the URL must be the same
 
 ### 3. Configure the trusted certificate authority certificates
 
-The algorithm, which performs the validation of the Web eID authentication token, needs to know which intermediate certificate authorities (CA) are trusted to issue the eID authentication certificates. CA certificates are loaded from `.cer` files in the profile-specific subdirectory of the  [`Certificates` resource directory](https://github.com/web-eid/web-eid-asp-dotnet-example/tree/main/src/WebEid.AspNetCore.Example/Certificates). By default, Estonian eID test CA certificates are included in the `Development` profile and production CA certificates in the `Production` profile.
+The algorithm, which performs the validation of the Web eID authentication token, needs to know which intermediate certificate authorities (CA) are trusted to issue the eID authentication certificates. CA certificates are loaded from `.cer` files in the profile-specific subdirectory of the  [`Certificates` resource directory](https://github.com/web-eid/web-eid-authtoken-validation-dotnet/tree/main/example/src/WebEid.AspNetCore.Example/Certificates). By default, Estonian eID test CA certificates are included in the `Development` profile and production CA certificates in the `Production` profile.
 
 In case you need to provide your own CA certificates, add the `.cer` files to the  `src/WebEid.AspNetCore.Example/Certificates/{Dev,Prod}` profile-specific directory.
 
@@ -91,7 +91,7 @@ Set up the `libdigidocpp` library as follows:
 
 1. Add RIA repository to install the official _libdigidocpp-csharp_ package:
     ```sh
-    wget https://github.com/web-eid/web-eid-asp-dotnet-example/raw/main/src/ria_public_key.gpg
+    wget https://raw.githubusercontent.com/web-eid/web-eid-authtoken-validation-dotnet/refs/heads/main/example/src/ria_public_key.gpg
     cp ria_public_key.gpg /usr/share/keyrings/ria-repository.gpg
     echo "deb [signed-by=/usr/share/keyrings/ria-repository.gpg] https://installer.id.ee/media/ubuntu/ $(lsb_release -cs) main" > /etc/apt/sources.list.d/ria-repository.list
     ```
