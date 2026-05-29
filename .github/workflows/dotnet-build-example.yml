@@ -37,11 +37,8 @@ jobs:
       - name: Install dependencies
         run: dotnet restore src/WebEid.AspNetCore.Example.sln --source "https://gitlab.com/api/v4/projects/35362906/packages/nuget/index.json" --source "https://api.nuget.org/v3/index.json"
 
-      - name: Download RIA repository public key
-        run: wget https://github.com/web-eid/web-eid-asp-dotnet-example/raw/main/src/ria_public_key.gpg
-        
       - name: Copy RIA repository key to keyrings
-        run: sudo cp ria_public_key.gpg /usr/share/keyrings/ria-repository.gpg
+        run: sudo cp src/ria_public_key.gpg /usr/share/keyrings/ria-repository.gpg
         
       - name: Add RIA repository to APT
         run: |
