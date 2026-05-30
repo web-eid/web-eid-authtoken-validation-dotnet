@@ -17,6 +17,14 @@ The ASP.NET web application makes use of the following technologies:
 
 Complete the steps below to run the example application in order to test authentication and digital signing with Web eID.
 
+```sh
+cd example/src
+docker compose up
+```
+This will start a prebuilt docker image with self-signed certificate on https://localhost:8443
+
+## Setup for Development
+
 ### 1. Add the Web eID authentication token validation library to your project
 
 #### When using Visual Studio
@@ -175,9 +183,10 @@ See the [Web eID Java example application documentation](https://github.com/web-
 
 You are running in the `Development` profile, but you have not created an empty file named `EE_T.xml` for TSL cache. Creating the file is mandatory and is described in more detail in the [_Using test TSL lists_](https://github.com/open-eid/libdigidocpp/wiki/Using-test-TSL-lists#preconditions) section of the `libdigidocpp` wiki.
 
-## Building and running with Docker on Ubuntu Linux
+## Building and running example web application with Docker on Ubuntu Linux
 
-This section covers the steps required to build the application on an Ubuntu Linux environment and run it using Docker.
+In case you want to use web-eid-authtoken-validation-dotnet in your web app, 
+then please follow these steps in this chapter to build a Docker image in Ubuntu Linux environment.
 
 ### Prerequisites
 
@@ -186,13 +195,24 @@ Before you begin, ensure you have the following installed on your system:
 - .NET SDK 8.0
 - libdigidocpp-csharp
 
-You can install them using the following command:
+You can install them using the following commands:
 
+Add RIA repository to install the official _libdigidocpp-csharp_ package:
+```sh
+cp src/ria_public_key.gpg /usr/share/keyrings/ria-repository.gpg
+echo "deb [signed-by=/usr/share/keyrings/ria-repository.gpg] https://installer.id.ee/media/ubuntu/ $(lsb_release -cs) main" | sudo -s tee /etc/apt/sources.list.d/ria-repository.list
+sudo apt update
+```
+then install the packages
 ```sh
 sudo apt install dotnet-sdk-8.0 libdigidocpp-csharp
 ```
+Add a NuGet package source for web-eid-authtoken-validation-dotnet library:
 
-Note: Before installing `libdigidocpp-csharp` you have to have added the RIA repository as a package source. See [For Ubuntu Linux section](#for-ubuntu-linux) for information.
+```sh
+dotnet nuget add source https://gitlab.com/api/v4/projects/35362906/packages/nuget/index.json --name "Web eID GitLab"
+```
+If last command ends with error message, then it is already added and you can move to next step: `error: The name specified has already been added to the list of available package sources. Provide a unique name.`
 
 ### Building the application
 
@@ -201,7 +221,7 @@ To build the application, follow these steps:
 1. Navigate to the `src` directory:
 
     ```sh
-    cd src
+    cd example/src
     ```
 
 2. Copy the necessary DigiDoc C# library files into your project:
@@ -216,10 +236,9 @@ To build the application, follow these steps:
     dotnet publish --configuration Release WebEid.AspNetCore.Example.sln
     ```
 
-4. Update the `OriginUrl` in the `appsettings.json` to match your production environment:
-
+4. Update the `OriginUrl` in the `appsettings.json` to match your production environment. Please replace https://localhost:8443 with your actual domain name where you intend to run the application:
     ```sh
-    sed -i 's#"OriginUrl": "https://localhost:44391"#"OriginUrl": "https://example.com"#' WebEid.AspNetCore.Example/bin/Release/net8.0/publish/appsettings.json
+    sed -i 's#"OriginUrl": "https://localhost:44391"#"OriginUrl": "https://localhost:8443"#' WebEid.AspNetCore.Example/bin/Release/net8.0/publish/appsettings.json
     ```
 
 ### Building the Docker image
@@ -231,6 +250,21 @@ docker build -t web-eid-asp-dotnet-example .
 ```
 
 This command builds a Docker image named `web-eid-asp-dotnet-example` using the `Dockerfile` in the current directory.
+
+In order to test the created image, use the example/src/docker-compose.yml. 
+You will need to replace the official image with the one you just built.
+Comment out the official image and add local:
+```
+...
+    #image: registry.gitlab.com/web-eid/service/web-eid-authentication-token-validation-dotnet/web-eid-asp-dotnet-example
+    image: web-eid-asp-dotnet-example:latest
+...
+```
+
+Then just run:
+```sh
+docker compose up
+```
 
 ## Running the Docker container with HTTPS support
 
