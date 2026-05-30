@@ -15,8 +15,12 @@ RUN echo "deb [signed-by=/usr/share/keyrings/ria-repository.gpg] https://install
 
 COPY ./WebEid.AspNetCore.Example/bin/Release/net8.0/publish/ .
 
-ENV ASPNETCORE_ENVIRONMENT=Production
+COPY ./WebEid.AspNetCore.Example/Certificates/Dev/self-signed-server-certificate.pfx /https/self-signed-server-certificate.pfx
 
-EXPOSE 80
+ENV ASPNETCORE_ENVIRONMENT=Production
+ENV ASPNETCORE_URLS="https://+:443"
+ENV ASPNETCORE_Kestrel__Certificates__Default__Path=/https/self-signed-server-certificate.pfx
+
+EXPOSE 443
 
 ENTRYPOINT ["dotnet", "WebEid.AspNetCore.Example.dll"]
