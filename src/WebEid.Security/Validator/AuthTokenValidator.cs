@@ -75,7 +75,7 @@ namespace WebEid.Security.Validator
             catch (Exception ex)
             {
                 // Generally "log and rethrow" is an anti-pattern, but it fits with the surrounding logging style.
-                this.logger?.LogWarning(ex, "Token parsing was interrupted:");
+                logger?.LogWarning(ex, "Token parsing was interrupted:");
                 throw;
             }
         }
@@ -99,7 +99,7 @@ namespace WebEid.Security.Validator
             catch (Exception ex)
             {
                 // Generally "log and rethrow" is an anti-pattern, but it fits with the surrounding logging style.
-                this.logger?.LogWarning(ex, "Token validation was interrupted:");
+                logger?.LogWarning(ex, "Token validation was interrupted:");
                 throw;
             }
         }

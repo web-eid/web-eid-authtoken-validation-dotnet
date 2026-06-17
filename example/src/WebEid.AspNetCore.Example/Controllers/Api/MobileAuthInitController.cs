@@ -24,6 +24,7 @@ namespace WebEid.AspNetCore.Example.Controllers.Api
     using System.Text.Json;
     using System.Text.Json.Serialization;
     using Microsoft.AspNetCore.Mvc;
+    using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.Options;
     using Options;
     using Security.Challenge;
@@ -34,7 +35,8 @@ namespace WebEid.AspNetCore.Example.Controllers.Api
     public class MobileAuthInitController(
         IChallengeNonceGenerator nonceGenerator,
         IOptions<WebEidMobileOptions> mobileOptions,
-        MobileRequestUriBuilder uriBuilder
+        MobileRequestUriBuilder uriBuilder,
+        IConfiguration configuration
     ) : ControllerBase
     {
         private const string WebEidMobileAuthPath = "auth";
@@ -46,7 +48,7 @@ namespace WebEid.AspNetCore.Example.Controllers.Api
             var challenge = nonceGenerator.GenerateAndStoreNonce(TimeSpan.FromMinutes(5));
             var challengeBase64 = challenge.Base64EncodedNonce;
 
-            var loginUri = $"{Request.Scheme}://{Request.Host}{MobileLoginPath}";
+            var loginUri = $"{configuration["OriginUrl"]}{MobileLoginPath}";
 
             var payload = new AuthPayload
             {

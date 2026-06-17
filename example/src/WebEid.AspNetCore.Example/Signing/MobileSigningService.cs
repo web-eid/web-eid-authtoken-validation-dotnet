@@ -27,12 +27,14 @@ namespace WebEid.AspNetCore.Example.Signing
     using Dto;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.WebUtilities;
+    using Microsoft.Extensions.Configuration;
     using Services;
 
     public class MobileSigningService(
         SigningService signingService,
         IHttpContextAccessor httpContextAccessor,
-        MobileRequestUriBuilder uriBuilder
+        MobileRequestUriBuilder uriBuilder,
+        IConfiguration configuration
     )
     {
         private const string WebEidMobileSignPath = "sign";
@@ -65,10 +67,7 @@ namespace WebEid.AspNetCore.Example.Signing
 
         private MobileInitRequest InitCertificateRequest()
         {
-            var request = httpContextAccessor.HttpContext!.Request;
-            var baseUrl = $"{request.Scheme}://{request.Host}";
-            var responseUri = $"{baseUrl}{CertificateResponsePath}";
-
+            var responseUri = $"{configuration["OriginUrl"]}{CertificateResponsePath}";
             var requestObj = new RequestObject
             {
                 ResponseUri = responseUri
@@ -89,9 +88,7 @@ namespace WebEid.AspNetCore.Example.Signing
             string containerName)
         {
             var digest = signingService.PrepareContainer(certificateDto, identity, containerName);
-            var request = httpContextAccessor.HttpContext!.Request;
-            var baseUrl = $"{request.Scheme}://{request.Host}";
-            var responseUri = $"{baseUrl}{SignatureResponsePath}";
+            var responseUri = $"{configuration["OriginUrl"]}{SignatureResponsePath}";
 
             var requestObj = new RequestObject
             {

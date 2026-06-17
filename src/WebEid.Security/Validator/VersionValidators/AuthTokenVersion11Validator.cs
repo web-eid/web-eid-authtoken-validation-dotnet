@@ -25,6 +25,7 @@ namespace WebEid.Security.Validator.VersionValidators
     using System.Collections.Generic;
     using System.Linq;
     using System.Security.Cryptography.X509Certificates;
+    using System.Text.RegularExpressions;
     using System.Threading.Tasks;
     using AuthToken;
     using CertValidators;
@@ -39,9 +40,10 @@ namespace WebEid.Security.Validator.VersionValidators
     /// Validator for token format web-eid:1.1.
     /// Extends V1 validator with additional checks for signing certificate + supported algorithms.
     /// </summary>
-    public sealed class AuthTokenVersion11Validator : AuthTokenVersion1Validator
+    public sealed partial class AuthTokenVersion11Validator : AuthTokenVersion1Validator
     {
-        private const string V11_SUPPORTED_TOKEN_FORMAT_PREFIX = "web-eid:1.1";
+        [GeneratedRegex(@"^web-eid:1\.1$", RegexOptions.IgnoreCase)]
+        private static partial Regex V11SupportedTokenFormatPattern();
 
         private static readonly HashSet<string> SupportedSigningCryptoAlgorithms =
             new(StringComparer.OrdinalIgnoreCase)
@@ -71,6 +73,11 @@ namespace WebEid.Security.Validator.VersionValidators
                 "SHA3-512"
             };
 
+        private readonly AuthTokenValidationConfiguration configuration;
+        private readonly IOcspClient ocspClient;
+        private readonly OcspServiceProvider ocspServiceProvider;
+        private readonly ILogger logger;
+
         /// <summary>
         /// Initializes a validator for Web eID authentication tokens in format <c>web-eid:1.1</c>.
         /// </summary>
@@ -84,13 +91,15 @@ namespace WebEid.Security.Validator.VersionValidators
             : base(simpleSubjectCertificateValidators, signatureValidator, configuration,
                    ocspClient, ocspServiceProvider, logger)
         {
+            this.configuration = configuration;
+            this.ocspClient = ocspClient;
+            this.ocspServiceProvider = ocspServiceProvider;
+            this.logger = logger;
         }
 
-        /// <summary>
-        /// Returns the supported token format prefix for version 1.1 tokens.
-        /// </summary>
-        protected override string GetSupportedFormatPrefix() =>
-            V11_SUPPORTED_TOKEN_FORMAT_PREFIX;
+        /// <inheritdoc />
+        protected override Regex GetSupportedFormatPattern() =>
+            V11SupportedTokenFormatPattern();
 
         /// <summary>
         /// Validates a Web eID authentication token in format <c>web-eid:1.1</c>
@@ -107,6 +116,7 @@ namespace WebEid.Security.Validator.VersionValidators
                 ValidateSameIssuer(subjectCertificate, signingCertificate);
                 ValidateSigningCertificateValidity(signingCertificate);
                 ValidateSigningCertificateKeyUsage(signingCertificate);
+                await ValidateSigningCertificateChainAsync(signingCertificate);
             }
 
             return subjectCertificate;
@@ -220,6 +230,29 @@ namespace WebEid.Security.Validator.VersionValidators
             {
                 throw new AuthTokenParseException(
                     "Signing certificate key usage extension missing or does not contain non-repudiation bit required for digital signatures");
+            }
+        }
+
+        private async Task ValidateSigningCertificateChainAsync(X509Certificate2 signingCertificate)
+        {
+            try
+            {
+                var trustValidators = SubjectCertificateValidatorBatch.ForTrustValidation(
+                    configuration,
+                    configuration.TrustedCaCertificates,
+                    ocspClient,
+                    ocspServiceProvider,
+                    logger
+                );
+
+                await trustValidators.ExecuteFor(signingCertificate);
+            }
+            catch (Exception ex)
+            {
+                throw new AuthTokenParseException(
+                    "Signing certificate chain validation failed",
+                    ex
+                );
             }
         }
 
