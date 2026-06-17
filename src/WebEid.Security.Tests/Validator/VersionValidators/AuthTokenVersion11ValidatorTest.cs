@@ -85,17 +85,20 @@ namespace WebEid.Security.Tests.Validator.VersionValidators
         }
 
         [TestCase("web-eid:1.1")]
-        [TestCase("web-eid:1.1.0")]
-        [TestCase("web-eid:1.10")]
-        public void WhenFormatIsV11OrPrefixedVariantThenSupportsReturnsTrue(string format) => Assert.That(v11Validator.Supports(format), Is.True);
+        public void WhenFormatIsV11ThenSupportsReturnsTrue(string format) =>
+            Assert.That(v11Validator.Supports(format), Is.True);
 
         [TestCase(null)]
         [TestCase("")]
         [TestCase("web-eid:1")]
         [TestCase("web-eid:1.0")]
+        [TestCase("web-eid:1.1.0")]
+        [TestCase("web-eid:1.10")]
+        [TestCase("web-eid:1.2")]
         [TestCase("web-eid:2")]
         [TestCase("webauthn:1.1")]
-        public void WhenFormatIsNullEmptyOrNotV11ThenSupportsReturnsFalse(string format) => Assert.That(v11Validator.Supports(format), Is.False);
+        public void WhenFormatIsNullEmptyOrNotV11ThenSupportsReturnsFalse(string format) =>
+            Assert.That(v11Validator.Supports(format), Is.False);
 
         [Test]
         public void WhenUnverifiedSigningCertificatesMissingThenValidationFails()
@@ -116,6 +119,15 @@ namespace WebEid.Security.Tests.Validator.VersionValidators
 
             var ex = Assert.ThrowsAsync<AuthTokenParseException>(() => Validator.Validate(token, ValidChallengeNonce));
             Assert.That(ex!.Message, Is.EqualTo("'supportedSignatureAlgorithms' field is missing"));
+        }
+
+        [Test]
+        public void WhenSigningCertificateChainValidationSucceedsThenValidationSucceeds()
+        {
+            var token = Validator.Parse(ValidV11AuthTokenStr);
+
+            Assert.DoesNotThrowAsync(() =>
+                Validator.Validate(token, ValidChallengeNonce));
         }
     }
 }

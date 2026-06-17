@@ -90,7 +90,8 @@ namespace WebEid.Security.Util
                     RevocationFlag = X509RevocationFlag.ExcludeRoot,
                     VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority,
                     VerificationTime = DateTimeProvider.UtcNow,
-                    UrlRetrievalTimeout = TimeSpan.Zero
+                    UrlRetrievalTimeout = TimeSpan.Zero,
+                    DisableCertificateDownloads = true
                 }
             };
 

@@ -23,6 +23,7 @@ namespace WebEid.Security.Validator.VersionValidators
 {
     using System;
     using System.Security.Cryptography.X509Certificates;
+    using System.Text.RegularExpressions;
     using System.Threading.Tasks;
     using AuthToken;
     using CertValidators;
@@ -34,9 +35,12 @@ namespace WebEid.Security.Validator.VersionValidators
     /// <summary>
     /// Validator for token format web-eid:1.0.
     /// </summary>
-    public class AuthTokenVersion1Validator : IAuthTokenVersionValidator
+    public partial class AuthTokenVersion1Validator : IAuthTokenVersionValidator
     {
         private const string V1_SUPPORTED_TOKEN_FORMAT_PREFIX = "web-eid:1";
+
+        [GeneratedRegex(@"^web-eid:1(?:\.\d+)?$", RegexOptions.IgnoreCase)]
+        private static partial Regex V1SupportedTokenFormatPattern();
 
         private readonly SubjectCertificateValidatorBatch simpleSubjectCertificateValidators;
         private readonly AuthTokenSignatureValidator signatureValidator;
@@ -69,14 +73,13 @@ namespace WebEid.Security.Validator.VersionValidators
         /// </summary>
         public virtual bool Supports(string format) =>
             format != null &&
-            format.StartsWith(GetSupportedFormatPrefix(), StringComparison.OrdinalIgnoreCase);
+            GetSupportedFormatPattern().IsMatch(format);
 
         /// <summary>
-        /// Returns the supported token format prefix for this validator version.
-        /// Derived classes may override this to provide a different format prefix.
+        /// Gets the supported token format pattern for this validator.
         /// </summary>
-        protected virtual string GetSupportedFormatPrefix() =>
-            V1_SUPPORTED_TOKEN_FORMAT_PREFIX;
+        protected virtual Regex GetSupportedFormatPattern() =>
+            V1SupportedTokenFormatPattern();
 
         /// <summary>
         /// Validates a Web eID authentication token and returns the authenticated user's certificate.

@@ -86,15 +86,21 @@ namespace WebEid.Security.Tests.Validator.VersionValidators
         [TestCase("web-eid:1.0")]
         [TestCase("web-eid:1.1")]
         [TestCase("web-eid:1.10")]
-        public void WhenFormatIsAnyMajorV1VariantThenSupportsReturnsTrue(string format) => Assert.That(validator.Supports(format), Is.True);
+        [TestCase("web-eid:1.999")]
+        public void WhenFormatIsValidMajorV1FormatThenSupportsReturnsTrue(string format) =>
+            Assert.That(validator.Supports(format), Is.True);
 
         [TestCase(null)]
         [TestCase("")]
         [TestCase("web-eid")]
+        [TestCase("web-eid:1.")]
+        [TestCase("web-eid:1.0TEST")]
+        [TestCase("web-eid:1.1.0")]
         [TestCase("web-eid:0.9")]
         [TestCase("web-eid:2")]
         [TestCase("webauthn:1")]
-        public void WhenFormatIsNullEmptyOrNotV1ThenSupportsReturnsFalse(string format) => Assert.That(validator.Supports(format), Is.False);
+        public void WhenFormatIsNullEmptyMalformedOrNotV1ThenSupportsReturnsFalse(string format) =>
+            Assert.That(validator.Supports(format), Is.False);
 
         [Test]
         public void WhenUnverifiedCertificateMissingThenValidationFails()
