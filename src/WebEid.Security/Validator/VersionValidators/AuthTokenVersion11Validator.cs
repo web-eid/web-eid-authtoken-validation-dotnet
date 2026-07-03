@@ -25,7 +25,6 @@ namespace WebEid.Security.Validator.VersionValidators
     using System.Collections.Generic;
     using System.Linq;
     using System.Security.Cryptography.X509Certificates;
-    using System.Text.RegularExpressions;
     using System.Threading.Tasks;
     using AuthToken;
     using CertValidators;
@@ -40,10 +39,9 @@ namespace WebEid.Security.Validator.VersionValidators
     /// Validator for token format web-eid:1.1.
     /// Extends V1 validator with additional checks for signing certificate + supported algorithms.
     /// </summary>
-    public sealed partial class AuthTokenVersion11Validator : AuthTokenVersion1Validator
+    public sealed class AuthTokenVersion11Validator : AuthTokenVersion1Validator
     {
-        [GeneratedRegex(@"^web-eid:1\.1$", RegexOptions.IgnoreCase)]
-        private static partial Regex V11SupportedTokenFormatPattern();
+        private const string V11_SUPPORTED_TOKEN_FORMAT = "web-eid:1.1";
 
         private static readonly HashSet<string> SupportedSigningCryptoAlgorithms =
             new(StringComparer.OrdinalIgnoreCase)
@@ -97,9 +95,11 @@ namespace WebEid.Security.Validator.VersionValidators
             this.logger = logger;
         }
 
-        /// <inheritdoc />
-        protected override Regex GetSupportedFormatPattern() =>
-            V11SupportedTokenFormatPattern();
+        /// <summary>
+        /// Determines whether this validator supports the specified token format.
+        /// </summary>
+        public override bool Supports(string format) =>
+            format == V11_SUPPORTED_TOKEN_FORMAT;
 
         /// <summary>
         /// Validates a Web eID authentication token in format <c>web-eid:1.1</c>
