@@ -74,7 +74,7 @@ namespace WebEid.Security.Util
         /// </summary>
         /// <param name="certificate">The certificate to validate.</param>
         /// <param name="trustedCaCertificates">A collection of trusted CA certificates.</param>
-        /// <returns>The validated certificate if it is signed by a trusted CA.</returns>
+        /// <returns>The certificate that directly issued the given certificate; the trust anchor when the anchor is the direct issuer.</returns>
         /// <exception cref="CertificateNotTrustedException">If the certificate is not signed by a trusted CA or if any other error occurs.</exception>
         /// <exception cref="CertificateNotYetValidException">when a CA certificate in the chain or the user certificate is not yet valid</exception>
         /// <exception cref="CertificateExpiredException">when a CA certificate in the chain or the user certificate is expired</exception>
@@ -117,18 +117,29 @@ namespace WebEid.Security.Util
                     throw new CertificateNotTrustedException(certificate, certificateErrorsString);
                 }
 
-                var chainElement = chain.ChainElements
-                    .Cast<X509ChainElement>()
-                    .FirstOrDefault(x => trustedCaCertificates.Any(ca =>
-                        x.Certificate.Thumbprint == ca.Thumbprint));
-                if (chainElement?.Certificate == null)
+                // The built chain is ordered from the subject towards the root. The first element that is
+                // a trusted CA certificate is the trust anchor; the path must terminate at it.
+                var trustedCaIndex = -1;
+                for (var i = 0; i < chain.ChainElements.Count; i++)
+                {
+                    if (trustedCaCertificates.Any(ca => chain.ChainElements[i].Certificate.Thumbprint == ca.Thumbprint))
+                    {
+                        trustedCaIndex = i;
+                        break;
+                    }
+                }
+                if (trustedCaIndex < 0)
                 {
                     throw new CertificateNotTrustedException(certificate);
                 }
-                // Verify that the trusted CA cert is presently valid before returning the result.
-                ValidateCertificateExpiry(chainElement.Certificate, DateTimeProvider.UtcNow, "Trusted CA");
+                var trustedCaCertificate = chain.ChainElements[trustedCaIndex].Certificate;
 
-                return chainElement.Certificate;
+                // Verify that the trusted CA cert is presently valid before returning the result.
+                ValidateCertificateExpiry(trustedCaCertificate, DateTimeProvider.UtcNow, "Trusted CA");
+
+                // Index 1 (when present before the anchor) is the subject's direct issuer; otherwise the subject
+                // was issued directly by the trust anchor.
+                return trustedCaIndex > 0 ? chain.ChainElements[1].Certificate : trustedCaCertificate;
             }
             catch (Exception ex) when (ex is not CertificateNotTrustedException)
             {
