@@ -134,5 +134,53 @@ namespace WebEid.Security.Tests.Validator.VersionValidators
             Assert.DoesNotThrowAsync(() =>
                 Validator.Validate(token, ValidChallengeNonce));
         }
+
+        [Test]
+        public void WhenUnverifiedSigningCertificatesMissingButIntermediateCertificatesPresentThenValidationSucceeds()
+        {
+            var token = Validator.Parse(ValidV11AuthTokenStr);
+            token.UnverifiedSigningCertificates = null;
+            token.UnverifiedIntermediateCertificates = [GetTestEsteid2018CaInBase64()];
+
+            Assert.DoesNotThrowAsync(() =>
+                Validator.Validate(token, ValidChallengeNonce));
+        }
+
+        [Test]
+        public void WhenUnverifiedSigningCertificatesEmptyThenValidationFails()
+        {
+            var token = Validator.Parse(ValidV11AuthTokenStr);
+            token.UnverifiedSigningCertificates = [];
+            token.UnverifiedIntermediateCertificates = [GetTestEsteid2018CaInBase64()];
+
+            var ex = Assert.ThrowsAsync<AuthTokenParseException>(() => Validator.Validate(token, ValidChallengeNonce));
+            Assert.That(ex!.Message, Is.EqualTo(
+                "'unverifiedSigningCertificates' field is missing, null or empty for format 'web-eid:1.1'"));
+        }
+
+        [Test]
+        public void WhenSigningCertificateIntermediateCertificatesEmptyThenValidationFails()
+        {
+            var token = Validator.Parse(ValidV11AuthTokenStr);
+            token.UnverifiedSigningCertificates[0].IntermediateCertificates = [];
+
+            var ex = Assert.ThrowsAsync<AuthTokenParseException>(() => Validator.Validate(token, ValidChallengeNonce));
+            Assert.That(ex!.Message, Is.EqualTo(
+                "'intermediateCertificates' must not be empty for format 'web-eid:1.1'"));
+        }
+
+        [Test]
+        public void WhenSigningCertificateIntermediateCertificatesContainsEmptyEntryThenValidationFails()
+        {
+            var token = Validator.Parse(ValidV11AuthTokenStr);
+            token.UnverifiedSigningCertificates[0].IntermediateCertificates = [""];
+
+            var ex = Assert.ThrowsAsync<AuthTokenParseException>(() => Validator.Validate(token, ValidChallengeNonce));
+            Assert.That(ex!.Message, Is.EqualTo(
+                "'intermediateCertificates' must not contain null or empty entries for format 'web-eid:1.1'"));
+        }
+
+        private static string GetTestEsteid2018CaInBase64() =>
+            Convert.ToBase64String(Certificates.GetTestEsteid2018Ca().GetRawCertData());
     }
 }
