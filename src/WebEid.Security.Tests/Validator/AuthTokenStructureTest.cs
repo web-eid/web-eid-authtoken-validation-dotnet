@@ -44,8 +44,17 @@ namespace WebEid.Security.Tests.Validator
 
         [Test]
         public void WhenTokenTooLongThenParsingFails() =>
-            Assert.Throws<AuthTokenParseException>(() => Validator.Parse(new string(new char[10001])))
+            Assert.Throws<AuthTokenParseException>(() => Validator.Parse(new string(new char[65537])))
                 .WithMessage("Auth token is too long");
+
+        [TestCase(10001)]
+        [TestCase(65536)]
+        public void WhenTokenIsWithinIncreasedLengthLimitThenParsingSucceeds(int tokenLength)
+        {
+            var token = ValidAuthTokenStr + new string(' ', tokenLength - ValidAuthTokenStr.Length);
+
+            Assert.That(Validator.Parse(token).Format, Is.EqualTo("web-eid:1"));
+        }
 
         [Test]
         public void WhenUnknownTokenVersionThenParsingFailsAsync()
