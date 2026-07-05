@@ -80,7 +80,6 @@ namespace WebEid.Security.Validator.Ocsp.Service
             try
             {
                 var certificate = new X509Certificate2(DotNetUtilities.ToX509Certificate(responderCertificate));
-                OcspResponseValidator.ValidateHasSigningExtension(responderCertificate);
                 // The responder certificate's validity on the current date is checked as part of the certification
                 // path validation. A responder may be issued by a token-supplied intermediate that is not itself
                 // trusted, so the intermediates are offered as path candidates; the path must still terminate at a
@@ -96,11 +95,18 @@ namespace WebEid.Security.Validator.Ocsp.Service
                     additionalIntermediateCertificates,
                     IntermediateRevocationCheck.Disabled,
                     now);
-                // RFC 6960 section 4.2.2.2: the responder must be the CA that issued the subject certificate or be
-                // directly delegated by it. CA identity is compared by subject and public key so that equivalent
+                // RFC 6960 section 4.2.2.2: the response must be signed by the CA that issued the subject certificate
+                // or by a responder directly delegated by it; a locally configured responder is handled by
+                // DesignatedOcspService. CA identity is compared by subject and public key so that equivalent
                 // cross-certificates for the same CA are accepted.
-                if (!RepresentsSameCa(certificate, certificateIssuerCertificate)
-                    && !RepresentsSameCa(responderIssuerCertificate, certificateIssuerCertificate))
+                if (RepresentsSameCa(certificate, certificateIssuerCertificate))
+                {
+                    // The response is signed by the issuing CA itself; the OCSP-signing extended key usage is required
+                    // only for delegated responder certificates.
+                    return;
+                }
+                OcspResponseValidator.ValidateHasSigningExtension(responderCertificate);
+                if (!RepresentsSameCa(responderIssuerCertificate, certificateIssuerCertificate))
                 {
                     throw new CertificateNotTrustedException(certificate,
                         "OCSP responder is not authorized by the subject certificate issuer");

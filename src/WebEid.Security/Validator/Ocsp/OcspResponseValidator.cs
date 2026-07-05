@@ -47,7 +47,7 @@ namespace WebEid.Security.Validator.Ocsp
                 if (extendedKeyUsage == null || !extendedKeyUsage.Contains(OidOcspSigning))
                 {
                     throw new OcspCertificateException(
-                        $"Certificate {certificate.SubjectDN} does not contain the key usage extension for OCSP response signing");
+                        $"Certificate {certificate.SubjectDN} does not contain the extended key usage extension value for OCSP response signing");
                 }
             }
             catch (CertificateParsingException e)
