@@ -28,6 +28,7 @@ namespace WebEid.Security.Tests.Validator.VersionValidators
     using Exceptions;
     using NUnit.Framework;
     using TestUtils;
+    using WebEid.Security.Util;
     using WebEid.Security.Validator;
 
     public class AuthTokenV11CertificateTest : AbstractTestWithValidator
@@ -139,6 +140,75 @@ namespace WebEid.Security.Tests.Validator.VersionValidators
             Assert.ThrowsAsync<AuthTokenParseException>(() =>
                 Validator.Validate(token, ValidChallengeNonce));
         }
+
+        [Test]
+        public void WhenValidV11TokenWithUnverifiedIntermediateCertificatesThenValidationSucceeds()
+        {
+            using var _ = DateTimeProvider.OverrideUtcNow(new DateTime(2023, 10, 1));
+            var token = Validator.Parse(ValidV11AuthTokenStr);
+            token.UnverifiedIntermediateCertificates = [Esteid2018CaCertificateInBase64()];
+
+            Assert.DoesNotThrowAsync(() => Validator.Validate(token, ValidChallengeNonce));
+        }
+
+        [Test]
+        public void WhenUnverifiedIntermediateCertificatesEmptyThenValidationFails()
+        {
+            var token = Validator.Parse(ValidV11AuthTokenStr);
+            token.UnverifiedIntermediateCertificates = [];
+
+            var ex = Assert.ThrowsAsync<AuthTokenParseException>(() => Validator.Validate(token, ValidChallengeNonce));
+            Assert.That(ex!.Message,
+                Is.EqualTo("'unverifiedIntermediateCertificates' must not be empty for format 'web-eid:1.1'"));
+        }
+
+        [Test]
+        public void WhenUnverifiedIntermediateCertificateContainsEmptyEntryThenValidationFails()
+        {
+            var token = Validator.Parse(ValidV11AuthTokenStr);
+            token.UnverifiedIntermediateCertificates = [""];
+
+            var ex = Assert.ThrowsAsync<AuthTokenParseException>(() => Validator.Validate(token, ValidChallengeNonce));
+            Assert.That(ex!.Message, Is.EqualTo(
+                "'unverifiedIntermediateCertificates' must not contain null or empty entries for format 'web-eid:1.1'"));
+        }
+
+        [Test]
+        public void WhenUnverifiedIntermediateCertificateIsNotBase64ThenValidationFails()
+        {
+            // The Java test asserts a CertificateDecodingException; the .NET certificate parser reports the decoding
+            // failure as an AuthTokenParseException naming the offending field.
+            var token = Validator.Parse(ValidV11AuthTokenStr);
+            token.UnverifiedIntermediateCertificates = ["This is not a certificate"];
+
+            var ex = Assert.ThrowsAsync<AuthTokenParseException>(() => Validator.Validate(token, ValidChallengeNonce));
+            Assert.That(ex!.Message,
+                Is.EqualTo("'unverifiedIntermediateCertificates' field must contain a valid certificate"));
+        }
+
+        [Test]
+        public void WhenUnverifiedSigningCertificatesAbsentButUnverifiedIntermediateCertificatesPresentThenValidationSucceeds()
+        {
+            using var _ = DateTimeProvider.OverrideUtcNow(new DateTime(2023, 10, 1));
+            var token = Validator.Parse(ValidV11AuthTokenStr);
+            token.UnverifiedSigningCertificates = null;
+            token.UnverifiedIntermediateCertificates = [Esteid2018CaCertificateInBase64()];
+
+            Assert.DoesNotThrowAsync(() => Validator.Validate(token, ValidChallengeNonce));
+        }
+
+        [Test]
+        public void WhenValidV11TokenWithSigningIntermediateCertificatesThenValidationSucceeds()
+        {
+            using var _ = DateTimeProvider.OverrideUtcNow(new DateTime(2023, 10, 1));
+            var token = Validator.Parse(ValidV11AuthTokenStr);
+            token.UnverifiedSigningCertificates[0].IntermediateCertificates = [Esteid2018CaCertificateInBase64()];
+
+            Assert.DoesNotThrowAsync(() => Validator.Validate(token, ValidChallengeNonce));
+        }
+
+        private static string Esteid2018CaCertificateInBase64() =>
+            Convert.ToBase64String(Certificates.GetTestEsteid2018Ca().GetRawCertData());
 
         private static readonly JsonSerializerOptions DefaultJsonSerializerOptions = new()
         {

@@ -72,9 +72,6 @@ namespace WebEid.Security.Validator.VersionValidators
             };
 
         private readonly AuthTokenValidationConfiguration configuration;
-        private readonly IOcspClient ocspClient;
-        private readonly OcspServiceProvider ocspServiceProvider;
-        private readonly ILogger logger;
 
         /// <summary>
         /// Initializes a validator for Web eID authentication tokens with token format major version 1
@@ -89,12 +86,7 @@ namespace WebEid.Security.Validator.VersionValidators
             ILogger logger = null)
             : base(simpleSubjectCertificateValidators, signatureValidator, configuration,
                    ocspClient, ocspServiceProvider, logger)
-        {
-            this.configuration = configuration;
-            this.ocspClient = ocspClient;
-            this.ocspServiceProvider = ocspServiceProvider;
-            this.logger = logger;
-        }
+            => this.configuration = configuration;
 
         /// <summary>
         /// Determines whether this validator supports the specified token format.
@@ -109,15 +101,16 @@ namespace WebEid.Security.Validator.VersionValidators
         public override async Task<X509Certificate2> Validate(WebEidAuthToken authToken, string currentChallengeNonce)
         {
             var subjectCertificate = await base.Validate(authToken, currentChallengeNonce);
-            var signingCertificates = ValidateSigningCertificates(authToken);
 
-            foreach (var signingCertificate in signingCertificates)
+            foreach (var unverifiedSigningCertificate in ValidateSigningCertificates(authToken))
             {
+                var signingCertificate = ParseSigningCertificate(unverifiedSigningCertificate.Certificate);
                 ValidateSameSubject(subjectCertificate, signingCertificate);
                 ValidateSameIssuer(subjectCertificate, signingCertificate);
-                ValidateSigningCertificateValidity(signingCertificate);
                 ValidateSigningCertificateKeyUsage(signingCertificate);
-                await ValidateSigningCertificateChainAsync(signingCertificate);
+                ValidateSigningCertificateChain(signingCertificate,
+                    X509CertificateExtensions.ParseCertificates(
+                        unverifiedSigningCertificate.IntermediateCertificates, "intermediateCertificates"));
             }
 
             return subjectCertificate;
@@ -148,17 +141,22 @@ namespace WebEid.Security.Validator.VersionValidators
             }
         }
 
-        private static List<X509Certificate2> ValidateSigningCertificates(WebEidAuthToken token)
+        private static List<UnverifiedSigningCertificate> ValidateSigningCertificates(WebEidAuthToken token)
         {
             var signingCertificates = token.UnverifiedSigningCertificates;
+            var intermediateCertificates = token.UnverifiedIntermediateCertificates;
 
+            // When the authentication certificate's intermediate certificates are present, signing certificates
+            // are optional.
+            if (signingCertificates == null && intermediateCertificates is { Count: > 0 })
+            {
+                return [];
+            }
             if (signingCertificates == null || signingCertificates.Count == 0)
             {
                 throw new AuthTokenParseException(
                     $"'unverifiedSigningCertificates' field is missing, null or empty for format '{token.Format}'");
             }
-
-            var result = new List<X509Certificate2>();
 
             foreach (var certificate in signingCertificates)
             {
@@ -169,21 +167,23 @@ namespace WebEid.Security.Validator.VersionValidators
                 }
 
                 ValidateSupportedSignatureAlgorithms(certificate);
-
-                try
-                {
-                    result.Add(
-                        X509CertificateExtensions.ParseCertificate(
-                            certificate.Certificate,
-                            "unverifiedSigningCertificates"));
-                }
-                catch (Exception ex)
-                {
-                    throw new AuthTokenParseException("Failed to decode signing certificate", ex);
-                }
+                ValidateIntermediateCertificatesField(certificate.IntermediateCertificates,
+                    "intermediateCertificates", token.Format);
             }
 
-            return result;
+            return signingCertificates;
+        }
+
+        private static X509Certificate2 ParseSigningCertificate(string certificateInBase64)
+        {
+            try
+            {
+                return X509CertificateExtensions.ParseCertificate(certificateInBase64, "unverifiedSigningCertificates");
+            }
+            catch (Exception ex)
+            {
+                throw new AuthTokenParseException("Failed to decode signing certificate", ex);
+            }
         }
 
         private static void ValidateSameSubject(X509Certificate2 subjectCert, X509Certificate2 signingCert)
@@ -209,20 +209,6 @@ namespace WebEid.Security.Validator.VersionValidators
             }
         }
 
-        private static void ValidateSigningCertificateValidity(X509Certificate2 cert)
-        {
-            try
-            {
-                var bcCert = cert.ToBouncyCastle();
-                bcCert.ValidateCertificateExpiry(DateTime.UtcNow, "signing_certificate");
-            }
-            catch (Exception ex)
-            {
-                throw new AuthTokenParseException(
-                    "Signing certificate is not valid: " + ex.Message, ex);
-            }
-        }
-
         private static void ValidateSigningCertificateKeyUsage(X509Certificate2 cert)
         {
             var keyUsage = cert.Extensions.OfType<X509KeyUsageExtension>().FirstOrDefault();
@@ -234,20 +220,21 @@ namespace WebEid.Security.Validator.VersionValidators
             }
         }
 
-        private async Task ValidateSigningCertificateChainAsync(X509Certificate2 signingCertificate)
+        private void ValidateSigningCertificateChain(X509Certificate2 signingCertificate,
+            ICollection<X509Certificate2> intermediateCertificates)
         {
             try
             {
-                var trustValidators = SubjectCertificateValidatorBatch.ForTrustValidation(
-                    configuration,
+                // The signing certificate itself deliberately gets no revocation check during authentication: its
+                // revocation status matters at signing time and is the signature validation service's concern.
+                // Token-supplied intermediate certificates in its path are checked for revocation.
+                signingCertificate.ValidateIsValidAndSignedByTrustedCa(
+                    "Signing",
                     configuration.TrustedCaCertificates,
-                    [],
-                    ocspClient,
-                    ocspServiceProvider,
-                    logger
-                );
-
-                await trustValidators.ExecuteFor(signingCertificate);
+                    intermediateCertificates,
+                    IntermediateRevocationCheck.Enabled,
+                    configuration.OcspRequestTimeout,
+                    DateTimeProvider.UtcNow);
             }
             catch (Exception ex)
             {
