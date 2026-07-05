@@ -44,7 +44,10 @@ namespace WebEid.Security.Validator.CertValidators
         /// <exception cref="CertificateExpiredException">when a CA certificate in the chain or the user certificate is expired</exception>
         public Task Validate(X509Certificate2 subjectCertificate)
         {
-            SubjectCertificateIssuerCertificate = subjectCertificate.ValidateIsValidAndSignedByTrustedCa(trustedCaCertificates);
+            SubjectCertificateIssuerCertificate = subjectCertificate.ValidateIsValidAndSignedByTrustedCa(
+                "User",
+                trustedCaCertificates,
+                DateTimeProvider.UtcNow);
 
             logger?.LogDebug("Subject certificate is valid and signed by a trusted CA");
 

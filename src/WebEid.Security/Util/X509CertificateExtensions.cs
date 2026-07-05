@@ -78,9 +78,29 @@ namespace WebEid.Security.Util
         /// <exception cref="CertificateNotTrustedException">If the certificate is not signed by a trusted CA or if any other error occurs.</exception>
         /// <exception cref="CertificateNotYetValidException">when a CA certificate in the chain or the user certificate is not yet valid</exception>
         /// <exception cref="CertificateExpiredException">when a CA certificate in the chain or the user certificate is expired</exception>
-        public static X509Certificate2 ValidateIsValidAndSignedByTrustedCa(this X509Certificate2 certificate, ICollection<X509Certificate2> trustedCaCertificates)
+        public static X509Certificate2 ValidateIsValidAndSignedByTrustedCa(this X509Certificate2 certificate, ICollection<X509Certificate2> trustedCaCertificates) =>
+            ValidateIsValidAndSignedByTrustedCa(certificate, "User", trustedCaCertificates, DateTimeProvider.UtcNow);
+
+        /// <summary>
+        /// Validates that the given certificate is valid and signed by a trusted CA and returns the certificate
+        /// that directly issued it.
+        /// </summary>
+        /// <param name="certificate">The certificate whose certification path is validated.</param>
+        /// <param name="certificateSubject">The role of the certificate, e.g. "User" or "AIA OCSP responder", used in
+        /// validity failure messages.</param>
+        /// <param name="trustedCaCertificates">A collection of trusted CA certificates.</param>
+        /// <param name="now">Validation date.</param>
+        /// <returns>The certificate that directly issued the given certificate; the trust anchor when the anchor
+        /// is the direct issuer.</returns>
+        /// <exception cref="CertificateNotTrustedException">If the certificate is not signed by a trusted CA or if any other error occurs.</exception>
+        /// <exception cref="CertificateNotYetValidException">when a CA certificate in the chain or the user certificate is not yet valid</exception>
+        /// <exception cref="CertificateExpiredException">when a CA certificate in the chain or the user certificate is expired</exception>
+        public static X509Certificate2 ValidateIsValidAndSignedByTrustedCa(this X509Certificate2 certificate,
+            string certificateSubject,
+            ICollection<X509Certificate2> trustedCaCertificates,
+            DateTime now)
         {
-            ValidateCertificateExpiry(certificate, DateTimeProvider.UtcNow, "User");
+            ValidateCertificateExpiry(certificate, now, certificateSubject);
 
             var chain = new X509Chain
             {
@@ -89,7 +109,7 @@ namespace WebEid.Security.Util
                     RevocationMode = X509RevocationMode.NoCheck,
                     RevocationFlag = X509RevocationFlag.ExcludeRoot,
                     VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority,
-                    VerificationTime = DateTimeProvider.UtcNow,
+                    VerificationTime = now,
                     UrlRetrievalTimeout = TimeSpan.Zero,
                     DisableCertificateDownloads = true
                 }
@@ -135,13 +155,15 @@ namespace WebEid.Security.Util
                 var trustedCaCertificate = chain.ChainElements[trustedCaIndex].Certificate;
 
                 // Verify that the trusted CA cert is presently valid before returning the result.
-                ValidateCertificateExpiry(trustedCaCertificate, DateTimeProvider.UtcNow, "Trusted CA");
+                ValidateCertificateExpiry(trustedCaCertificate, now, "Trusted CA");
 
                 // Index 1 (when present before the anchor) is the subject's direct issuer; otherwise the subject
                 // was issued directly by the trust anchor.
                 return trustedCaIndex > 0 ? chain.ChainElements[1].Certificate : trustedCaCertificate;
             }
-            catch (Exception ex) when (ex is not CertificateNotTrustedException)
+            catch (Exception ex) when (ex is not CertificateNotTrustedException
+                and not CertificateExpiredException
+                and not CertificateNotYetValidException)
             {
                 throw new CertificateNotTrustedException(certificate, ex);
             }
