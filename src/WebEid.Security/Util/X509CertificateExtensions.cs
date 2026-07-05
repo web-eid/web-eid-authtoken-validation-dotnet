@@ -79,7 +79,7 @@ namespace WebEid.Security.Util
         /// <exception cref="CertificateNotYetValidException">when a CA certificate in the chain or the user certificate is not yet valid</exception>
         /// <exception cref="CertificateExpiredException">when a CA certificate in the chain or the user certificate is expired</exception>
         public static X509Certificate2 ValidateIsValidAndSignedByTrustedCa(this X509Certificate2 certificate, ICollection<X509Certificate2> trustedCaCertificates) =>
-            ValidateIsValidAndSignedByTrustedCa(certificate, "User", trustedCaCertificates, DateTimeProvider.UtcNow);
+            ValidateIsValidAndSignedByTrustedCa(certificate, "User", trustedCaCertificates, [], DateTimeProvider.UtcNow);
 
         /// <summary>
         /// Validates that the given certificate is valid and signed by a trusted CA and returns the certificate
@@ -89,6 +89,8 @@ namespace WebEid.Security.Util
         /// <param name="certificateSubject">The role of the certificate, e.g. "User" or "AIA OCSP responder", used in
         /// validity failure messages.</param>
         /// <param name="trustedCaCertificates">A collection of trusted CA certificates.</param>
+        /// <param name="additionalIntermediateCertificates">Untrusted intermediate certificates offered as
+        /// certification-path candidates only; the path must still terminate at one of the trusted CA certificates.</param>
         /// <param name="now">Validation date.</param>
         /// <returns>The certificate that directly issued the given certificate; the trust anchor when the anchor
         /// is the direct issuer.</returns>
@@ -98,6 +100,7 @@ namespace WebEid.Security.Util
         public static X509Certificate2 ValidateIsValidAndSignedByTrustedCa(this X509Certificate2 certificate,
             string certificateSubject,
             ICollection<X509Certificate2> trustedCaCertificates,
+            ICollection<X509Certificate2> additionalIntermediateCertificates,
             DateTime now)
         {
             ValidateCertificateExpiry(certificate, now, certificateSubject);
@@ -116,6 +119,10 @@ namespace WebEid.Security.Util
             };
 
             foreach (var cert in trustedCaCertificates)
+            {
+                chain.ChainPolicy.ExtraStore.Add(cert);
+            }
+            foreach (var cert in additionalIntermediateCertificates ?? [])
             {
                 chain.ChainPolicy.ExtraStore.Add(cert);
             }
