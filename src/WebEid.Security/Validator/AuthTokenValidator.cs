@@ -41,7 +41,7 @@ namespace WebEid.Security.Validator
 
         // Use human-readable meaningful names for token length limits.
         private const int TokenMinLength = 100;
-        private const int TokenMaxLength = 10000;
+        private const int TokenMaxLength = 65536;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AuthTokenValidator"/> class.
