@@ -68,5 +68,21 @@ namespace WebEid.Security.Tests.Validator
             Assert.DoesNotThrowAsync(() => validator.Validate(token, "YPVgYc7Qds0qmK/RilPLffnsIg7IIovM4BAWqGZWwiY="));
         }
 
+        [Test]
+        public void WhenIdCardIsValidatedWithAiaOcspCheckThenDelegatedResponderIsAuthorizedAndValidationSucceeds()
+        {
+            // The OCSP response was recorded from the card's AIA OCSP responder at http://eiddevcards.zetescards.be:8888
+            // on 2026-07-02. Its responder certificate is issued by eID TEST EC Citizen CA, the issuer of the
+            // authentication certificate, so the RFC 6960 delegated-responder authorization check in AiaOcspService
+            // must accept it. The clock is set to the recording time as the response thisUpdate age is limited.
+            using var _ = DateTimeProvider.OverrideUtcNow(new DateTime(2026, 7, 2, 8, 39, 30, DateTimeKind.Utc));
+            var ocspClient = new RecordedResponseOcspClient(
+                Certificates.ResourceReader.ReadFromResource("ocsp_response_belgian_test_id_card.der"));
+            var validator = AuthTokenValidators.GetAuthTokenValidatorForBelgianIdCardWithOcspCheck(ocspClient);
+            var token = validator.Parse(BelgianTestIdCardAuthTokenEcc);
+
+            Assert.DoesNotThrowAsync(() => validator.Validate(token, "iMeEwP2cgUINY2XoO/lqEpOUn7z/ysHRqGXkGKC4VXE="));
+        }
+
     }
 }
