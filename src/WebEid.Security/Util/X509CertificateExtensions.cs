@@ -157,6 +157,22 @@ namespace WebEid.Security.Util
         }
 
         /// <summary>
+        /// Parses a list of base64-encoded certificates and returns a list of <see cref="X509Certificate2"/> instances.
+        /// </summary>
+        /// <param name="certificatesInBase64">The base64-encoded certificates.</param>
+        /// <param name="fieldName">The name of the field containing the certificates.</param>
+        /// <returns>A list of <see cref="X509Certificate2"/> instances.</returns>
+        /// <exception cref="AuthTokenParseException">Thrown when parsing fails.</exception>
+        public static List<X509Certificate2> ParseCertificates(ICollection<string> certificatesInBase64, string fieldName)
+        {
+            if (certificatesInBase64 == null || certificatesInBase64.Count == 0)
+            {
+                return [];
+            }
+            return [.. certificatesInBase64.Select(certificate => ParseCertificate(certificate, fieldName))];
+        }
+
+        /// <summary>
         /// Gets the Common Name (CN) from the certificate's subject.
         /// </summary>
         public static string GetSubjectCn(this X509Certificate certificate) =>

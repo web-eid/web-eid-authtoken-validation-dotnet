@@ -59,6 +59,35 @@ namespace WebEid.Security.Tests.Util
             Assert.That("EE", Is.EqualTo(certificate.GetSubjectCountryCode()));
 
         [Test]
+        public void ParseCertificatesWithNullListReturnsEmptyList() =>
+            Assert.That(X509CertificateExtensions.ParseCertificates(null, "unverifiedIntermediateCertificates"),
+                Is.Empty);
+
+        [Test]
+        public void ParseCertificatesWithEmptyListReturnsEmptyList() =>
+            Assert.That(X509CertificateExtensions.ParseCertificates([], "unverifiedIntermediateCertificates"),
+                Is.Empty);
+
+        [Test]
+        public void ParseCertificatesDecodesAllCertificates()
+        {
+            var certificateInBase64 = Convert.ToBase64String(certificate.GetRawCertData());
+
+            var result = X509CertificateExtensions.ParseCertificates(
+                [certificateInBase64, certificateInBase64], "unverifiedIntermediateCertificates");
+
+            Assert.That(result, Has.Count.EqualTo(2));
+            Assert.That(result[0].RawData, Is.EqualTo(certificate.GetRawCertData()));
+            Assert.That(result[1].RawData, Is.EqualTo(certificate.GetRawCertData()));
+        }
+
+        [Test]
+        public void ParseCertificatesWithInvalidEntryThrows() =>
+            Assert.Throws<AuthTokenParseException>(() =>
+                    X509CertificateExtensions.ParseCertificates(["not a certificate"], "unverifiedIntermediateCertificates"))
+                .WithMessage("'unverifiedIntermediateCertificates' field must contain a valid certificate");
+
+        [Test]
         public void ValidateBcNotYetValidCertificateExpiryThrowsException() =>
             Assert.Throws<CertificateNotYetValidException>(() =>
                 DotNetUtilities.FromX509Certificate(certificate)
