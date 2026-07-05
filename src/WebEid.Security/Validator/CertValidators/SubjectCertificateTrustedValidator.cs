@@ -29,6 +29,7 @@ namespace WebEid.Security.Validator.CertValidators
             SubjectCertificateIssuerCertificate = subjectCertificate.ValidateIsValidAndSignedByTrustedCa(
                 "User",
                 trustedCaCertificates,
+                [],
                 DateTimeProvider.UtcNow);
 
             logger?.LogDebug("Subject certificate is valid and signed by a trusted CA");
