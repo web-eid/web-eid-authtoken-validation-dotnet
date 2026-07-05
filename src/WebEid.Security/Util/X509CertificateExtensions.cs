@@ -38,6 +38,8 @@ namespace WebEid.Security.Util
     /// </summary>
     public static class X509CertificateExtensions
     {
+        private static readonly TimeSpan DefaultRevocationUrlRetrievalTimeout = TimeSpan.FromSeconds(5);
+
         /// <summary>
         /// Checks whether the certificate was valid on the given date.
         /// </summary>
@@ -79,7 +81,8 @@ namespace WebEid.Security.Util
         /// <exception cref="CertificateNotYetValidException">when a CA certificate in the chain or the user certificate is not yet valid</exception>
         /// <exception cref="CertificateExpiredException">when a CA certificate in the chain or the user certificate is expired</exception>
         public static X509Certificate2 ValidateIsValidAndSignedByTrustedCa(this X509Certificate2 certificate, ICollection<X509Certificate2> trustedCaCertificates) =>
-            ValidateIsValidAndSignedByTrustedCa(certificate, "User", trustedCaCertificates, [], DateTimeProvider.UtcNow);
+            ValidateIsValidAndSignedByTrustedCa(certificate, "User", trustedCaCertificates, [],
+                IntermediateRevocationCheck.Disabled, DateTimeProvider.UtcNow);
 
         /// <summary>
         /// Validates that the given certificate is valid and signed by a trusted CA and returns the certificate
@@ -91,6 +94,8 @@ namespace WebEid.Security.Util
         /// <param name="trustedCaCertificates">A collection of trusted CA certificates.</param>
         /// <param name="additionalIntermediateCertificates">Untrusted intermediate certificates offered as
         /// certification-path candidates only; the path must still terminate at one of the trusted CA certificates.</param>
+        /// <param name="intermediateRevocationCheck">Whether the non-anchor intermediate CA certificates of the built
+        /// path are checked for revocation.</param>
         /// <param name="now">Validation date.</param>
         /// <returns>The certificate that directly issued the given certificate; the trust anchor when the anchor
         /// is the direct issuer.</returns>
@@ -101,19 +106,55 @@ namespace WebEid.Security.Util
             string certificateSubject,
             ICollection<X509Certificate2> trustedCaCertificates,
             ICollection<X509Certificate2> additionalIntermediateCertificates,
+            IntermediateRevocationCheck intermediateRevocationCheck,
+            DateTime now) =>
+            ValidateIsValidAndSignedByTrustedCa(certificate, certificateSubject, trustedCaCertificates,
+                additionalIntermediateCertificates, intermediateRevocationCheck,
+                DefaultRevocationUrlRetrievalTimeout, now);
+
+        /// <summary>
+        /// Validates that the given certificate is valid and signed by a trusted CA and returns the certificate
+        /// that directly issued it.
+        /// </summary>
+        /// <param name="certificate">The certificate whose certification path is validated.</param>
+        /// <param name="certificateSubject">The role of the certificate, e.g. "User" or "AIA OCSP responder", used in
+        /// validity failure messages.</param>
+        /// <param name="trustedCaCertificates">A collection of trusted CA certificates.</param>
+        /// <param name="additionalIntermediateCertificates">Untrusted intermediate certificates offered as
+        /// certification-path candidates only; the path must still terminate at one of the trusted CA certificates.</param>
+        /// <param name="intermediateRevocationCheck">Whether the non-anchor intermediate CA certificates of the built
+        /// path are checked for revocation.</param>
+        /// <param name="revocationUrlRetrievalTimeout">Maximum time spent retrieving OCSP or CRL data while checking
+        /// intermediate certificate revocation.</param>
+        /// <param name="now">Validation date.</param>
+        /// <returns>The certificate that directly issued the given certificate; the trust anchor when the anchor
+        /// is the direct issuer.</returns>
+        /// <exception cref="CertificateNotTrustedException">If the certificate is not signed by a trusted CA or if any other error occurs.</exception>
+        /// <exception cref="CertificateNotYetValidException">when a CA certificate in the chain or the user certificate is not yet valid</exception>
+        /// <exception cref="CertificateExpiredException">when a CA certificate in the chain or the user certificate is expired</exception>
+        public static X509Certificate2 ValidateIsValidAndSignedByTrustedCa(this X509Certificate2 certificate,
+            string certificateSubject,
+            ICollection<X509Certificate2> trustedCaCertificates,
+            ICollection<X509Certificate2> additionalIntermediateCertificates,
+            IntermediateRevocationCheck intermediateRevocationCheck,
+            TimeSpan revocationUrlRetrievalTimeout,
             DateTime now)
         {
             ValidateCertificateExpiry(certificate, now, certificateSubject);
+            RequirePositiveRevocationUrlRetrievalTimeout(revocationUrlRetrievalTimeout);
 
             var chain = new X509Chain
             {
                 ChainPolicy =
                 {
+                    // Revocation checking of the validated certificate is intentionally disabled here: each caller
+                    // applies its own role-specific leaf revocation policy. Non-anchor intermediate certificates are
+                    // checked separately below when the intermediate revocation check is enabled.
                     RevocationMode = X509RevocationMode.NoCheck,
                     RevocationFlag = X509RevocationFlag.ExcludeRoot,
                     VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority,
                     VerificationTime = now,
-                    UrlRetrievalTimeout = TimeSpan.Zero,
+                    UrlRetrievalTimeout = revocationUrlRetrievalTimeout,
                     DisableCertificateDownloads = true
                 }
             };
@@ -161,6 +202,12 @@ namespace WebEid.Security.Util
                 }
                 var trustedCaCertificate = chain.ChainElements[trustedCaIndex].Certificate;
 
+                if (intermediateRevocationCheck == IntermediateRevocationCheck.Enabled)
+                {
+                    ValidateIntermediateCertificatesNotRevoked(chain, trustedCaIndex, trustedCaCertificates,
+                        additionalIntermediateCertificates, revocationUrlRetrievalTimeout, now);
+                }
+
                 // Verify that the trusted CA cert is presently valid before returning the result.
                 ValidateCertificateExpiry(trustedCaCertificate, now, "Trusted CA");
 
@@ -174,6 +221,94 @@ namespace WebEid.Security.Util
             {
                 throw new CertificateNotTrustedException(certificate, ex);
             }
+        }
+
+        /// <summary>
+        /// Validates that the non-anchor intermediate CA certificates of the built certification path are not revoked.
+        /// </summary>
+        private static void ValidateIntermediateCertificatesNotRevoked(X509Chain builtChain,
+            int trustedCaIndex,
+            ICollection<X509Certificate2> trustedCaCertificates,
+            ICollection<X509Certificate2> additionalIntermediateCertificates,
+            TimeSpan revocationUrlRetrievalTimeout,
+            DateTime now)
+        {
+            if (trustedCaIndex <= 1)
+            {
+                return; // The leaf chains directly to a trust anchor; there is no non-anchor intermediate to validate.
+            }
+
+            // Validate only the CA suffix of the built path, excluding the leaf at index 0, whose revocation policy
+            // is role-specific and applied by the caller, and the trust anchor, which is excluded from the check
+            // by treating it as the custom trusted root of the revocation chain.
+            var firstIntermediateCertificate = builtChain.ChainElements[1].Certificate;
+
+            using var revocationChain = new X509Chain();
+            ConfigureIntermediateRevocationPolicy(revocationChain.ChainPolicy, revocationUrlRetrievalTimeout, now);
+
+            foreach (var cert in trustedCaCertificates)
+            {
+                revocationChain.ChainPolicy.CustomTrustStore.Add(cert);
+                revocationChain.ChainPolicy.ExtraStore.Add(cert);
+            }
+            foreach (var cert in additionalIntermediateCertificates ?? [])
+            {
+                revocationChain.ChainPolicy.ExtraStore.Add(cert);
+            }
+
+            if (!revocationChain.Build(firstIntermediateCertificate))
+            {
+                var offendingCertificate = GetOffendingCertificate(revocationChain, firstIntermediateCertificate);
+                var errors = revocationChain.ChainStatus
+                    .Select(x => string.Format(CultureInfo.InvariantCulture,
+                        "{0} ({1})",
+                        x.StatusInformation.Trim(),
+                        x.Status))
+                    .ToArray();
+                var certificateErrorsString = errors.Length > 0
+                    ? string.Join(Environment.NewLine, errors)
+                    : "Unknown errors.";
+
+                throw new CertificateNotTrustedException(offendingCertificate, certificateErrorsString);
+            }
+        }
+
+        internal static void ConfigureIntermediateRevocationPolicy(X509ChainPolicy chainPolicy,
+            TimeSpan revocationUrlRetrievalTimeout,
+            DateTime now)
+        {
+            ArgumentNullException.ThrowIfNull(chainPolicy);
+            RequirePositiveRevocationUrlRetrievalTimeout(revocationUrlRetrievalTimeout);
+
+            // Revocation checking prefers OCSP and falls back to CRLs. Hard-fail is deliberately retained: an
+            // intermediate whose revocation status cannot be established must not become part of a trusted path.
+            chainPolicy.RevocationMode = X509RevocationMode.Online;
+            chainPolicy.RevocationFlag = X509RevocationFlag.ExcludeRoot;
+            chainPolicy.TrustMode = X509ChainTrustMode.CustomRootTrust;
+            chainPolicy.VerificationTime = now;
+            chainPolicy.UrlRetrievalTimeout = revocationUrlRetrievalTimeout;
+            chainPolicy.DisableCertificateDownloads = true;
+        }
+
+        private static void RequirePositiveRevocationUrlRetrievalTimeout(TimeSpan revocationUrlRetrievalTimeout)
+        {
+            if (revocationUrlRetrievalTimeout <= TimeSpan.Zero)
+            {
+                throw new ArgumentOutOfRangeException(nameof(revocationUrlRetrievalTimeout),
+                    "Intermediate certificate revocation URL retrieval timeout must be greater than zero");
+            }
+        }
+
+        /// <summary>
+        /// Returns the intermediate certificate that failed the revocation check, or the first intermediate when
+        /// the failing certificate cannot be determined.
+        /// </summary>
+        private static X509Certificate2 GetOffendingCertificate(X509Chain revocationChain, X509Certificate2 firstIntermediateCertificate)
+        {
+            var offendingElement = revocationChain.ChainElements
+                .Cast<X509ChainElement>()
+                .FirstOrDefault(element => element.ChainElementStatus.Length > 0);
+            return offendingElement?.Certificate ?? firstIntermediateCertificate;
         }
 
         /// <summary>
