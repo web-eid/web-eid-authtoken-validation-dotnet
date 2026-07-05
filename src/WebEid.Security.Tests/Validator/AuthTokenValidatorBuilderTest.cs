@@ -79,6 +79,44 @@ namespace WebEid.Security.Tests.Validator
         }
 
         [Test]
+        public void AiaOcspResponderIssuerMatchingPolicyDefaultsToExactCertificate()
+        {
+            var configuration = new AuthTokenValidationConfiguration();
+
+            Assert.That(configuration.AiaOcspResponderIssuerMatchingPolicy,
+                Is.EqualTo(ResponderIssuerMatchingPolicy.ExactCertificate));
+            Assert.That(configuration.Copy().AiaOcspResponderIssuerMatchingPolicy,
+                Is.EqualTo(ResponderIssuerMatchingPolicy.ExactCertificate));
+        }
+
+        [Test]
+        public void AiaOcspResponderIssuerMatchingPolicyIsCopied()
+        {
+            var configuration = new AuthTokenValidationConfiguration
+            {
+                AiaOcspResponderIssuerMatchingPolicy = ResponderIssuerMatchingPolicy.SubjectAndPublicKey
+            };
+
+            Assert.That(configuration.Copy().AiaOcspResponderIssuerMatchingPolicy,
+                Is.EqualTo(ResponderIssuerMatchingPolicy.SubjectAndPublicKey));
+        }
+
+        [Test]
+        public void WithAiaOcspResponderIssuerMatchingPolicySetsPolicy()
+        {
+            var returnedBuilder = builderWithLogger
+                .WithAiaOcspResponderIssuerMatchingPolicy(ResponderIssuerMatchingPolicy.SubjectAndPublicKey);
+
+            Assert.That(returnedBuilder, Is.SameAs(builderWithLogger));
+
+            var configurationField = typeof(AuthTokenValidatorBuilder)
+                .GetField("configuration", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var configuration = (AuthTokenValidationConfiguration)configurationField!.GetValue(builderWithLogger);
+            Assert.That(configuration!.AiaOcspResponderIssuerMatchingPolicy,
+                Is.EqualTo(ResponderIssuerMatchingPolicy.SubjectAndPublicKey));
+        }
+
+        [Test]
         public void WhenOriginProtocolHttpThenBuildingFails()
         {
             var authTokenValidatorBuilder = builder.WithSiteOrigin(new Uri("http://ria.ee"));

@@ -37,6 +37,8 @@ namespace WebEid.Security.Validator.Ocsp.Service
         private readonly List<X509Certificate2> trustedCaCertificates;
         private readonly X509Certificate2 certificateIssuerCertificate;
         private readonly ICollection<X509Certificate2> additionalIntermediateCertificates;
+        private readonly ResponderIssuerMatchingPolicy responderIssuerMatchingPolicy;
+        private readonly TimeSpan revocationUrlRetrievalTimeout;
 
         /// <summary>
         /// Creates an AIA OCSP service for a single validation run of the given certificate.
@@ -61,6 +63,8 @@ namespace WebEid.Security.Validator.Ocsp.Service
             this.certificateIssuerCertificate = certificateIssuerCertificate;
             this.additionalIntermediateCertificates = additionalIntermediateCertificates;
             DoesSupportNonce = !configuration.NonceDisabledOcspUrls.Contains(AccessLocation);
+            responderIssuerMatchingPolicy = configuration.ResponderIssuerMatchingPolicy;
+            revocationUrlRetrievalTimeout = configuration.RevocationUrlRetrievalTimeout;
         }
 
         public bool DoesSupportNonce { get; }
@@ -83,30 +87,46 @@ namespace WebEid.Security.Validator.Ocsp.Service
                 // The responder certificate's validity on the current date is checked as part of the certification
                 // path validation. A responder may be issued by a token-supplied intermediate that is not itself
                 // trusted, so the intermediates are offered as path candidates; the path must still terminate at a
-                // trusted anchor. Revocation is deliberately not checked anywhere in this path: the responder
-                // certificate itself is never revocation-checked, whatever revocation policy the CA has chosen for
-                // it under RFC 6960 section 4.2.2.2.1, because OCSP-checking a responder against its own service
-                // would be circular; and the RepresentsSameCa checks below only accept a responder that is, or is
-                // directly delegated by, the subject certificate's issuer, which this validation run has already
-                // vetted while validating the subject certificate.
+                // trusted anchor. The responder certificate itself is never revocation-checked, whatever revocation
+                // policy the CA has chosen for it under RFC 6960 section 4.2.2.2.1: OCSP-checking a responder against
+                // its own service would be circular. In practice all production Estonian, Belgian and Finnish AIA
+                // responder certificates carry id-pkix-ocsp-nocheck, which tells clients to skip the check anyway.
+                //
+                // With exact issuer matching, the intermediate CA certificates are not checked again: this validation
+                // run has already vetted the exact issuer while validating the subject certificate, as either a
+                // configured trust anchor or a token-supplied intermediate that was revocation-checked then. With
+                // subject-and-public-key matching, however, the responder path may use a different equivalent
+                // cross-certificate, so every non-anchor intermediate in that path is revocation-checked.
                 var responderIssuerCertificate = certificate.ValidateIsValidAndSignedByTrustedCa(
                     "AIA OCSP responder",
                     trustedCaCertificates,
                     additionalIntermediateCertificates,
-                    IntermediateRevocationCheck.Disabled,
+                    GetIntermediateRevocationCheck(),
+                    revocationUrlRetrievalTimeout,
                     now);
                 // RFC 6960 section 4.2.2.2: the response must be signed by the CA that issued the subject certificate
                 // or by a responder directly delegated by it; a locally configured responder is handled by
-                // DesignatedOcspService. CA identity is compared by subject and public key so that equivalent
-                // cross-certificates for the same CA are accepted.
-                if (RepresentsSameCa(certificate, certificateIssuerCertificate))
+                // DesignatedOcspService.
+                if (MatchesCertificateIssuer(certificate, certificateIssuerCertificate))
                 {
                     // The response is signed by the issuing CA itself; the OCSP-signing extended key usage is required
                     // only for delegated responder certificates.
                     return;
                 }
+                if (RepresentsSameCa(certificate, certificateIssuerCertificate))
+                {
+                    // The response is signed directly by the issuing CA, but with a certificate that is only equivalent
+                    // to (same subject and public key), not identical with, the subject certificate's issuer certificate.
+                    // This can only happen under the ExactCertificate policy. Report it explicitly, because otherwise
+                    // control falls through to the delegated-responder branch below and fails with a misleading
+                    // missing-OCSP-signing-extended-key-usage error; the SubjectAndPublicKey policy accepts it.
+                    throw new CertificateNotTrustedException(certificate,
+                        "OCSP response is signed by a certificate equivalent to but not the same as the subject " +
+                        "certificate issuer; the exact-certificate responder issuer matching policy requires the " +
+                        "issuer certificate itself");
+                }
                 OcspResponseValidator.ValidateHasSigningExtension(responderCertificate);
-                if (!RepresentsSameCa(responderIssuerCertificate, certificateIssuerCertificate))
+                if (!MatchesCertificateIssuer(responderIssuerCertificate, certificateIssuerCertificate))
                 {
                     throw new CertificateNotTrustedException(certificate,
                         "OCSP responder is not authorized by the subject certificate issuer");
@@ -124,5 +144,21 @@ namespace WebEid.Security.Validator.Ocsp.Service
         private static bool RepresentsSameCa(X509Certificate2 first, X509Certificate2 second) =>
             first.SubjectName.RawData.SequenceEqual(second.SubjectName.RawData) &&
             first.PublicKey.ExportSubjectPublicKeyInfo().SequenceEqual(second.PublicKey.ExportSubjectPublicKeyInfo());
+
+        private bool MatchesCertificateIssuer(X509Certificate2 first, X509Certificate2 second) =>
+            responderIssuerMatchingPolicy switch
+            {
+                ResponderIssuerMatchingPolicy.ExactCertificate => first.RawData.SequenceEqual(second.RawData),
+                ResponderIssuerMatchingPolicy.SubjectAndPublicKey => RepresentsSameCa(first, second),
+                _ => throw new InvalidOperationException($"Unknown responder issuer matching policy {responderIssuerMatchingPolicy}")
+            };
+
+        private IntermediateRevocationCheck GetIntermediateRevocationCheck() =>
+            responderIssuerMatchingPolicy switch
+            {
+                ResponderIssuerMatchingPolicy.ExactCertificate => IntermediateRevocationCheck.Disabled,
+                ResponderIssuerMatchingPolicy.SubjectAndPublicKey => IntermediateRevocationCheck.Enabled,
+                _ => throw new InvalidOperationException($"Unknown responder issuer matching policy {responderIssuerMatchingPolicy}")
+            };
     }
 }

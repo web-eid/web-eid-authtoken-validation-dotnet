@@ -116,10 +116,11 @@ namespace WebEid.Security.Validator
         }
 
         /// <summary>
-        /// Sets both the connection and response timeout of user certificate revocation check OCSP requests.
+        /// Sets the network timeout for certificate revocation requests. This applies to user certificate OCSP
+        /// requests and platform OCSP or CRL retrievals used to check intermediate certificates.
         /// This is an optional configuration parameter, the default is 5 seconds.
         /// </summary>
-        /// <param name="ocspRequestTimeout">the duration of OCSP request connection and response timeout</param>
+        /// <param name="ocspRequestTimeout">the certificate revocation request timeout</param>
         /// <returns>the builder instance for method chaining</returns>
         public AuthTokenValidatorBuilder WithOcspRequestTimeout(TimeSpan ocspRequestTimeout)
         {
@@ -181,6 +182,25 @@ namespace WebEid.Security.Validator
                 logger.LogDebug(
                     "OCSP URLs for which the nonce protocol extension is disabled set to {NonceDisabledOcspUrls}",
                     configuration.NonceDisabledOcspUrls);
+            }
+            return this;
+        }
+
+        /// <summary>
+        /// Sets how an AIA OCSP responder certificate issuer is matched against the issuer of the subject certificate.
+        /// The default is <see cref="ResponderIssuerMatchingPolicy.ExactCertificate"/>. Use
+        /// <see cref="ResponderIssuerMatchingPolicy.SubjectAndPublicKey"/> only when equivalent cross-certificates must be
+        /// accepted. Under that policy, non-anchor intermediate certificates in the responder's certification path are
+        /// checked for revocation.
+        /// </summary>
+        /// <param name="matchingPolicy">AIA OCSP responder issuer matching policy</param>
+        /// <returns>the builder instance for method chaining</returns>
+        public AuthTokenValidatorBuilder WithAiaOcspResponderIssuerMatchingPolicy(ResponderIssuerMatchingPolicy matchingPolicy)
+        {
+            configuration.AiaOcspResponderIssuerMatchingPolicy = matchingPolicy;
+            if (logger?.IsEnabled(LogLevel.Debug) == true)
+            {
+                logger.LogDebug("AIA OCSP responder issuer matching policy set to {MatchingPolicy}", matchingPolicy);
             }
             return this;
         }

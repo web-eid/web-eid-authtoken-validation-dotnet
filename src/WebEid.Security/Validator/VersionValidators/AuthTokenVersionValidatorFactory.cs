@@ -89,7 +89,9 @@ namespace WebEid.Security.Validator.VersionValidators
                     validationConfig.DesignatedOcspServiceConfiguration,
                     new AiaOcspServiceConfiguration(
                         validationConfig.NonceDisabledOcspUrls,
-                        trustedCaCertificates
+                        trustedCaCertificates,
+                        validationConfig.AiaOcspResponderIssuerMatchingPolicy,
+                        validationConfig.OcspRequestTimeout
                     )
                 );
             }
