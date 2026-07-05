@@ -24,6 +24,7 @@ namespace WebEid.Security.Tests.TestUtils
     using System;
     using System.Security.Cryptography.X509Certificates;
     using Security.Validator;
+    using Security.Validator.Ocsp;
 
     public static class AuthTokenValidators
     {
@@ -80,6 +81,24 @@ namespace WebEid.Security.Tests.TestUtils
                 "https://47f0-46-131-86-189.ngrok-free.app",
                 Certificates.CertificateLoader.LoadCertificatesFromResources("DVV TEST Certificates - G5E.crt", "VRK TEST CA for Test Purposes - G4.crt")
             );
+
+        public static IAuthTokenValidator GetAuthTokenValidatorForBelgianIdCardWithOcspCheck(IOcspClient ocspClient) =>
+            GetAuthTokenValidatorBuilder(
+                "https://47f0-46-131-86-189.ngrok-free.app",
+                Certificates.CertificateLoader.LoadCertificatesFromResources("eID TEST EC Citizen CA.cer"))
+                // The recorded OCSP response used in tests was created without a nonce.
+                .WithNonceDisabledOcspUrls(new Uri("http://eiddevcards.zetescards.be:8888"))
+                .WithOcspClient(ocspClient)
+                .Build();
+
+        public static IAuthTokenValidator GetAuthTokenValidatorForFinnishIdCardWithOcspCheck(IOcspClient ocspClient) =>
+            GetAuthTokenValidatorBuilder(
+                "https://47f0-46-131-86-189.ngrok-free.app",
+                Certificates.CertificateLoader.LoadCertificatesFromResources("DVV TEST Certificates - G5E.crt", "VRK TEST CA for Test Purposes - G4.crt"))
+                // The recorded OCSP response used in tests was created without a nonce.
+                .WithNonceDisabledOcspUrls(new Uri("http://ocsptest.fineid.fi/dvvtp5ec"))
+                .WithOcspClient(ocspClient)
+                .Build();
 
 
         public static AuthTokenValidatorBuilder GetDefaultAuthTokenValidatorBuilder() =>

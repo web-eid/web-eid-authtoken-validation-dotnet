@@ -68,5 +68,21 @@ namespace WebEid.Security.Tests.Validator
             Assert.DoesNotThrowAsync(() => validator.Validate(token, "ZqlDATkQRqh7LkqEbspBc2qDjot29oiNLlITdLgiVIo="));
         }
 
+        [Test]
+        public void WhenIdCardIsValidatedWithAiaOcspCheckThenDelegatedResponderIsAuthorizedAndValidationSucceeds()
+        {
+            // The OCSP response was recorded from the card's AIA OCSP responder at http://ocsptest.fineid.fi/dvvtp5ec
+            // on 2026-07-02. Its responder certificate is issued by DVV TEST Certificates - G5E, the issuer of the
+            // authentication certificate, so the RFC 6960 delegated-responder authorization check in AiaOcspService
+            // must accept it. The clock is set to the recording time as the response thisUpdate age is limited.
+            using var _ = DateTimeProvider.OverrideUtcNow(new DateTime(2026, 7, 2, 8, 39, 30, DateTimeKind.Utc));
+            var ocspClient = new RecordedResponseOcspClient(
+                Certificates.ResourceReader.ReadFromResource("ocsp_response_finnish_test_id_card.der"));
+            var validator = AuthTokenValidators.GetAuthTokenValidatorForFinnishIdCardWithOcspCheck(ocspClient);
+            var token = validator.Parse(FinnishTestIdCardBackmanJuhaniAuthToken);
+
+            Assert.DoesNotThrowAsync(() => validator.Validate(token, "x9qZDRO/ao2zprt3Z0bkW4CvvE/gALFtUIf3tcC0XxY="));
+        }
+
     }
 }
