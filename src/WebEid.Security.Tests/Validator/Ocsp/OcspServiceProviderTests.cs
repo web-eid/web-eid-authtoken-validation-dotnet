@@ -4,6 +4,7 @@
 namespace WebEid.Security.Tests.Validator.Ocsp
 {
     using System;
+    using System.Security.Cryptography.X509Certificates;
     using Exceptions;
     using NUnit.Framework;
     using Org.BouncyCastle.Security;
@@ -18,7 +19,10 @@ namespace WebEid.Security.Tests.Validator.Ocsp
         public void WhenDesignatedOcspServiceConfigurationProvidedThenCreatesDesignatedOcspService()
         {
             var ocspServiceProvider = OcspServiceMaker.GetDesignatedOcspServiceProvider();
-            var service = ocspServiceProvider.GetService(DotNetUtilities.FromX509Certificate(Certificates.GetJaakKristjanEsteid2018Cert()));
+            var service = ocspServiceProvider.GetService(
+                DotNetUtilities.FromX509Certificate(Certificates.GetJaakKristjanEsteid2018Cert()),
+                new X509Certificate2(Certificates.GetTestEsteid2018Ca()),
+                []);
             Assert.That(service.AccessLocation, Is.EqualTo(new Uri("http://demo.sk.ee/ocsp")));
             Assert.That(service.DoesSupportNonce, Is.True);
             Assert.DoesNotThrow(() =>
@@ -37,7 +41,10 @@ namespace WebEid.Security.Tests.Validator.Ocsp
         public void WhenAiaOcspServiceConfigurationProvidedThenCreatesAiaOcspService()
         {
             var ocspServiceProvider = OcspServiceMaker.GetAiaOcspServiceProvider();
-            var service2018 = ocspServiceProvider.GetService(DotNetUtilities.FromX509Certificate(Certificates.GetJaakKristjanEsteid2018Cert()));
+            var service2018 = ocspServiceProvider.GetService(
+                DotNetUtilities.FromX509Certificate(Certificates.GetJaakKristjanEsteid2018Cert()),
+                new X509Certificate2(Certificates.GetTestEsteid2018Ca()),
+                []);
             Assert.That(service2018.AccessLocation, Is.EqualTo(new Uri("http://aia.demo.sk.ee/esteid2018")));
             Assert.That(service2018.DoesSupportNonce, Is.True);
             Assert.DoesNotThrow(() =>
@@ -46,7 +53,10 @@ namespace WebEid.Security.Tests.Validator.Ocsp
                     DotNetUtilities.FromX509Certificate(Certificates.GetTestEsteid2018Ca()),
                     CheckMoment));
 
-            var service2015 = ocspServiceProvider.GetService(DotNetUtilities.FromX509Certificate(Certificates.GetMariliisEsteid2015Cert()));
+            var service2015 = ocspServiceProvider.GetService(
+                DotNetUtilities.FromX509Certificate(Certificates.GetMariliisEsteid2015Cert()),
+                new X509Certificate2(Certificates.GetTestEsteid2015Ca()),
+                []);
             Assert.That(service2015.AccessLocation, Is.EqualTo(new Uri("http://aia.demo.sk.ee/esteid2015")));
             Assert.That(service2015.DoesSupportNonce, Is.False);
             Assert.DoesNotThrow(() =>
@@ -60,7 +70,10 @@ namespace WebEid.Security.Tests.Validator.Ocsp
         public void WhenAiaOcspServiceConfigurationDoesNotHaveResponderCertTrustedCaThenThrows()
         {
             var ocspServiceProvider = OcspServiceMaker.GetAiaOcspServiceProvider();
-            var service2018 = ocspServiceProvider.GetService(DotNetUtilities.FromX509Certificate(Certificates.GetJaakKristjanEsteid2018Cert()));
+            var service2018 = ocspServiceProvider.GetService(
+                DotNetUtilities.FromX509Certificate(Certificates.GetJaakKristjanEsteid2018Cert()),
+                new X509Certificate2(Certificates.GetTestEsteid2018Ca()),
+                []);
             var wrongResponderCert = DotNetUtilities.FromX509Certificate(Certificates.GetMariliisEsteid2015Cert());
             Assert.Throws<OcspCertificateException>(() =>
                 service2018.ValidateResponderCertificate(wrongResponderCert, CheckMoment));

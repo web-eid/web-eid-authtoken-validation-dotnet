@@ -65,7 +65,8 @@ namespace WebEid.Security.Validator.CertValidators
                 }
             }
 
-            var certTrustedValidator = new SubjectCertificateTrustedValidator(trustedCaCertificates, additionalIntermediateCertificates, logger);
+            var certTrustedValidator = new SubjectCertificateTrustedValidator(trustedCaCertificates,
+                additionalIntermediateCertificates, configuration.OcspRequestTimeout, logger);
             var batch = CreateFrom(certTrustedValidator);
 
             if (configuration.IsUserCertificateRevocationCheckWithOcspEnabled)
@@ -77,6 +78,7 @@ namespace WebEid.Security.Validator.CertValidators
                         ocspServiceProvider,
                         configuration.AllowedOcspResponseTimeSkew,
                         configuration.MaxOcspResponseThisUpdateAge,
+                        additionalIntermediateCertificates,
                         logger
                     )
                 );

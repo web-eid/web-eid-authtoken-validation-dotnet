@@ -4,6 +4,7 @@
 namespace WebEid.Security.Validator.CertValidators
 {
     using System;
+    using System.Collections.Generic;
     using System.IO;
     using System.Security.Cryptography.X509Certificates;
     using System.Threading.Tasks;
@@ -22,11 +23,13 @@ namespace WebEid.Security.Validator.CertValidators
         OcspServiceProvider ocspServiceProvider,
         TimeSpan allowedOcspTimeSkew,
         TimeSpan maxOcspResponseThisUpdateAge,
+        ICollection<X509Certificate2> additionalIntermediateCertificates,
         ILogger logger = null) : ISubjectCertificateValidator
     {
         private readonly SubjectCertificateTrustedValidator trustValidator = trustValidator;
         private readonly IOcspClient ocspClient = ocspClient;
         private readonly OcspServiceProvider ocspServiceProvider = ocspServiceProvider;
+        private readonly ICollection<X509Certificate2> additionalIntermediateCertificates = additionalIntermediateCertificates ?? [];
         private readonly ILogger logger = logger;
 
         private readonly TimeSpan allowedOcspTimeSkew = allowedOcspTimeSkew;
@@ -42,7 +45,9 @@ namespace WebEid.Security.Validator.CertValidators
             try
             {
                 var certificate = DotNetUtilities.FromX509Certificate(subjectCertificate);
-                var ocspService = ocspServiceProvider.GetService(certificate);
+                var ocspService = ocspServiceProvider.GetService(certificate,
+                    trustValidator.SubjectCertificateIssuerCertificate,
+                    additionalIntermediateCertificates);
 
                 if (!ocspService.DoesSupportNonce)
                 {

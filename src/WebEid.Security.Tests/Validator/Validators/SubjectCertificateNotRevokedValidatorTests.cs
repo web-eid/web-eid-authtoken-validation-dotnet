@@ -199,7 +199,8 @@ namespace WebEid.Security.Tests.Validator.Validators
                 ocspClientMock,
                 ocspServiceProvider,
                 configuration.AllowedOcspResponseTimeSkew,
-                configuration.MaxOcspResponseThisUpdateAge);
+                configuration.MaxOcspResponseThisUpdateAge,
+                []);
             Assert.ThrowsAsync<UserCertificateOcspCheckFailedException>(() =>
                     validator.Validate(esteid2018Cert))
                 .InnerException.IsInstanceOf<UserCertificateRevokedException>()
@@ -279,7 +280,7 @@ namespace WebEid.Security.Tests.Validator.Validators
             Certificates.ResourceReader.ReadFromResource("ocsp_response.der");
 
         private SubjectCertificateNotRevokedValidator GetSubjectCertificateNotRevokedValidatorWithAiaOcsp(IOcspClient client) =>
-            new(trustedValidator, client, OcspServiceMaker.GetAiaOcspServiceProvider(), configuration.AllowedOcspResponseTimeSkew, configuration.MaxOcspResponseThisUpdateAge);
+            new(trustedValidator, client, OcspServiceMaker.GetAiaOcspServiceProvider(), configuration.AllowedOcspResponseTimeSkew, configuration.MaxOcspResponseThisUpdateAge, []);
 
         private static void SetSubjectCertificateIssuerCertificate(SubjectCertificateTrustedValidator trustedValidator) =>
             SetPrivatePropertyValue(trustedValidator, "SubjectCertificateIssuerCertificate", new X509Certificate2(Certificates.GetTestEsteid2018Ca()));
@@ -302,7 +303,7 @@ namespace WebEid.Security.Tests.Validator.Validators
         }
 
         private SubjectCertificateNotRevokedValidator GetSubjectCertificateNotRevokedValidatior(OcspServiceProvider ocspServiceProvider)
-            => new(trustedValidator, ocspClient, ocspServiceProvider, configuration.AllowedOcspResponseTimeSkew, configuration.MaxOcspResponseThisUpdateAge);
+            => new(trustedValidator, ocspClient, ocspServiceProvider, configuration.AllowedOcspResponseTimeSkew, configuration.MaxOcspResponseThisUpdateAge, []);
 
         private sealed class OcspClientMock : IOcspClient
         {
