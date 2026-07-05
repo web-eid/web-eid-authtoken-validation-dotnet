@@ -30,6 +30,9 @@ namespace WebEid.Security.Validator.CertValidators
                 "User",
                 trustedCaCertificates,
                 [],
+                // Intermediate CA certificates require revocation checks here because they are not checked elsewhere.
+                // Subject certificate revocation is handled separately by SubjectCertificateNotRevokedValidator.
+                IntermediateRevocationCheck.Enabled,
                 DateTimeProvider.UtcNow);
 
             logger?.LogDebug("Subject certificate is valid and signed by a trusted CA");
