@@ -23,6 +23,7 @@ namespace WebEid.Security.Validator.Ocsp.Service
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
     using System.Security.Cryptography.X509Certificates;
     using Exceptions;
     using Org.BouncyCastle.Security;
@@ -34,14 +35,31 @@ namespace WebEid.Security.Validator.Ocsp.Service
     internal class AiaOcspService : IOcspService
     {
         private readonly List<X509Certificate2> trustedCaCertificates;
+        private readonly X509Certificate2 certificateIssuerCertificate;
+        private readonly ICollection<X509Certificate2> additionalIntermediateCertificates;
 
+        /// <summary>
+        /// Creates an AIA OCSP service for a single validation run of the given certificate.
+        /// </summary>
+        /// <param name="configuration">AIA OCSP service configuration.</param>
+        /// <param name="certificate">The certificate whose revocation status the service answers for.</param>
+        /// <param name="certificateIssuerCertificate">The certificate that directly issued the given certificate;
+        /// the OCSP responder must be authorized by it.</param>
+        /// <param name="additionalIntermediateCertificates">Untrusted, token-supplied intermediate certificates that
+        /// may be needed to build the responder's certification path to a trusted CA; may be empty.</param>
         public AiaOcspService(AiaOcspServiceConfiguration configuration,
-            Org.BouncyCastle.X509.X509Certificate certificate)
+            Org.BouncyCastle.X509.X509Certificate certificate,
+            X509Certificate2 certificateIssuerCertificate,
+            ICollection<X509Certificate2> additionalIntermediateCertificates)
         {
             ArgumentNullException.ThrowIfNull(configuration);
+            ArgumentNullException.ThrowIfNull(certificateIssuerCertificate);
+            ArgumentNullException.ThrowIfNull(additionalIntermediateCertificates);
 
             AccessLocation = GetOcspAiaUrlFromCertificate(certificate);
             trustedCaCertificates = configuration.TrustedCaCertificates;
+            this.certificateIssuerCertificate = certificateIssuerCertificate;
+            this.additionalIntermediateCertificates = additionalIntermediateCertificates;
             DoesSupportNonce = !configuration.NonceDisabledOcspUrls.Contains(AccessLocation);
         }
 
@@ -61,16 +79,44 @@ namespace WebEid.Security.Validator.Ocsp.Service
         {
             try
             {
-                responderCertificate.ValidateCertificateExpiry(now, "AIA OCSP responder");
-                // Trusted certificates validity has been already verified in ValidateCertificateExpiry().
+                var certificate = new X509Certificate2(DotNetUtilities.ToX509Certificate(responderCertificate));
                 OcspResponseValidator.ValidateHasSigningExtension(responderCertificate);
-                _ = new X509Certificate2(DotNetUtilities.ToX509Certificate(responderCertificate))
-                    .ValidateIsValidAndSignedByTrustedCa(trustedCaCertificates);
+                // The responder certificate's validity on the current date is checked as part of the certification
+                // path validation. A responder may be issued by a token-supplied intermediate that is not itself
+                // trusted, so the intermediates are offered as path candidates; the path must still terminate at a
+                // trusted anchor. Revocation is deliberately not checked anywhere in this path: the responder
+                // certificate itself is never revocation-checked, whatever revocation policy the CA has chosen for
+                // it under RFC 6960 section 4.2.2.2.1, because OCSP-checking a responder against its own service
+                // would be circular; and the RepresentsSameCa checks below only accept a responder that is, or is
+                // directly delegated by, the subject certificate's issuer, which this validation run has already
+                // vetted while validating the subject certificate.
+                var responderIssuerCertificate = certificate.ValidateIsValidAndSignedByTrustedCa(
+                    "AIA OCSP responder",
+                    trustedCaCertificates,
+                    additionalIntermediateCertificates,
+                    IntermediateRevocationCheck.Disabled,
+                    now);
+                // RFC 6960 section 4.2.2.2: the responder must be the CA that issued the subject certificate or be
+                // directly delegated by it. CA identity is compared by subject and public key so that equivalent
+                // cross-certificates for the same CA are accepted.
+                if (!RepresentsSameCa(certificate, certificateIssuerCertificate)
+                    && !RepresentsSameCa(responderIssuerCertificate, certificateIssuerCertificate))
+                {
+                    throw new CertificateNotTrustedException(certificate,
+                        "OCSP responder is not authorized by the subject certificate issuer");
+                }
             }
-            catch (Exception ex) when (ex is not CertificateNotTrustedException and not CertificateExpiredException)
+            catch (Exception ex) when (ex is not CertificateNotTrustedException
+                and not CertificateExpiredException
+                and not CertificateNotYetValidException
+                and not OcspCertificateException)
             {
                 throw new OcspCertificateException("Invalid certificate", ex);
             }
         }
+
+        private static bool RepresentsSameCa(X509Certificate2 first, X509Certificate2 second) =>
+            first.SubjectName.RawData.SequenceEqual(second.SubjectName.RawData) &&
+            first.PublicKey.ExportSubjectPublicKeyInfo().SequenceEqual(second.PublicKey.ExportSubjectPublicKeyInfo());
     }
 }

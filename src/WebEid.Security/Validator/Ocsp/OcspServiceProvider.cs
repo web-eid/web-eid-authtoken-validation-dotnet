@@ -22,6 +22,8 @@
 namespace WebEid.Security.Validator.Ocsp
 {
     using System;
+    using System.Collections.Generic;
+    using System.Security.Cryptography.X509Certificates;
     using Service;
 
     /// <summary>
@@ -40,16 +42,24 @@ namespace WebEid.Security.Validator.Ocsp
 
         /// <summary>
         /// Gets the appropriate OCSP service based on the certificate issuer.
+        /// An AIA OCSP service instance is created for a single validation run of the given certificate.
         /// </summary>
         /// <param name="certificate">The X.509 certificate for which to retrieve the OCSP service.</param>
+        /// <param name="certificateIssuerCertificate">The certificate that directly issued the subject certificate.</param>
+        /// <param name="additionalIntermediateCertificates">Untrusted, token-supplied intermediate certificates that may be
+        /// needed to build the OCSP responder's certification path to a trusted CA; may be empty.</param>
         /// <returns>An instance of <see cref="IOcspService"/>.</returns>
-        public IOcspService GetService(Org.BouncyCastle.X509.X509Certificate certificate = null)
+        public IOcspService GetService(Org.BouncyCastle.X509.X509Certificate certificate,
+            X509Certificate2 certificateIssuerCertificate,
+            ICollection<X509Certificate2> additionalIntermediateCertificates)
         {
             if (designatedOcspService != null && designatedOcspService.SupportsIssuerOf(certificate))
             {
+                // The designated responder is pinned by equality, so the subject issuer and token-supplied
+                // intermediate certificates are not needed for its validation.
                 return designatedOcspService;
             }
-            return new AiaOcspService(aiaOcspServiceConfiguration, certificate);
+            return new AiaOcspService(aiaOcspServiceConfiguration, certificate, certificateIssuerCertificate, additionalIntermediateCertificates);
         }
     }
 }
