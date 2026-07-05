@@ -47,6 +47,7 @@ namespace WebEid.Security.Validator.CertValidators
         public static SubjectCertificateValidatorBatch ForTrustValidation(
             AuthTokenValidationConfiguration configuration,
             ICollection<X509Certificate2> trustedCaCertificates,
+            ICollection<X509Certificate2> additionalIntermediateCertificates,
             IOcspClient ocspClient,
             OcspServiceProvider ocspServiceProvider,
             ILogger logger)
@@ -64,7 +65,7 @@ namespace WebEid.Security.Validator.CertValidators
                 }
             }
 
-            var certTrustedValidator = new SubjectCertificateTrustedValidator(trustedCaCertificates, logger);
+            var certTrustedValidator = new SubjectCertificateTrustedValidator(trustedCaCertificates, additionalIntermediateCertificates, logger);
             var batch = CreateFrom(certTrustedValidator);
 
             if (configuration.IsUserCertificateRevocationCheckWithOcspEnabled)
