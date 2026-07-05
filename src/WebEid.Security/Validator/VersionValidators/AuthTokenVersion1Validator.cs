@@ -21,6 +21,8 @@
  */
 namespace WebEid.Security.Validator.VersionValidators
 {
+    using System.Collections.Generic;
+    using System.Linq;
     using System.Security.Cryptography.X509Certificates;
     using System.Threading.Tasks;
     using AuthToken;
@@ -75,10 +77,16 @@ namespace WebEid.Security.Validator.VersionValidators
         /// </summary>
         public virtual async Task<X509Certificate2> Validate(WebEidAuthToken authToken, string currentChallengeNonce)
         {
-            if (AuthTokenVersion.SupportsExactly(authToken.Format, SupportedExactMajorVersion, SupportedMinimalMinorVersion) &&
-                authToken.UnverifiedSigningCertificates != null)
+            if (AuthTokenVersion.SupportsExactly(authToken.Format, SupportedExactMajorVersion, SupportedMinimalMinorVersion))
             {
-                throw new AuthTokenParseException($"'unverifiedSigningCertificates' field is not allowed for format '{authToken.Format}'");
+                if (authToken.UnverifiedSigningCertificates != null)
+                {
+                    throw new AuthTokenParseException($"'unverifiedSigningCertificates' field is not allowed for format '{authToken.Format}'");
+                }
+                if (authToken.UnverifiedIntermediateCertificates != null)
+                {
+                    throw new AuthTokenParseException($"'unverifiedIntermediateCertificates' field is not allowed for format '{authToken.Format}'");
+                }
             }
 
             if (string.IsNullOrEmpty(authToken.UnverifiedCertificate))
@@ -90,12 +98,14 @@ namespace WebEid.Security.Validator.VersionValidators
                 authToken.UnverifiedCertificate,
                 "unverifiedCertificate"
             );
+            var additionalIntermediateCertificates = DecodeAdditionalIntermediateCertificates(authToken);
 
             await simpleSubjectCertificateValidators.ExecuteFor(subjectCertificate);
 
             var trustValidators = SubjectCertificateValidatorBatch.ForTrustValidation(
                 configuration,
                 configuration.TrustedCaCertificates,
+                additionalIntermediateCertificates,
                 ocspClient,
                 ocspServiceProvider,
                 logger
@@ -112,6 +122,30 @@ namespace WebEid.Security.Validator.VersionValidators
             );
 
             return subjectCertificate;
+        }
+
+        private static List<X509Certificate2> DecodeAdditionalIntermediateCertificates(WebEidAuthToken token)
+        {
+            ValidateIntermediateCertificatesField(token.UnverifiedIntermediateCertificates,
+                "unverifiedIntermediateCertificates", token.Format);
+            return X509CertificateExtensions.ParseCertificates(token.UnverifiedIntermediateCertificates,
+                "unverifiedIntermediateCertificates");
+        }
+
+        internal static void ValidateIntermediateCertificatesField(List<string> intermediateCertificates, string fieldName, string format)
+        {
+            if (intermediateCertificates == null)
+            {
+                return;
+            }
+            if (intermediateCertificates.Count == 0)
+            {
+                throw new AuthTokenParseException($"'{fieldName}' must not be empty for format '{format}'");
+            }
+            if (intermediateCertificates.Any(string.IsNullOrEmpty))
+            {
+                throw new AuthTokenParseException($"'{fieldName}' must not contain null or empty entries for format '{format}'");
+            }
         }
     }
 }

@@ -21,6 +21,7 @@
  */
 namespace WebEid.Security.Validator.CertValidators
 {
+    using System;
     using System.Collections.Generic;
     using System.Security.Cryptography.X509Certificates;
     using System.Threading.Tasks;
@@ -28,10 +29,27 @@ namespace WebEid.Security.Validator.CertValidators
     using Util;
     using WebEid.Security.Exceptions;
 
-    internal sealed class SubjectCertificateTrustedValidator(ICollection<X509Certificate2> trustedCaCertificates, ILogger logger) : ISubjectCertificateValidator
+    internal sealed class SubjectCertificateTrustedValidator(ICollection<X509Certificate2> trustedCaCertificates,
+        ICollection<X509Certificate2> additionalIntermediateCertificates,
+        TimeSpan revocationUrlRetrievalTimeout,
+        ILogger logger) : ISubjectCertificateValidator
     {
         private readonly ICollection<X509Certificate2> trustedCaCertificates = trustedCaCertificates;
+        private readonly ICollection<X509Certificate2> additionalIntermediateCertificates = additionalIntermediateCertificates ?? [];
+        private readonly TimeSpan revocationUrlRetrievalTimeout = revocationUrlRetrievalTimeout;
         private readonly ILogger logger = logger;
+
+        internal SubjectCertificateTrustedValidator(ICollection<X509Certificate2> trustedCaCertificates,
+            ICollection<X509Certificate2> additionalIntermediateCertificates,
+            ILogger logger)
+            : this(trustedCaCertificates, additionalIntermediateCertificates, TimeSpan.FromSeconds(5), logger)
+        {
+        }
+
+        internal SubjectCertificateTrustedValidator(ICollection<X509Certificate2> trustedCaCertificates, ILogger logger)
+            : this(trustedCaCertificates, [], TimeSpan.FromSeconds(5), logger)
+        {
+        }
 
         /// <summary>
         /// Checks that the user certificate from the authentication token is valid and signed by
@@ -47,10 +65,11 @@ namespace WebEid.Security.Validator.CertValidators
             SubjectCertificateIssuerCertificate = subjectCertificate.ValidateIsValidAndSignedByTrustedCa(
                 "User",
                 trustedCaCertificates,
-                [],
+                additionalIntermediateCertificates,
                 // Intermediate CA certificates require revocation checks here because they are not checked elsewhere.
                 // Subject certificate revocation is handled separately by SubjectCertificateNotRevokedValidator.
                 IntermediateRevocationCheck.Enabled,
+                revocationUrlRetrievalTimeout,
                 DateTimeProvider.UtcNow);
 
             logger?.LogDebug("Subject certificate is valid and signed by a trusted CA");
@@ -58,6 +77,10 @@ namespace WebEid.Security.Validator.CertValidators
             return Task.CompletedTask;
         }
 
+        /// <summary>
+        /// Returns the certificate that directly issued the subject certificate, or the trust anchor when the anchor
+        /// is the direct issuer. Available after <see cref="Validate(X509Certificate2)"/> has succeeded.
+        /// </summary>
         public X509Certificate2 SubjectCertificateIssuerCertificate { get; private set; }
     }
 }
