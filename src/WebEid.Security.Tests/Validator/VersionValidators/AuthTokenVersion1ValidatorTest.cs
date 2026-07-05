@@ -141,5 +141,23 @@ namespace WebEid.Security.Tests.Validator.VersionValidators
                 ex.Message,
                 Does.Contain("'unverifiedSigningCertificates' field is not allowed for format 'web-eid:1'"));
         }
+
+        [Test]
+        public void WhenUnverifiedIntermediateCertificatesPresentForV1ThenValidationFails()
+        {
+            var token = new WebEidAuthToken
+            {
+                Format = "web-eid:1",
+                UnverifiedSigningCertificates = null,
+                UnverifiedIntermediateCertificates = ["intermediate"]
+            };
+
+            var ex = Assert.ThrowsAsync<AuthTokenParseException>(() =>
+                validator.Validate(token, "nonce"));
+
+            Assert.That(
+                ex.Message,
+                Does.Contain("'unverifiedIntermediateCertificates' field is not allowed for format 'web-eid:1'"));
+        }
     }
 }

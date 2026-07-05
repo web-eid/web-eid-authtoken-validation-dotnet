@@ -241,6 +241,7 @@ namespace WebEid.Security.Validator.VersionValidators
                 var trustValidators = SubjectCertificateValidatorBatch.ForTrustValidation(
                     configuration,
                     configuration.TrustedCaCertificates,
+                    [],
                     ocspClient,
                     ocspServiceProvider,
                     logger
