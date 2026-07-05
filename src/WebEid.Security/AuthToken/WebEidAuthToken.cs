@@ -47,6 +47,11 @@ namespace WebEid.Security.AuthToken
         /// </summary>
         public string UnverifiedCertificate { get; set; }
         /// <summary>
+        /// The base64-encoded DER-encoded intermediate CA certificates that may be needed to build the
+        /// authentication certificate's certification path to a trusted CA.
+        /// </summary>
+        public List<string> UnverifiedIntermediateCertificates { get; set; }
+        /// <summary>
         /// The base64-encoded signing certificates (DER).
         /// </summary>
         public List<UnverifiedSigningCertificate> UnverifiedSigningCertificates { get; set; }
