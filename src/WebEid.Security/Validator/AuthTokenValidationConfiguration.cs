@@ -47,6 +47,7 @@ namespace WebEid.Security.Validator
             DesignatedOcspServiceConfiguration = other.DesignatedOcspServiceConfiguration;
             DisallowedSubjectCertificatePolicies = new ReadOnlyCollection<string>(other.DisallowedSubjectCertificatePolicies);
             NonceDisabledOcspUrls = [.. other.NonceDisabledOcspUrls];
+            AiaOcspResponderIssuerMatchingPolicy = other.AiaOcspResponderIssuerMatchingPolicy;
         }
 
         /// <summary>
@@ -66,7 +67,7 @@ namespace WebEid.Security.Validator
         public bool IsUserCertificateRevocationCheckWithOcspEnabled { get; set; } = true;
 
         /// <summary>
-        /// The OCSP request timeout.
+        /// The network timeout for OCSP and CRL revocation requests.
         /// </summary>
         public TimeSpan OcspRequestTimeout { get; set; } = TimeSpan.FromSeconds(5);
 
@@ -103,6 +104,13 @@ namespace WebEid.Security.Validator
         /// Disable OCSP nonce extension for EstEID 2015 cards by default.
         /// </summary>
         public List<Uri> NonceDisabledOcspUrls { get; } = [];
+
+        /// <summary>
+        /// The policy for matching the issuer authorizing an AIA OCSP responder against the subject certificate's
+        /// issuer. The default is <see cref="ResponderIssuerMatchingPolicy.ExactCertificate"/>.
+        /// </summary>
+        public ResponderIssuerMatchingPolicy AiaOcspResponderIssuerMatchingPolicy { get; set; } =
+            ResponderIssuerMatchingPolicy.ExactCertificate;
 
 
         private static void RequirePositiveTimeSpan(TimeSpan timeSpan, string fieldName)
@@ -185,7 +193,8 @@ namespace WebEid.Security.Validator
                    MaxOcspResponseThisUpdateAge.Equals(other.MaxOcspResponseThisUpdateAge) &&
                    Equals(DesignatedOcspServiceConfiguration, other.DesignatedOcspServiceConfiguration) &&
                    Enumerable.SequenceEqual(DisallowedSubjectCertificatePolicies, other.DisallowedSubjectCertificatePolicies) &&
-                   Enumerable.SequenceEqual(NonceDisabledOcspUrls, other.NonceDisabledOcspUrls);
+                   Enumerable.SequenceEqual(NonceDisabledOcspUrls, other.NonceDisabledOcspUrls) &&
+                   AiaOcspResponderIssuerMatchingPolicy == other.AiaOcspResponderIssuerMatchingPolicy;
         }
 
         /// <inheritdoc/>
@@ -199,6 +208,7 @@ namespace WebEid.Security.Validator
                 OcspRequestTimeout,
                 AllowedOcspResponseTimeSkew,
                 MaxOcspResponseThisUpdateAge,
-                DesignatedOcspServiceConfiguration);
+                DesignatedOcspServiceConfiguration,
+                AiaOcspResponderIssuerMatchingPolicy);
     }
 }
