@@ -16,7 +16,14 @@ namespace WebEid.Security.Validator.Ocsp.Service
     /// </remarks>
     /// <param name="nonceDisabledOcspUrls">List of OCSP responder URLs where nonce is disabled.</param>
     /// <param name="trustedCaCertificates">List of trusted CA certificates.</param>
-    public sealed class AiaOcspServiceConfiguration(List<Uri> nonceDisabledOcspUrls, List<X509Certificate2> trustedCaCertificates) : IEquatable<AiaOcspServiceConfiguration>
+    /// <param name="responderIssuerMatchingPolicy">How the issuer authorizing an AIA OCSP responder is matched
+    /// against the subject certificate's issuer.</param>
+    /// <param name="revocationUrlRetrievalTimeout">Maximum time spent retrieving OCSP or CRL data while checking
+    /// intermediate certificate revocation.</param>
+    public sealed class AiaOcspServiceConfiguration(List<Uri> nonceDisabledOcspUrls,
+        List<X509Certificate2> trustedCaCertificates,
+        ResponderIssuerMatchingPolicy responderIssuerMatchingPolicy = ResponderIssuerMatchingPolicy.ExactCertificate,
+        TimeSpan? revocationUrlRetrievalTimeout = null) : IEquatable<AiaOcspServiceConfiguration>
     {
 
         /// <summary>
@@ -30,6 +37,19 @@ namespace WebEid.Security.Validator.Ocsp.Service
         /// </summary>
         public List<X509Certificate2> TrustedCaCertificates { get; } =
                 trustedCaCertificates ?? throw new ArgumentNullException(nameof(trustedCaCertificates));
+
+        /// <summary>
+        /// Gets the policy for matching the issuer authorizing an AIA OCSP responder against the subject
+        /// certificate's issuer.
+        /// </summary>
+        public ResponderIssuerMatchingPolicy ResponderIssuerMatchingPolicy { get; } = responderIssuerMatchingPolicy;
+
+        /// <summary>
+        /// Gets the maximum time spent retrieving OCSP or CRL data while checking intermediate certificate
+        /// revocation.
+        /// </summary>
+        public TimeSpan RevocationUrlRetrievalTimeout { get; } =
+            RequirePositiveTimeout(revocationUrlRetrievalTimeout ?? TimeSpan.FromSeconds(5));
 
         /// <summary>
         /// Determines whether the current instance is equal to another <see cref="AiaOcspServiceConfiguration"/>.
@@ -49,7 +69,9 @@ namespace WebEid.Security.Validator.Ocsp.Service
             }
 
             return Enumerable.SequenceEqual(NonceDisabledOcspUrls, other.NonceDisabledOcspUrls) &&
-                   Enumerable.SequenceEqual(TrustedCaCertificates, other.TrustedCaCertificates);
+                   Enumerable.SequenceEqual(TrustedCaCertificates, other.TrustedCaCertificates) &&
+                   ResponderIssuerMatchingPolicy == other.ResponderIssuerMatchingPolicy &&
+                   RevocationUrlRetrievalTimeout == other.RevocationUrlRetrievalTimeout;
         }
 
         /// <inheritdoc/>
@@ -60,10 +82,18 @@ namespace WebEid.Security.Validator.Ocsp.Service
         {
             unchecked
             {
-                return ((NonceDisabledOcspUrls != null ? NonceDisabledOcspUrls.GetHashCode() : 0) * 397) ^
-                       (TrustedCaCertificates != null ? TrustedCaCertificates.GetHashCode() : 0);
+                var hashCode = NonceDisabledOcspUrls != null ? NonceDisabledOcspUrls.GetHashCode() : 0;
+                hashCode = (hashCode * 397) ^ (TrustedCaCertificates != null ? TrustedCaCertificates.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ ResponderIssuerMatchingPolicy.GetHashCode();
+                return (hashCode * 397) ^ RevocationUrlRetrievalTimeout.GetHashCode();
             }
         }
+
+        private static TimeSpan RequirePositiveTimeout(TimeSpan revocationUrlRetrievalTimeout) =>
+            revocationUrlRetrievalTimeout > TimeSpan.Zero
+                ? revocationUrlRetrievalTimeout
+                : throw new ArgumentOutOfRangeException(nameof(revocationUrlRetrievalTimeout),
+                    "Intermediate certificate revocation URL retrieval timeout must be greater than zero");
 
         /// <summary>
         /// Determines whether two <see cref="AiaOcspServiceConfiguration"/> instances are equal.
