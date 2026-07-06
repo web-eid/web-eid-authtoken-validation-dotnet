@@ -24,6 +24,7 @@ namespace WebEid.Security.Validator.CertValidators
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.Linq;
     using System.Security.Cryptography.X509Certificates;
     using System.Threading.Tasks;
     using Exceptions;
@@ -122,7 +123,17 @@ namespace WebEid.Security.Validator.CertValidators
                     $"OCSP response must contain one response, received {basicResponse.Responses.Length} responses instead");
             }
             var certStatusResponse = basicResponse.Responses[0];
-            if (!requestCertificateId.SerialNumber.Equals(certStatusResponse.GetCertID().SerialNumber))
+            // Confirm the whole certificate ID corresponds to the requested one, not only the serial number:
+            // a serial number is unique only within a single issuer, so the issuer name and key hashes must
+            // be compared as well to guard against a response about a same-serial certificate of a different
+            // issuer. The hash algorithm is compared by OID rather than by its full AlgorithmIdentifier, so
+            // that responders that encode the SHA-1 parameters as an explicit NULL are treated as equal to
+            // those that omit the parameters (the two DER forms are equivalent per RFC 6960 CertID).
+            var responseCertificateId = certStatusResponse.GetCertID();
+            if (!requestCertificateId.SerialNumber.Equals(responseCertificateId.SerialNumber)
+                || !string.Equals(requestCertificateId.HashAlgOid, responseCertificateId.HashAlgOid, StringComparison.Ordinal)
+                || !requestCertificateId.GetIssuerNameHash().SequenceEqual(responseCertificateId.GetIssuerNameHash())
+                || !requestCertificateId.GetIssuerKeyHash().SequenceEqual(responseCertificateId.GetIssuerKeyHash()))
             {
                 throw new UserCertificateOcspCheckFailedException(
                     "OCSP responded with certificate ID that differs from the requested ID");
