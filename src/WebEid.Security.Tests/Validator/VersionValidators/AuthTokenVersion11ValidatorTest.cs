@@ -85,19 +85,24 @@ namespace WebEid.Security.Tests.Validator.VersionValidators
         }
 
         [TestCase("web-eid:1.1")]
-        public void WhenFormatIsV11ThenSupportsReturnsTrue(string format) =>
+        [TestCase("web-eid:1.2")]
+        [TestCase("web-eid:1.10")]
+        [TestCase("web-eid:1.999")]
+        public void WhenFormatIsV11OrHigherMinorVersionThenSupportsReturnsTrue(string format) =>
             Assert.That(v11Validator.Supports(format), Is.True);
 
         [TestCase(null)]
         [TestCase("")]
         [TestCase("web-eid:1")]
         [TestCase("web-eid:1.0")]
+        [TestCase("web-eid:1.")]
+        [TestCase("web-eid:1.0TEST")]
+        [TestCase("web-eid:1.00")]
         [TestCase("web-eid:1.1.0")]
-        [TestCase("web-eid:1.10")]
-        [TestCase("web-eid:1.2")]
         [TestCase("web-eid:2")]
+        [TestCase("web-eid:0.9")]
         [TestCase("webauthn:1.1")]
-        public void WhenFormatIsNullEmptyOrNotV11ThenSupportsReturnsFalse(string format) =>
+        public void WhenFormatIsNullEmptyMinorVersion0NonCanonicalOrMalformedThenSupportsReturnsFalse(string format) =>
             Assert.That(v11Validator.Supports(format), Is.False);
 
         [Test]

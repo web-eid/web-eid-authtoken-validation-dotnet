@@ -84,6 +84,10 @@ namespace WebEid.Security.Tests.Validator.VersionValidators
 
         [TestCase("web-eid:1")]
         [TestCase("web-eid:1.0")]
+        [TestCase("web-eid:1.1")]
+        [TestCase("web-eid:1.2")]
+        [TestCase("web-eid:1.10")]
+        [TestCase("web-eid:1.999")]
         public void WhenFormatIsValidMajorV1FormatThenSupportsReturnsTrue(string format) =>
             Assert.That(validator.Supports(format), Is.True);
 
@@ -92,11 +96,10 @@ namespace WebEid.Security.Tests.Validator.VersionValidators
         [TestCase("web-eid")]
         [TestCase("web-eid:1.")]
         [TestCase("web-eid:1.0TEST")]
-        [TestCase("web-eid:1.1")]
+        [TestCase("web-eid:1.00")]
+        [TestCase("web-eid:1.000")]
+        [TestCase("web-eid:01")]
         [TestCase("web-eid:1.1.0")]
-        [TestCase("web-eid:1.2")]
-        [TestCase("web-eid:1.10")]
-        [TestCase("web-eid:1.999")]
         [TestCase("web-eid:0.9")]
         [TestCase("web-eid:2")]
         [TestCase("webauthn:1")]

@@ -36,12 +36,12 @@ namespace WebEid.Security.Validator.VersionValidators
     using Util;
 
     /// <summary>
-    /// Validator for token format web-eid:1.1.
+    /// Validator for token formats with major version 1 and minor version 1 or higher, e.g. web-eid:1.1.
     /// Extends V1 validator with additional checks for signing certificate + supported algorithms.
     /// </summary>
     public sealed class AuthTokenVersion11Validator : AuthTokenVersion1Validator
     {
-        private const string V11_SUPPORTED_TOKEN_FORMAT = "web-eid:1.1";
+        private const int SupportedMinimalMinorVersion = 1;
 
         private static readonly HashSet<string> SupportedSigningCryptoAlgorithms =
             new(StringComparer.OrdinalIgnoreCase)
@@ -77,7 +77,8 @@ namespace WebEid.Security.Validator.VersionValidators
         private readonly ILogger logger;
 
         /// <summary>
-        /// Initializes a validator for Web eID authentication tokens in format <c>web-eid:1.1</c>.
+        /// Initializes a validator for Web eID authentication tokens with token format major version 1
+        /// and minor version 1 or higher.
         /// </summary>
         internal AuthTokenVersion11Validator(
             SubjectCertificateValidatorBatch simpleSubjectCertificateValidators,
@@ -99,11 +100,11 @@ namespace WebEid.Security.Validator.VersionValidators
         /// Determines whether this validator supports the specified token format.
         /// </summary>
         public override bool Supports(string format) =>
-            format == V11_SUPPORTED_TOKEN_FORMAT;
+            AuthTokenVersion.Supports(format, SupportedExactMajorVersion, SupportedMinimalMinorVersion);
 
         /// <summary>
-        /// Validates a Web eID authentication token in format <c>web-eid:1.1</c>
-        /// and returns the authenticated user's certificate.
+        /// Validates a Web eID authentication token with token format major version 1
+        /// and minor version 1 or higher, and returns the authenticated user's certificate.
         /// </summary>
         public override async Task<X509Certificate2> Validate(WebEidAuthToken authToken, string currentChallengeNonce)
         {
@@ -154,7 +155,7 @@ namespace WebEid.Security.Validator.VersionValidators
             if (signingCertificates == null || signingCertificates.Count == 0)
             {
                 throw new AuthTokenParseException(
-                    "'unverifiedSigningCertificates' field is missing, null or empty for format 'web-eid:1.1'");
+                    $"'unverifiedSigningCertificates' field is missing, null or empty for format '{token.Format}'");
             }
 
             var result = new List<X509Certificate2>();
@@ -164,7 +165,7 @@ namespace WebEid.Security.Validator.VersionValidators
                 if (certificate == null || string.IsNullOrEmpty(certificate.Certificate))
                 {
                     throw new AuthTokenParseException(
-                        "'unverifiedSigningCertificates' contains a null or empty entry for format 'web-eid:1.1'");
+                        $"'unverifiedSigningCertificates' contains a null or empty entry for format '{token.Format}'");
                 }
 
                 ValidateSupportedSignatureAlgorithms(certificate);

@@ -21,7 +21,6 @@
  */
 namespace WebEid.Security.Validator.VersionValidators
 {
-    using System;
     using System.Security.Cryptography.X509Certificates;
     using System.Threading.Tasks;
     using AuthToken;
@@ -32,11 +31,12 @@ namespace WebEid.Security.Validator.VersionValidators
     using Util;
 
     /// <summary>
-    /// Validator for token format web-eid:1.0.
+    /// Validator for token formats with major version 1, e.g. web-eid:1 and web-eid:1.0.
     /// </summary>
     public partial class AuthTokenVersion1Validator : IAuthTokenVersionValidator
     {
-        private const string V1_SUPPORTED_TOKEN_FORMAT_PREFIX = "web-eid:1";
+        internal const int SupportedExactMajorVersion = 1;
+        private const int SupportedMinimalMinorVersion = 0;
 
         private readonly SubjectCertificateValidatorBatch simpleSubjectCertificateValidators;
         private readonly AuthTokenSignatureValidator signatureValidator;
@@ -46,7 +46,7 @@ namespace WebEid.Security.Validator.VersionValidators
         private readonly ILogger logger;
 
         /// <summary>
-        /// Initializes a validator for Web eID authentication tokens in format <c>web-eid:1.0</c>.
+        /// Initializes a validator for Web eID authentication tokens with token format major version 1.
         /// </summary>
         internal AuthTokenVersion1Validator(
             SubjectCertificateValidatorBatch simpleSubjectCertificateValidators,
@@ -68,15 +68,15 @@ namespace WebEid.Security.Validator.VersionValidators
         /// Determines whether this validator supports the specified token format.
         /// </summary>
         public virtual bool Supports(string format) =>
-            format == V1_SUPPORTED_TOKEN_FORMAT_PREFIX ||
-            format == "web-eid:1.0";
+            AuthTokenVersion.Supports(format, SupportedExactMajorVersion, SupportedMinimalMinorVersion);
 
         /// <summary>
         /// Validates a Web eID authentication token and returns the authenticated user's certificate.
         /// </summary>
         public virtual async Task<X509Certificate2> Validate(WebEidAuthToken authToken, string currentChallengeNonce)
         {
-            if (IsExactV10Format(authToken.Format) && authToken.UnverifiedSigningCertificates != null)
+            if (AuthTokenVersion.SupportsExactly(authToken.Format, SupportedExactMajorVersion, SupportedMinimalMinorVersion) &&
+                authToken.UnverifiedSigningCertificates != null)
             {
                 throw new AuthTokenParseException($"'unverifiedSigningCertificates' field is not allowed for format '{authToken.Format}'");
             }
@@ -113,9 +113,5 @@ namespace WebEid.Security.Validator.VersionValidators
 
             return subjectCertificate;
         }
-
-        private static bool IsExactV10Format(string format) =>
-            V1_SUPPORTED_TOKEN_FORMAT_PREFIX.Equals(format, StringComparison.OrdinalIgnoreCase) ||
-            "web-eid:1.0".Equals(format, StringComparison.OrdinalIgnoreCase);
     }
 }
