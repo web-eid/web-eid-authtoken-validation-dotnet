@@ -156,13 +156,14 @@ By default the address is https://localhost:44391.
 ## Table of contents
 
 * [Quickstart](#quickstart)
+* [Setup for Development](#setup-for-development)
 * [Overview of the project](#overview-of-the-project)
   + [Overview of the source code](#overview-of-the-source-code)
   + [Requesting the signing certificate in a separate step](#requesting-the-signing-certificate-in-a-separate-step)
 * [More information](#more-information)
   + [Frequently asked questions](#frequently-asked-questions)
     - [Why do I get the `System.ApplicationException: Failed to verify OCSP Responder certificate` error during signing?](#why-do-i-get-the-systemapplicationexception-failed-to-verify-ocsp-responder-certificate-error-during-signing)
-* [Building and running with Docker on Ubuntu Linux](#building-and-running-with-docker-on-ubuntu-linux)
+* [Building and running example web application with Docker on Ubuntu Linux](#building-and-running-example-web-application-with-docker-on-ubuntu-linux)
     + [Prerequisites](#prerequisites)
     + [Building the application](#building-the-application)
     + [Building the Docker image](#building-the-docker-image)
@@ -187,8 +188,12 @@ The `src\WebEid.AspNetCore.Example` directory contains the ASP.NET application s
     -   logging in,
     -   digital signing,
 -   `DigiDoc`: contains the C# binding files of the `libdigidocpp` library; these files must be copied from the `libdigidocpp` installation directory `\include\digidocpp_csharp`,
+-   `Dto`: data transfer objects used by the Web API endpoints,
 -   `Pages`: Razor pages,
--   `Services`: Web eID signing service implementation that uses `libdigidocpp`.
+-   `Services`: helper services for cleaning up signing containers and for building the mobile authentication and signing request URIs,
+-   `Signing`: Web eID signing service implementation that uses `libdigidocpp`,
+    -   `SigningService`: prepares signing containers and finalizes signatures,
+    -   `MobileSigningService`: orchestrates the mobile signing flow (builds mobile signing requests/responses) and supports requesting the signing certificate in a separate step when enabled by configuration,
 -   `Options`: strongly-typed configuration classes for mobile Web eID settings such as `BaseRequestUri` and `RequestSigningCert` (when set to false, initiates a separate signing-certificate flow to demo requesting the certificate without prior authentication, as the signing certificate normally comes from the authentication flow).
 
 ### Requesting the signing certificate in a separate step
