@@ -159,6 +159,7 @@ By default the address is https://localhost:44391.
 * [Setup for Development](#setup-for-development)
 * [Overview of the project](#overview-of-the-project)
   + [Overview of the source code](#overview-of-the-source-code)
+  + [Adding Web eID for Mobile support to an existing integration](#adding-web-eid-for-mobile-support-to-an-existing-integration)
   + [Requesting the signing certificate in a separate step](#requesting-the-signing-certificate-in-a-separate-step)
 * [More information](#more-information)
   + [Frequently asked questions](#frequently-asked-questions)
@@ -195,6 +196,19 @@ The `src\WebEid.AspNetCore.Example` directory contains the ASP.NET application s
     -   `SigningService`: prepares signing containers and finalizes signatures,
     -   `MobileSigningService`: orchestrates the mobile signing flow (builds mobile signing requests/responses) and supports requesting the signing certificate in a separate step when enabled by configuration,
 -   `Options`: strongly-typed configuration classes for mobile Web eID settings such as `BaseRequestUri` and `RequestSigningCert` (when set to false, initiates a separate signing-certificate flow to demo requesting the certificate without prior authentication, as the signing certificate normally comes from the authentication flow).
+
+### Adding Web eID for Mobile support to an existing integration
+
+The library README describes [what to change in an existing Web eID integration](https://github.com/web-eid/web-eid-authtoken-validation-dotnet#adding-web-eid-for-mobile-support-to-an-existing-integration) to support Web eID for Mobile; the example implements each of those steps as follows:
+
+-   library: the `WebEid.Security` package version that validates `web-eid:1.1` tokens, with no validator changes,
+-   mobile authentication init endpoint: `POST /auth/mobile/init` in `Controllers/Api/MobileAuthInitController.cs`, which builds the App Link with `Services/MobileRequestUriBuilder.cs`,
+-   login page: `GET /auth/mobile/login` served by `Pages/WebEidLogin.cshtml`, which parses the URL fragment with `wwwroot/js/payload.js`,
+-   login endpoint: the same `POST /auth/login` in `Controllers/Api/AuthController.cs` as in the browser flow; the signing certificate of a `web-eid:1.1` token is kept in the `signingCertificate` and `supportedSignatureAlgorithms` claims,
+-   cookies and CSRF: the `__Host-` prefixed, `Secure`, `SameSite=Lax` session and authentication cookies and the global `AutoValidateAntiforgeryTokenAttribute` filter in `Startup.cs`,
+-   front end: `wwwroot/js/device-utils.js` and the mobile authentication button in `Pages/Index.cshtml`,
+-   configuration: `OriginUrl` (also used to build `loginUri`), and `BaseRequestUri` (`web-eid-mobile://` for development, `https://mopp.ria.ee` for the RIA DigiDoc app) and `RequestSigningCert` in the `WebEidMobile` section of `appsettings.json` and `appsettings.Development.json`,
+-   digital signing: `POST /sign/mobile/init`, `/sign/mobile/certificate` and `/sign/mobile/signature` in `Controllers/Api/SignController.cs` and `Signing/MobileSigningService.cs`, the callback page `Pages/WebEidCallback.cshtml` and the trigger in `Pages/Welcome.cshtml`.
 
 ### Requesting the signing certificate in a separate step
 
