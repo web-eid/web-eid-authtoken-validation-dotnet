@@ -159,6 +159,7 @@ By default the address is https://localhost:44391.
 * [Setup for Development](#setup-for-development)
 * [Overview of the project](#overview-of-the-project)
   + [Overview of the source code](#overview-of-the-source-code)
+  + [Adding Web eID for Mobile support to an existing integration](#adding-web-eid-for-mobile-support-to-an-existing-integration)
   + [Requesting the signing certificate in a separate step](#requesting-the-signing-certificate-in-a-separate-step)
 * [More information](#more-information)
   + [Frequently asked questions](#frequently-asked-questions)
@@ -195,6 +196,14 @@ The `src\WebEid.AspNetCore.Example` directory contains the ASP.NET application s
     -   `SigningService`: prepares signing containers and finalizes signatures,
     -   `MobileSigningService`: orchestrates the mobile signing flow (builds mobile signing requests/responses) and supports requesting the signing certificate in a separate step when enabled by configuration,
 -   `Options`: strongly-typed configuration classes for mobile Web eID settings such as `BaseRequestUri` and `RequestSigningCert` (when set to false, initiates a separate signing-certificate flow to demo requesting the certificate without prior authentication, as the signing certificate normally comes from the authentication flow).
+
+### Adding Web eID for Mobile support to an existing integration
+
+To add mobile authentication to an existing integration, follow the [library migration guide](../README.md#adding-web-eid-for-mobile-support-to-an-existing-integration). This example adds `POST /auth/mobile/init` in `Controllers/Api/MobileAuthInitController.cs` and `GET /auth/mobile/login` in `Pages/WebEidLogin.cshtml`, using `wwwroot/js/payload.js`. Both login flows submit to `POST /auth/login` in `Controllers/Api/AuthController.cs`.
+
+Configure `OriginUrl`, `WebEidMobile:BaseRequestUri` and `WebEidMobile:RequestSigningCert` in `appsettings.json` and `appsettings.Development.json`. Set the base request URI to `https://mopp.ria.ee` for the RIA DigiDoc app; both files currently use `web-eid-mobile://` for development. The mobile button and device detection are in `Pages/Index.cshtml` and `wwwroot/js/device-utils.js`. `Startup.cs` configures `__Host-` prefixed, `Secure`, `SameSite=Lax` session and authentication cookies and enables antiforgery validation globally.
+
+For optional mobile signing, see `Controllers/Api/SignController.cs`, `Signing/MobileSigningService.cs` and `Pages/WebEidCallback.cshtml`. The login handler stores a validated token's signing certificate and algorithms in the `signingCertificate` and `supportedSignatureAlgorithms` claims for reuse when signing.
 
 ### Requesting the signing certificate in a separate step
 
