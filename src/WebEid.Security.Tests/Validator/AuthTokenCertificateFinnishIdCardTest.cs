@@ -23,13 +23,12 @@ namespace WebEid.Security.Tests.Validator
 {
     using System;
     using NUnit.Framework;
-    using WebEid.Security.Exceptions;
     using WebEid.Security.Tests.TestUtils;
     using WebEid.Security.Util;
 
     public class AuthTokenCertificateFinnishIdCardTest : AbstractTestWithValidator
     {
-        private const string FinnishTestIdCardBackmanJuhaniAuthToken = 
+        private const string FinnishTestIdCardBackmanJuhaniAuthToken =
             "{" +
             "  \"action\": \"web-eid:authenticate-success\"," +
             "  \"algorithm\": \"ES384\"," +
@@ -39,7 +38,7 @@ namespace WebEid.Security.Tests.Validator
             "  \"unverifiedCertificate\": \"MIIEOjCCA7+gAwIBAgIEBhwJHTAMBggqhkjOPQQDAwUAMHgxCzAJBgNVBAYTAkZJMSkwJwYDVQQKDCBEaWdpLSBqYSB2YWVzdG90aWV0b3ZpcmFzdG8gVEVTVDEYMBYGA1UECwwPVGVzdGl2YXJtZW50ZWV0MSQwIgYDVQQDDBtEVlYgVEVTVCBDZXJ0aWZpY2F0ZXMgLSBHNUUwHhcNMjMwMTI1MjIwMDAwWhcNMjgwMTIzMjE1OTU5WjB5MQswCQYDVQQGEwJGSTESMBAGA1UEBRMJOTk5MDIwMDE2MQ8wDQYDVQQqDAZKVUhBTkkxGTAXBgNVBAQMEFNQRUNJTUVOLUJBQ0tNQU4xKjAoBgNVBAMMIVNQRUNJTUVOLUJBQ0tNQU4gSlVIQU5JIDk5OTAyMDAxNjB2MBAGByqGSM49AgEGBSuBBAAiA2IABKq3yVI9NYmZwV2Matvk6yXFLLYn087ldhvl1AfCRoV8mTGhmL+y/R4DzaTeTrS9epEUcR9x2697h6DLBUkiOlAcI3nN92RJgNlBOCdvBdNcYgx57njSJHde4Rsm5gmLLqOCAhUwggIRMB8GA1UdIwQYMBaAFBKet+Iox/OUaou9Tcb0wjaXUkIIMB0GA1UdDgQWBBS8olmlfP/C700H4k/wLPrKX513QzAOBgNVHQ8BAf8EBAMCA4gwgc0GA1UdIASBxTCBwjCBvwYKKoF2hAVjCoJgATCBsDAnBggrBgEFBQcCARYbaHR0cDovL3d3dy5maW5laWQuZmkvY3BzOTkvMIGEBggrBgEFBQcCAjB4GnZWYXJtZW5uZXBvbGl0aWlra2Egb24gc2FhdGF2aWxsYSAtIENlcnRpZmlrYXRwb2xpY3kgZmlubnMgLSBDZXJ0aWZpY2F0ZSBwb2xpY3kgaXMgYXZhaWxhYmxlIGh0dHA6Ly93d3cuZmluZWlkLmZpL2Nwczk5MDAGA1UdEQQpMCeBJVMxSnVoYW5pMDQ5LlNQRUNJTUVOLUJhY2ttYW5AdGVzdGkuZmkwDwYDVR0TAQH/BAUwAwEBADA4BgNVHR8EMTAvMC2gK6AphidodHRwOi8vcHJveHkuZmluZWlkLmZpL2NybC9kdnZ0cDVlYy5jcmwwcgYIKwYBBQUHAQEEZjBkMDIGCCsGAQUFBzAChiZodHRwOi8vcHJveHkuZmluZWlkLmZpL2NhL2R2dnRwNWVjLmNydDAuBggrBgEFBQcwAYYiaHR0cDovL29jc3B0ZXN0LmZpbmVpZC5maS9kdnZ0cDVlYzAMBggqhkjOPQQDAwUAA2cAMGQCMClSh2MQZVYZyKfgmntQxuVUtQvIIqs8aOdsKpla4wt/IU6hMbGEAfIv4AzLXLsS5QIwUcjlY8BCj4+x84ihAqqHNIle6kyKek/Tj994SjQBmUadtyUSDvg8O5MppKvgJCNV\"" +
             "}";
 
-        private const string FinnishTestIdCardBabafoVeliAuthToken = 
+        private const string FinnishTestIdCardBabafoVeliAuthToken =
             "{" +
             "  \"action\": \"web-eid:authenticate-success\"," +
             "  \"algorithm\": \"PS256\"," +
@@ -68,6 +67,6 @@ namespace WebEid.Security.Tests.Validator
             var token = validator.Parse(FinnishTestIdCardBabafoVeliAuthToken);
             Assert.DoesNotThrowAsync(() => validator.Validate(token, "ZqlDATkQRqh7LkqEbspBc2qDjot29oiNLlITdLgiVIo="));
         }
-      
+
     }
 }

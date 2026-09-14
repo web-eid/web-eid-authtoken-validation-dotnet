@@ -47,23 +47,23 @@ namespace WebEid.Security.Tests.Validator.Validators
 
         private AuthTokenValidationConfiguration configuration;
 
-        public SubjectCertificateNotRevokedValidatorTests() => this.ocspClient = new OcspClient(TimeSpan.FromSeconds(5));
+        public SubjectCertificateNotRevokedValidatorTests() => ocspClient = new OcspClient(TimeSpan.FromSeconds(5));
 
         [SetUp]
         public void SetUp()
         {
-            this.trustedValidator = new SubjectCertificateTrustedValidator(null, null);
-            SetSubjectCertificateIssuerCertificate(this.trustedValidator);
-            this.esteid2018Cert = Certificates.GetJaakKristjanEsteid2018Cert();
-            this.configuration = new AuthTokenValidationConfiguration();
+            trustedValidator = new SubjectCertificateTrustedValidator(null, null);
+            SetSubjectCertificateIssuerCertificate(trustedValidator);
+            esteid2018Cert = Certificates.GetJaakKristjanEsteid2018Cert();
+            configuration = new AuthTokenValidationConfiguration();
         }
 
         [Test]
         public void WhenValidAiaOcspResponderConfigurationThenSucceeds()
         {
-            var validator = this.GetSubjectCertificateNotRevokedValidatorWithAiaOcsp(this.ocspClient);
+            var validator = GetSubjectCertificateNotRevokedValidatorWithAiaOcsp(ocspClient);
             Assert.DoesNotThrowAsync(() =>
-                validator.Validate(this.esteid2018Cert));
+                validator.Validate(esteid2018Cert));
         }
 
         [Test]
@@ -72,7 +72,7 @@ namespace WebEid.Security.Tests.Validator.Validators
         {
             var ocspServiceProvider = OcspServiceMaker.GetDesignatedOcspServiceProvider();
             var validator = GetSubjectCertificateNotRevokedValidatior(ocspServiceProvider);
-            Assert.DoesNotThrowAsync(() => validator.Validate(this.esteid2018Cert));
+            Assert.DoesNotThrowAsync(() => validator.Validate(esteid2018Cert));
         }
 
         [Test]
@@ -81,7 +81,7 @@ namespace WebEid.Security.Tests.Validator.Validators
         {
             var ocspServiceProvider = OcspServiceMaker.GetDesignatedOcspServiceProvider(false);
             var validator = GetSubjectCertificateNotRevokedValidatior(ocspServiceProvider);
-            Assert.DoesNotThrowAsync(() => validator.Validate(this.esteid2018Cert));
+            Assert.DoesNotThrowAsync(() => validator.Validate(esteid2018Cert));
         }
 
         [Test]
@@ -90,7 +90,7 @@ namespace WebEid.Security.Tests.Validator.Validators
             var ocspServiceProvider = OcspServiceMaker.GetDesignatedOcspServiceProvider("http://invalid.invalid");
             var validator = GetSubjectCertificateNotRevokedValidatior(ocspServiceProvider);
             Assert.ThrowsAsync<UserCertificateOcspCheckFailedException>(() =>
-                    validator.Validate(this.esteid2018Cert))
+                    validator.Validate(esteid2018Cert))
                 .InnerException.IsInstanceOf<HttpRequestException>();
         }
 
@@ -101,7 +101,7 @@ namespace WebEid.Security.Tests.Validator.Validators
                 OcspServiceMaker.GetDesignatedOcspServiceProvider("http://demo.sk.ee/ocsps");
             var validator = GetSubjectCertificateNotRevokedValidatior(ocspServiceProvider);
             Assert.ThrowsAsync<UserCertificateOcspCheckFailedException>(() =>
-                    validator.Validate(this.esteid2018Cert))
+                    validator.Validate(esteid2018Cert))
                 .InnerException
                 .HasMessageStartingWith("OCSP request was not successful, response: StatusCode: 404");
         }
@@ -109,9 +109,9 @@ namespace WebEid.Security.Tests.Validator.Validators
         [Test]
         public void WhenOcspRequestHasInvalidBodyThenThrows()
         {
-            var validator = this.GetSubjectCertificateNotRevokedValidatorWithAiaOcsp(new OcspClientMock("invalid"));
+            var validator = GetSubjectCertificateNotRevokedValidatorWithAiaOcsp(new OcspClientMock("invalid"));
             Assert.ThrowsAsync<UserCertificateOcspCheckFailedException>(() =>
-                    validator.Validate(this.esteid2018Cert))
+                    validator.Validate(esteid2018Cert))
                 .InnerException
                 .HasMessage("corrupted stream - out of bounds length found: 110 >= 7");
         }
@@ -119,20 +119,20 @@ namespace WebEid.Security.Tests.Validator.Validators
         [Test]
         public void WhenOcspResponseIsNotSuccessfulThenThrows()
         {
-            var validator = this.GetSubjectCertificateNotRevokedValidatorWithAiaOcsp(
+            var validator = GetSubjectCertificateNotRevokedValidatorWithAiaOcsp(
                 new OcspClientMock(BuildOcspResponseBodyWithInternalErrorStatus()));
             Assert.ThrowsAsync<UserCertificateOcspCheckFailedException>(() =>
-                validator.Validate(this.esteid2018Cert))
+                validator.Validate(esteid2018Cert))
                 .WithMessage("User certificate revocation check has failed: Response status: internal error");
         }
 
         [Test]
         public void WhenOcspResponseHasInvalidCertificateIdThenThrows()
         {
-            var validator = this.GetSubjectCertificateNotRevokedValidatorWithAiaOcsp(
+            var validator = GetSubjectCertificateNotRevokedValidatorWithAiaOcsp(
                 new OcspClientMock(BuildOcspResponseBodyWithInvalidCertificateId()));
             Assert.ThrowsAsync<UserCertificateOcspCheckFailedException>(() =>
-                    validator.Validate(this.esteid2018Cert))
+                    validator.Validate(esteid2018Cert))
                 .WithMessage(
                     "User certificate revocation check has failed: OCSP responded with certificate ID that differs from the requested ID");
         }
@@ -140,20 +140,20 @@ namespace WebEid.Security.Tests.Validator.Validators
         [Test]
         public void WhenOcspResponseHasInvalidSignatureThenThrows()
         {
-            var validator = this.GetSubjectCertificateNotRevokedValidatorWithAiaOcsp(
+            var validator = GetSubjectCertificateNotRevokedValidatorWithAiaOcsp(
                 new OcspClientMock(BuildOcspResponseBodyWithInvalidSignature()));
             Assert.ThrowsAsync<UserCertificateOcspCheckFailedException>(() =>
-                    validator.Validate(this.esteid2018Cert))
+                    validator.Validate(esteid2018Cert))
                 .WithMessage("User certificate revocation check has failed: OCSP response signature is invalid");
         }
 
         [Test]
         public void WhenOcspResponseHasInvalidResponderCertThenThrows()
         {
-            var validator = this.GetSubjectCertificateNotRevokedValidatorWithAiaOcsp(
+            var validator = GetSubjectCertificateNotRevokedValidatorWithAiaOcsp(
                 new OcspClientMock(BuildOcspResponseBodyWithInvalidResponderCert()));
             Assert.ThrowsAsync<UserCertificateOcspCheckFailedException>(() =>
-                    validator.Validate(this.esteid2018Cert))
+                    validator.Validate(esteid2018Cert))
                 .InnerException
                 .IsInstanceOf<IOException>()
                 .HasMessageStartingWith("corrupted stream - out of bounds length found: 322 >= 266");
@@ -162,10 +162,10 @@ namespace WebEid.Security.Tests.Validator.Validators
         [Test]
         public void WhenOcspResponseHasInvalidTagThenThrows()
         {
-            var validator = this.GetSubjectCertificateNotRevokedValidatorWithAiaOcsp(
+            var validator = GetSubjectCertificateNotRevokedValidatorWithAiaOcsp(
                 new OcspClientMock(BuildOcspResponseBodyWithInvalidTag()));
             Assert.ThrowsAsync<UserCertificateOcspCheckFailedException>(() =>
-                    validator.Validate(this.esteid2018Cert))
+                    validator.Validate(esteid2018Cert))
                 .InnerException
                 .IsInstanceOf<OcspException>()
                 .HasMessage("problem decoding object: System.IO.IOException: unknown tag 23 encountered");
@@ -174,10 +174,10 @@ namespace WebEid.Security.Tests.Validator.Validators
         [Test]
         public void WhenOcspResponseHas2CertResponsesThenThrows()
         {
-            var validator = this.GetSubjectCertificateNotRevokedValidatorWithAiaOcsp(
+            var validator = GetSubjectCertificateNotRevokedValidatorWithAiaOcsp(
                 new OcspClientMock(Certificates.ResourceReader.ReadFromResource("ocsp_response_with_2_responses.der")));
             Assert.ThrowsAsync<UserCertificateOcspCheckFailedException>(() =>
-                    validator.Validate(this.esteid2018Cert))
+                    validator.Validate(esteid2018Cert))
                 .WithMessage(
                     "User certificate revocation check has failed: OCSP response must contain one response, received 2 responses instead");
         }
@@ -186,10 +186,10 @@ namespace WebEid.Security.Tests.Validator.Validators
         [Ignore("It is difficult to make Python and C# CertId equal, needs more work")]
         public void WhenOcspResponseHas2ResponderCertsThenThrows()
         {
-            var validator = this.GetSubjectCertificateNotRevokedValidatorWithAiaOcsp(
+            var validator = GetSubjectCertificateNotRevokedValidatorWithAiaOcsp(
                 new OcspClientMock(Certificates.ResourceReader.ReadFromResource("ocsp_response_with_2_responder_certs.der")));
             Assert.ThrowsAsync<UserCertificateOcspCheckFailedException>(() =>
-                    validator.Validate(this.esteid2018Cert))
+                    validator.Validate(esteid2018Cert))
                 .WithMessage(
                     "User certificate revocation check has failed: OCSP response must contain one responder certificate, received 2 certificates instead");
         }
@@ -198,10 +198,10 @@ namespace WebEid.Security.Tests.Validator.Validators
         public void WhenOcspResponseRevokedThenThrows()
         {
             using var _ = DateTimeProvider.OverrideUtcNow(new DateTime(2021, 9, 18));
-            var validator = this.GetSubjectCertificateNotRevokedValidatorWithAiaOcsp(
+            var validator = GetSubjectCertificateNotRevokedValidatorWithAiaOcsp(
                     new OcspClientMock(Certificates.ResourceReader.ReadFromResource("ocsp_response_revoked.der")));
             Assert.ThrowsAsync<UserCertificateOcspCheckFailedException>(() =>
-                    validator.Validate(this.esteid2018Cert))
+                    validator.Validate(esteid2018Cert))
                 .InnerException.IsInstanceOf<UserCertificateRevokedException>()
                 .WithMessage("User certificate has been revoked: Revocation reason: 0");
         }
@@ -213,13 +213,13 @@ namespace WebEid.Security.Tests.Validator.Validators
             var ocspServiceProvider = OcspServiceMaker.GetDesignatedOcspServiceProvider("https://web-eid-test.free.beeceptor.com");
             var ocspClientMock = new OcspClientMock(Certificates.ResourceReader.ReadFromResource("ocsp_response_unknown.der"));
             var validator = new SubjectCertificateNotRevokedValidator(
-                this.trustedValidator,
+                trustedValidator,
                 ocspClientMock,
                 ocspServiceProvider,
                 configuration.AllowedOcspResponseTimeSkew,
                 configuration.MaxOcspResponseThisUpdateAge);
             Assert.ThrowsAsync<UserCertificateOcspCheckFailedException>(() =>
-                    validator.Validate(this.esteid2018Cert))
+                    validator.Validate(esteid2018Cert))
                 .InnerException.IsInstanceOf<UserCertificateRevokedException>()
                 .WithMessage("User certificate has been revoked: Unknown status");
         }
@@ -228,10 +228,10 @@ namespace WebEid.Security.Tests.Validator.Validators
         public void WhenOcspResponseCaCertNotTrustedThenThrows()
         {
             using var _ = DateTimeProvider.OverrideUtcNow(new DateTime(2021, 3, 1));
-            var validator = this.GetSubjectCertificateNotRevokedValidatorWithAiaOcsp(
+            var validator = GetSubjectCertificateNotRevokedValidatorWithAiaOcsp(
                 new OcspClientMock(Certificates.ResourceReader.ReadFromResource("ocsp_response_unknown.der")));
             var ex = Assert.ThrowsAsync<UserCertificateOcspCheckFailedException>(() =>
-                    validator.Validate(this.esteid2018Cert));
+                    validator.Validate(esteid2018Cert));
             Assert.That(ex.InnerException, Is.TypeOf<CertificateNotTrustedException>());
             Assert.That(ex.InnerException.Message,
                 Does.StartWith(
@@ -242,10 +242,10 @@ namespace WebEid.Security.Tests.Validator.Validators
         [Test]
         public void WhenOcspResponseCACertExpiredThenThrows()
         {
-            var validator = this.GetSubjectCertificateNotRevokedValidatorWithAiaOcsp(
+            var validator = GetSubjectCertificateNotRevokedValidatorWithAiaOcsp(
                 new OcspClientMock(Certificates.ResourceReader.ReadFromResource("ocsp_response_unknown.der")));
             var ex = Assert.ThrowsAsync<UserCertificateOcspCheckFailedException>(() =>
-                    validator.Validate(this.esteid2018Cert));
+                    validator.Validate(esteid2018Cert));
             Assert.That(ex.InnerException, Is.TypeOf<CertificateExpiredException>());
             Assert.That(ex.InnerException.Message,
                 Does.StartWith("AIA OCSP responder certificate has expired"));
@@ -297,7 +297,7 @@ namespace WebEid.Security.Tests.Validator.Validators
             Certificates.ResourceReader.ReadFromResource("ocsp_response.der");
 
         private SubjectCertificateNotRevokedValidator GetSubjectCertificateNotRevokedValidatorWithAiaOcsp(IOcspClient client) =>
-            new(this.trustedValidator, client, OcspServiceMaker.GetAiaOcspServiceProvider(), configuration.AllowedOcspResponseTimeSkew, configuration.MaxOcspResponseThisUpdateAge);
+            new(trustedValidator, client, OcspServiceMaker.GetAiaOcspServiceProvider(), configuration.AllowedOcspResponseTimeSkew, configuration.MaxOcspResponseThisUpdateAge);
 
         private static void SetSubjectCertificateIssuerCertificate(SubjectCertificateTrustedValidator trustedValidator) =>
             SetPrivatePropertyValue(trustedValidator, "SubjectCertificateIssuerCertificate", new X509Certificate2(Certificates.GetTestEsteid2018Ca()));
@@ -320,7 +320,7 @@ namespace WebEid.Security.Tests.Validator.Validators
         }
 
         private SubjectCertificateNotRevokedValidator GetSubjectCertificateNotRevokedValidatior(OcspServiceProvider ocspServiceProvider)
-            => new(this.trustedValidator, this.ocspClient, ocspServiceProvider, configuration.AllowedOcspResponseTimeSkew, configuration.MaxOcspResponseThisUpdateAge);
+            => new(trustedValidator, ocspClient, ocspServiceProvider, configuration.AllowedOcspResponseTimeSkew, configuration.MaxOcspResponseThisUpdateAge);
 
         private sealed class OcspClientMock : IOcspClient
         {
@@ -334,11 +334,11 @@ namespace WebEid.Security.Tests.Validator.Validators
 
             public async Task<OcspResp> Request(Uri uri, OcspReq ocspReq)
             {
-                var contentBytes = await this.content.ReadAsByteArrayAsync();
+                var contentBytes = await content.ReadAsByteArrayAsync();
                 return new OcspResp(contentBytes);
             }
         }
 
-        public void Dispose() => this.ocspClient?.Dispose();
+        public void Dispose() => ocspClient?.Dispose();
     }
 }

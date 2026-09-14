@@ -27,22 +27,16 @@ namespace WebEid.Security.Validator.Ocsp
     /// <summary>
     /// Provides an OCSP (Online Certificate Status Protocol) service provider based on configuration.
     /// </summary>
-    public class OcspServiceProvider
+    /// <remarks>
+    /// Initializes a new instance of the <see cref="OcspServiceProvider"/> class.
+    /// </remarks>
+    /// <param name="designatedOcspServiceConfiguration">The configuration for the designated OCSP service.</param>
+    /// <param name="aiaOcspServiceConfiguration">The configuration for the AIA (Authority Information Access) OCSP service.</param>
+    public class OcspServiceProvider(DesignatedOcspServiceConfiguration designatedOcspServiceConfiguration, AiaOcspServiceConfiguration aiaOcspServiceConfiguration)
     {
-        private readonly DesignatedOcspService designatedOcspService;
-        private readonly AiaOcspServiceConfiguration aiaOcspServiceConfiguration;
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="OcspServiceProvider"/> class.
-        /// </summary>
-        /// <param name="designatedOcspServiceConfiguration">The configuration for the designated OCSP service.</param>
-        /// <param name="aiaOcspServiceConfiguration">The configuration for the AIA (Authority Information Access) OCSP service.</param>
-        public OcspServiceProvider(DesignatedOcspServiceConfiguration designatedOcspServiceConfiguration, AiaOcspServiceConfiguration aiaOcspServiceConfiguration)
-        {
-            this.designatedOcspService = designatedOcspServiceConfiguration != null ? new DesignatedOcspService(designatedOcspServiceConfiguration) : null;
-            this.aiaOcspServiceConfiguration = aiaOcspServiceConfiguration ??
+        private readonly DesignatedOcspService designatedOcspService = designatedOcspServiceConfiguration != null ? new DesignatedOcspService(designatedOcspServiceConfiguration) : null;
+        private readonly AiaOcspServiceConfiguration aiaOcspServiceConfiguration = aiaOcspServiceConfiguration ??
                                                throw new ArgumentNullException(nameof(aiaOcspServiceConfiguration));
-        }
 
         /// <summary>
         /// Gets the appropriate OCSP service based on the certificate issuer.
@@ -51,11 +45,11 @@ namespace WebEid.Security.Validator.Ocsp
         /// <returns>An instance of <see cref="IOcspService"/>.</returns>
         public IOcspService GetService(Org.BouncyCastle.X509.X509Certificate certificate = null)
         {
-            if (this.designatedOcspService != null && this.designatedOcspService.SupportsIssuerOf(certificate))
+            if (designatedOcspService != null && designatedOcspService.SupportsIssuerOf(certificate))
             {
-                return this.designatedOcspService;
+                return designatedOcspService;
             }
-            return new AiaOcspService(this.aiaOcspServiceConfiguration, certificate);
+            return new AiaOcspService(aiaOcspServiceConfiguration, certificate);
         }
     }
 }

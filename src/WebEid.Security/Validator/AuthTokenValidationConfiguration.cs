@@ -38,15 +38,15 @@ namespace WebEid.Security.Validator
 
         private AuthTokenValidationConfiguration(AuthTokenValidationConfiguration other)
         {
-            this.SiteOrigin = other.SiteOrigin;
-            this.TrustedCaCertificates = new List<X509Certificate2>(other.TrustedCaCertificates);
-            this.IsUserCertificateRevocationCheckWithOcspEnabled = other.IsUserCertificateRevocationCheckWithOcspEnabled;
-            this.OcspRequestTimeout = other.OcspRequestTimeout;
-            this.AllowedOcspResponseTimeSkew = other.AllowedOcspResponseTimeSkew;
-            this.MaxOcspResponseThisUpdateAge = other.MaxOcspResponseThisUpdateAge;
-            this.DesignatedOcspServiceConfiguration = other.DesignatedOcspServiceConfiguration;
-            this.DisallowedSubjectCertificatePolicies = new ReadOnlyCollection<string>(other.DisallowedSubjectCertificatePolicies);
-            this.NonceDisabledOcspUrls = new List<Uri>(other.NonceDisabledOcspUrls);
+            SiteOrigin = other.SiteOrigin;
+            TrustedCaCertificates = [.. other.TrustedCaCertificates];
+            IsUserCertificateRevocationCheckWithOcspEnabled = other.IsUserCertificateRevocationCheckWithOcspEnabled;
+            OcspRequestTimeout = other.OcspRequestTimeout;
+            AllowedOcspResponseTimeSkew = other.AllowedOcspResponseTimeSkew;
+            MaxOcspResponseThisUpdateAge = other.MaxOcspResponseThisUpdateAge;
+            DesignatedOcspServiceConfiguration = other.DesignatedOcspServiceConfiguration;
+            DisallowedSubjectCertificatePolicies = new ReadOnlyCollection<string>(other.DisallowedSubjectCertificatePolicies);
+            NonceDisabledOcspUrls = [.. other.NonceDisabledOcspUrls];
         }
 
         /// <summary>
@@ -57,7 +57,7 @@ namespace WebEid.Security.Validator
         /// <summary>
         /// The list of trusted CA certificates.
         /// </summary>
-        public List<X509Certificate2> TrustedCaCertificates { get; } = new List<X509Certificate2>();
+        public List<X509Certificate2> TrustedCaCertificates { get; } = [];
 
         /// <summary>
         /// A value indicating whether user certificate revocation check with OCSP is enabled.
@@ -90,19 +90,19 @@ namespace WebEid.Security.Validator
         /// The list of disallowed subject certificate policies.
         /// </summary>
         public IList<string> DisallowedSubjectCertificatePolicies { get; } =
-            new List<string>(new[]
-            {
+            [
                 SubjectCertificatePolicies.EsteidSk2015MobileIdPolicyV1,
                 SubjectCertificatePolicies.EsteidSk2015MobileIdPolicyV2,
                 SubjectCertificatePolicies.EsteidSk2015MobileIdPolicyV3,
                 SubjectCertificatePolicies.EsteidSk2015MobileIdPolicy
-            });
+,
+            ];
 
         /// <summary>
         /// The list of OCSP URLs where the nonce extension is disabled.
         /// Disable OCSP nonce extension for EstEID 2015 cards by default.
         /// </summary>
-        public List<Uri> NonceDisabledOcspUrls { get; } = new List<Uri> { };
+        public List<Uri> NonceDisabledOcspUrls { get; } = [];
 
 
         private static void RequirePositiveTimeSpan(TimeSpan timeSpan, string fieldName)
@@ -120,17 +120,17 @@ namespace WebEid.Security.Validator
         /// <exception cref="ArgumentException">When required parameters are null</exception>
         public void Validate()
         {
-            ValidateSiteOriginURL(this.SiteOrigin);
+            ValidateSiteOriginURL(SiteOrigin);
 
-            if (!this.TrustedCaCertificates.Any())
+            if (TrustedCaCertificates.Count == 0)
             { throw new ArgumentException("At least one trusted certificate authority must be provided"); }
 
-            RequirePositiveTimeSpan(this.OcspRequestTimeout, "OCSP request timeout");
-            RequirePositiveTimeSpan(this.AllowedOcspResponseTimeSkew, "Allowed OCSP response time-skew");
-            RequirePositiveTimeSpan(this.MaxOcspResponseThisUpdateAge, "Max OCSP response thisUpdate age");
+            RequirePositiveTimeSpan(OcspRequestTimeout, "OCSP request timeout");
+            RequirePositiveTimeSpan(AllowedOcspResponseTimeSkew, "Allowed OCSP response time-skew");
+            RequirePositiveTimeSpan(MaxOcspResponseThisUpdateAge, "Max OCSP response thisUpdate age");
         }
 
-        
+
         /// <summary>
         /// Validates that the given URI is an origin URL as defined in <a href="https://developer.mozilla.org/en-US/docs/Web/API/Location/origin">MDN</a>,
         /// in the form of <![CDATA[<code> <scheme> "://" <hostname> [ ":" <port> ]</code>]]>.
@@ -140,10 +140,7 @@ namespace WebEid.Security.Validator
         /// <exception cref="ArgumentException">When the URI is not in the form of origin URL</exception>
         private static void ValidateSiteOriginURL(Uri siteOrigin)
         {
-            if (siteOrigin == null)
-            {
-                throw new ArgumentNullException(nameof(siteOrigin));
-            }
+            ArgumentNullException.ThrowIfNull(siteOrigin);
 
             try
             {
@@ -165,18 +162,43 @@ namespace WebEid.Security.Validator
         /// </summary>
         /// <returns>A new instance with the same configuration as the original.</returns>
         public AuthTokenValidationConfiguration Copy() =>
-            new AuthTokenValidationConfiguration(this);
+            new(this);
 
         /// <inheritdoc/>
-        public bool Equals(AuthTokenValidationConfiguration other) =>
-            this.SiteOrigin.Equals(other.SiteOrigin) &&
-                   Enumerable.SequenceEqual(this.TrustedCaCertificates, other.TrustedCaCertificates) &&
-                   this.IsUserCertificateRevocationCheckWithOcspEnabled.Equals(other
-                       .IsUserCertificateRevocationCheckWithOcspEnabled) &&
-                   this.OcspRequestTimeout.Equals(other.OcspRequestTimeout) &&
-                   Enumerable.SequenceEqual(this.DisallowedSubjectCertificatePolicies,
-                       other.DisallowedSubjectCertificatePolicies) &&
-                   Equals(this.DesignatedOcspServiceConfiguration, other.DesignatedOcspServiceConfiguration) &&
-                   Enumerable.SequenceEqual(this.NonceDisabledOcspUrls, other.NonceDisabledOcspUrls);
+        public bool Equals(AuthTokenValidationConfiguration other)
+        {
+            if (other is null)
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            return Equals(SiteOrigin, other.SiteOrigin) &&
+                   Enumerable.SequenceEqual(TrustedCaCertificates, other.TrustedCaCertificates) &&
+                   IsUserCertificateRevocationCheckWithOcspEnabled == other.IsUserCertificateRevocationCheckWithOcspEnabled &&
+                   OcspRequestTimeout.Equals(other.OcspRequestTimeout) &&
+                   AllowedOcspResponseTimeSkew.Equals(other.AllowedOcspResponseTimeSkew) &&
+                   MaxOcspResponseThisUpdateAge.Equals(other.MaxOcspResponseThisUpdateAge) &&
+                   Equals(DesignatedOcspServiceConfiguration, other.DesignatedOcspServiceConfiguration) &&
+                   Enumerable.SequenceEqual(DisallowedSubjectCertificatePolicies, other.DisallowedSubjectCertificatePolicies) &&
+                   Enumerable.SequenceEqual(NonceDisabledOcspUrls, other.NonceDisabledOcspUrls);
+        }
+
+        /// <inheritdoc/>
+        public override bool Equals(object obj) =>
+            obj is AuthTokenValidationConfiguration other && Equals(other);
+
+        /// <inheritdoc/>
+        public override int GetHashCode() => HashCode.Combine(
+                SiteOrigin,
+                IsUserCertificateRevocationCheckWithOcspEnabled,
+                OcspRequestTimeout,
+                AllowedOcspResponseTimeSkew,
+                MaxOcspResponseThisUpdateAge,
+                DesignatedOcspServiceConfiguration);
     }
 }

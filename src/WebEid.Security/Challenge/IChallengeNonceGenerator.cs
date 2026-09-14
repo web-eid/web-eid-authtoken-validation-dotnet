@@ -31,7 +31,7 @@ namespace WebEid.Security.Challenge
         /// <summary>
         /// Challenge Nonce length in bytes.
         /// </summary>
-        const int NonceLength = 32;
+        public const int NonceLength = 32;
 
         /// <summary>
         /// Generates a cryptographic nonce, a large random number that can be used only once,
@@ -39,6 +39,6 @@ namespace WebEid.Security.Challenge
         /// </summary>
         /// <param name="ttl">Challenge nonce time-to-live duration. When the time-to-live passes, the nonce is considered to be expired.</param>
         /// <returns>a ChallengeNonce that contains the Base64-encoded nonce and its expiry time</returns>
-        ChallengeNonce GenerateAndStoreNonce(TimeSpan ttl);
+        public ChallengeNonce GenerateAndStoreNonce(TimeSpan ttl);
     }
 }

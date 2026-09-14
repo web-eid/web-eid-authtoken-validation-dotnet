@@ -1,0 +1,50 @@
+/*
+ * Copyright © 2025-2025 Estonian Information System Authority
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+namespace WebEid.Security.Validator.VersionValidators
+{
+    using System.Security.Cryptography.X509Certificates;
+    using System.Threading.Tasks;
+    using AuthToken;
+    using Exceptions;
+
+    /// <summary>
+    /// Version-specific Web eID authentication token validator.
+    /// </summary>
+    public interface IAuthTokenVersionValidator
+    {
+        /// <summary>
+        /// Whether this validator supports the specified token format,
+        /// e.g. "web-eid:1.0" or "web-eid:1.1".
+        /// </summary>
+        public bool Supports(string format);
+
+        /// <summary>
+        /// Validates the Web eID authentication token according to the
+        /// version-specific rules and returns the authenticated user's certificate.
+        /// </summary>
+        /// <param name="authToken">Parsed Web eID authentication token.</param>
+        /// <param name="currentChallengeNonce">Server-issued challenge nonce.</param>
+        /// <returns>Validated authentication certificate.</returns>
+        /// <exception cref="AuthTokenException">If validation fails.</exception>
+        public Task<X509Certificate2> Validate(WebEidAuthToken authToken, string currentChallengeNonce);
+    }
+}

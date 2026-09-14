@@ -17,14 +17,14 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-﻿namespace WebEid.AspNetCore.Example.Services
+namespace WebEid.AspNetCore.Example.Services
 {
+    using System;
     using digidoc;
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.Extensions.Hosting;
-    using System;
 
-    public class DigiDocConfiguration
+    public class DigiDocConfiguration(IWebHostEnvironment env)
     {
         /// <summary>
         /// Base64 cert from https://open-eid.github.io/test-TL/trusted-test-tsl.crt
@@ -58,12 +58,7 @@ oaPjh2zKIrz/AlY2RmqMMA==";
         private const string TestTslUrl = "https://open-eid.github.io/test-TL/tl-mp-test-EE.xml";
         private const string TestTsUrl = "http://demo.sk.ee/tsa/";
 
-        private readonly IWebHostEnvironment env;
-
-        public DigiDocConfiguration(IWebHostEnvironment env)
-        {
-            this.env = env;
-        }
+        private readonly IWebHostEnvironment env = env;
 
         public void Initialize()
         {
@@ -74,7 +69,7 @@ oaPjh2zKIrz/AlY2RmqMMA==";
                 conf.setTSLCert(Convert.FromBase64String(TestTslCert));
                 conf.setTSUrl(TestTsUrl);
             }
-            DigiDocConf.init(conf);
+            Conf.init(conf);
         }
     }
 }
