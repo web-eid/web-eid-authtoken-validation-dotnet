@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Estonian Information System Authority
+// SPDX-License-Identifier: MIT
+
 namespace WebEid.Security.Tests.Certificate
 {
     using System.Security.Cryptography.X509Certificates;

@@ -1,4 +1,6 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<!-- SPDX-FileCopyrightText: Estonian Information System Authority -->
+<!-- SPDX-License-Identifier: MIT -->
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
