@@ -22,7 +22,8 @@ namespace WebEid.AspNetCore.Example
     using System.Threading.Tasks;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
-
+    using System.Net;
+    
     public class Startup
     {
         public Startup(IConfiguration configuration, IWebHostEnvironment environment)
@@ -30,6 +31,8 @@ namespace WebEid.AspNetCore.Example
             Configuration = configuration;
             CurrentEnvironment = environment;
         }
+
+        private static ILogger logger;
 
         private IConfiguration Configuration { get; }
         private IWebHostEnvironment CurrentEnvironment { get; }
@@ -41,7 +44,7 @@ namespace WebEid.AspNetCore.Example
             {
                 builder.AddConsole();
             });
-            var logger = loggerFactory.CreateLogger("Web-eId ASP.NET Core Example");
+            logger = loggerFactory.CreateLogger("Web-eId ASP.NET Core Example");
             services.AddSingleton(logger);
 
             services.AddRazorPages(options =>
@@ -67,12 +70,20 @@ namespace WebEid.AspNetCore.Example
                 options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute());
             });
 
+            var isLoopbackAddressWithHttpProtocol = IsLoopbackAddressWithHttpProtocol(Configuration);
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
                 {
-                    options.Cookie.Name = "__Host-WebEid.AspNetCore.Example.Auth";
-                    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-                    options.Cookie.SameSite = SameSiteMode.Strict;
+                    if (isLoopbackAddressWithHttpProtocol)
+                    {
+                        options.Cookie.Name = "WebEid.AspNetCore.Example.Auth";
+                    }
+                    else
+                    {
+                        options.Cookie.Name = "__Host-WebEid.AspNetCore.Example.Auth";
+                        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                    }
+                    options.Cookie.SameSite = SameSiteMode.Strict;                        
                     options.Events.OnRedirectToLogin = context =>
                     {
                         context.Response.Redirect("/");
@@ -87,8 +98,15 @@ namespace WebEid.AspNetCore.Example
 
             services.AddSession(options =>
             {
-                options.Cookie.Name = "__Host-WebEid.AspNetCore.Example.Session";
-                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                if (isLoopbackAddressWithHttpProtocol)
+                {
+                    options.Cookie.Name = "WebEid.AspNetCore.Example.Auth";
+                }
+                else
+                {
+                    options.Cookie.Name = "__Host-WebEid.AspNetCore.Example.Session";
+                    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                }
                 options.Cookie.SameSite = SameSiteMode.Strict;
                 options.IdleTimeout = TimeSpan.FromSeconds(60);
                 options.Cookie.IsEssential = true;
@@ -108,10 +126,13 @@ namespace WebEid.AspNetCore.Example
             services.AddSingleton<IChallengeNonceStore, SessionBackedChallengeNonceStore>();
             services.AddSingleton<IChallengeNonceGenerator, ChallengeNonceGenerator>();
 
-            services.AddAntiforgery(options =>
+            if (!isLoopbackAddressWithHttpProtocol)
             {
-                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-            });
+                services.AddAntiforgery(options =>
+                {
+                    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                });
+            }
 
             // Add support for running behind a TLS terminating proxy.
             services.Configure<ForwardedHeadersOptions>(options =>
@@ -131,7 +152,21 @@ namespace WebEid.AspNetCore.Example
                 throw new ConfigurationErrorsException("OriginUrl is not configured");
             }
 
-            return new Uri(url);
+            if (url.EndsWith("/"))
+            {
+                throw new ConfigurationErrorsException("Configuration parameter OriginUrl cannot end with '/': " + url);
+            }
+
+            var uri = new Uri(url);
+
+            if (uri.Scheme.Equals("http") && IsLoopbackAddress(uri.Host))
+            {
+                var uriHttps = new Uri("https" + url.Substring(uri.Scheme.Length));
+                logger.LogWarning("Configuration OriginUrl contains http protocol {}, which is not supported. Replacing it with secure {}", uri.OriginalString, uriHttps.OriginalString);
+                uri = uriHttps;
+            }
+
+            return uri;
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -164,5 +199,30 @@ namespace WebEid.AspNetCore.Example
                 endpoints.MapControllers();
             });
         }
+
+        private static bool IsLoopbackAddressWithHttpProtocol(IConfiguration configuration)
+        {
+            string originUrl = configuration["OriginUrl"];
+            return originUrl.StartsWith("http:") && IsLoopbackAddress(new Uri(originUrl).Host);
+        }
+
+        private static bool IsLoopbackAddress(string host)
+        {
+            if (string.IsNullOrEmpty(host)) return false;
+
+            if (host.Equals("localhost", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            if (IPAddress.TryParse(host, out IPAddress ipAddress))
+            {
+                return IPAddress.IsLoopback(ipAddress);
+            }
+
+            return false;
+        }
+
     }
+
 }
