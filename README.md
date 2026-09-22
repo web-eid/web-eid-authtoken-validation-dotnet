@@ -12,7 +12,7 @@ Additional information regarding the Web eID project can be found on the officia
 
 # Quickstart
 
-Complete the steps below to add support for secure authentication with eID cards to your ASP.NET Core web application backend. Instructions for the frontend are available [here](https://github.com/web-eid/web-eid.js).
+Complete the steps below to add support for secure authentication with eID cards to your ASP.NET Core web application backend. Instructions for the frontend are available [here](https://github.com/web-eid/web-eid.js). If your application already uses Web eID and you only need to add the mobile flow, see [Adding Web eID for Mobile support to an existing integration](#adding-web-eid-for-mobile-support-to-an-existing-integration).
 
 See full example [here](https://github.com/web-eid/web-eid-authtoken-validation-dotnet/tree/main/example).
 
@@ -382,7 +382,7 @@ When using standard [ASP.NET cookie authentication](https://docs.microsoft.com/e
     Note that successful token validation only establishes *who* the user is; it does not establish that the user is allowed to use the service. The authorization check is application-specific and must be implemented by the application itself, as outlined by the `IsUserAuthorized()` stub above.
 
 
-- Similarly, the `MobileAuthInitController` generates a challenge nonce and returns the authentication request link (OS-verified App Link / Universal Link) for starting the Web eID mobile authentication flow, and the `AuthController` handles the mobile login request by validating the returned authentication token and creating the authentication cookie.
+- Similarly, the `MobileAuthInitController` generates a challenge nonce and returns the authentication request link (OS-verified App Link / Universal Link) for starting the Web eID mobile authentication flow, and the `AuthController` handles the mobile login request by validating the returned authentication token and creating the authentication cookie. The authentication token returned by the mobile app uses format `web-eid:1.1` when a signing certificate is requested, or `web-eid:1.0` for authentication only.
   ```cs
     using System;
     using System.Text;
@@ -457,9 +457,21 @@ When using standard [ASP.NET cookie authentication](https://docs.microsoft.com/e
     }
   ```
 
+## Adding Web eID for Mobile support to an existing integration
+
+Reuse your existing challenge nonce generator and store, trusted CA configuration, token validation and authorization logic. The mobile flow adds an App Link/Universal Link that opens the RIA DigiDoc app and a login page that receives the response in its URL fragment and posts the token to your back end. Authentication-only responses use `web-eid:1.0`; requesting a signing certificate with `getSigningCertificate=true` requires a validator that supports `web-eid:1.1`. The validator configuration stays the same.
+
+1. Add `POST /auth/mobile/init` to generate and store a challenge nonce and return `authUri`: `https://id.eesti.ee/auth#<payload>`, where the payload is Base64-encoded JSON containing `challenge`, `loginUri` and optionally `getSigningCertificate` ([init controller](example/src/WebEid.AspNetCore.Example/Controllers/Api/MobileAuthInitController.cs)). Set `WebEidMobile:BaseRequestUri` to `https://id.eesti.ee` for the RIA DigiDoc app; the example defaults to the development scheme `web-eid-mobile://`. Configure `WebEidMobile:RequestSigningCert` as needed.
+2. Serve `GET /auth/mobile/login` at an HTTPS `loginUri` on the validator's configured `OriginUrl`. Its script must decode the response, handle errors and post `authToken` to the existing `POST /auth/login` endpoint ([login page](example/src/WebEid.AspNetCore.Example/Pages/WebEidLogin.cshtml), [payload parser](example/src/WebEid.AspNetCore.Example/wwwroot/js/payload.js)). Retrieve and consume the session's unexpired challenge nonce, validate the token, apply your authorization checks and establish the authenticated session as before.
+3. Use `Secure`, `HttpOnly`, `SameSite=Lax` for the pre-authentication session cookie so it accompanies the return from the app. Keep CSRF protection on POST endpoints ([Startup.cs](example/src/WebEid.AspNetCore.Example/Startup.cs)) and protect the login page against XSS. Callback fragments are untrusted input; the CSRF token alone does not authenticate them. See the architecture document's [security assumptions](https://github.com/web-eid/web-eid-for-mobile-architecture-doc#security-assumptions).
+4. Add a mobile login button that calls the init endpoint and opens the returned `authUri` ([front end](example/src/WebEid.AspNetCore.Example/Pages/Index.cshtml)). Keep the existing desktop login control.
+
+Optional mobile signing is demonstrated by [SignController](example/src/WebEid.AspNetCore.Example/Controllers/Api/SignController.cs) and [MobileSigningService](example/src/WebEid.AspNetCore.Example/Signing/MobileSigningService.cs). A validated signing certificate returned during authentication can be stored with its supported algorithms to skip the separate certificate request. Check that the signing certificate belongs to the authenticated user before preparing the data to sign.
+
 # Table of contents
 
 * [Quickstart](#quickstart)
+  * [Adding Web eID for Mobile support to an existing integration](#adding-web-eid-for-mobile-support-to-an-existing-integration)
 * [Introduction](#introduction)
 * [Authentication token format](#authentication-token-format)
   * [Supported token format versions](#supported-token-format-versions)
