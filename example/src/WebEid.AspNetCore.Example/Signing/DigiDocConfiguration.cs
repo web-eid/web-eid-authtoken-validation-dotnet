@@ -58,7 +58,8 @@ oaPjh2zKIrz/AlY2RmqMMA==";
                 conf.setTSLCert(Convert.FromBase64String(TestTslCert));
                 conf.setTSUrl(TestTsUrl);
             }
-            DigiDocConf.init(conf);
+            // DigiDocConf.init takes ownership of the native object, transfer() prevents the C# finalizer from deleting it.
+            DigiDocConf.init(conf.transfer());
         }
     }
 }
