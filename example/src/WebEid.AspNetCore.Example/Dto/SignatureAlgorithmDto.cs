@@ -1,12 +1,12 @@
 // SPDX-FileCopyrightText: Estonian Information System Authority
 // SPDX-License-Identifier: MIT
 
-﻿namespace WebEid.AspNetCore.Example.Dto
+namespace WebEid.AspNetCore.Example.Dto
 {
     public class SignatureAlgorithmDto
     {
-        public string CryptoAlgorithm { get; set; }
-        public string HashFunction { get; set; }
-        public string PaddingScheme { get; set; }
+        public required string CryptoAlgorithm { get; set; }
+        public required string HashFunction { get; set; }
+        public required string PaddingScheme { get; set; }
     }
 }

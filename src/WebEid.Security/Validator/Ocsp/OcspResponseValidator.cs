@@ -127,7 +127,7 @@ namespace WebEid.Security.Validator.Ocsp
 
     internal interface ISingleResp
     {
-        DateTime ThisUpdate { get; }
-        DateTimeObject NextUpdate { get; }
+        public DateTime ThisUpdate { get; }
+        public DateTimeObject NextUpdate { get; }
     }
 }

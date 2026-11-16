@@ -4,14 +4,13 @@
 namespace WebEid.Security.Tests.Validator
 {
     using System;
-    using System.Collections.Generic;
+    using System.Security.Cryptography;
     using System.Security.Cryptography.X509Certificates;
     using NUnit.Framework;
     using Org.BouncyCastle.Security;
     using Security.Validator;
     using Security.Validator.Ocsp.Service;
     using TestUtils;
-    using X509Certificate = Org.BouncyCastle.X509.X509Certificate;
 
     [TestFixture]
     public class AuthTokenValidationConfigurationTests
@@ -20,7 +19,7 @@ namespace WebEid.Security.Tests.Validator
         public void AuthTokenValidationConfigurationWithoutSiteOriginThrowsArgumentException()
         {
             var configuration = new AuthTokenValidationConfiguration();
-            Assert.Throws<ArgumentNullException>(() => configuration.Validate())
+            Assert.Throws<ArgumentNullException>(configuration.Validate)
                 .WithMessage("Value cannot be null. (Parameter 'siteOrigin')");
         }
 
@@ -29,7 +28,7 @@ namespace WebEid.Security.Tests.Validator
         {
             var configuration =
                 new AuthTokenValidationConfiguration { SiteOrigin = new Uri("invalid", UriKind.RelativeOrAbsolute) };
-            Assert.Throws<ArgumentException>(() => configuration.Validate())
+            Assert.Throws<ArgumentException>(configuration.Validate)
                 .WithMessage("Provided URI is not a valid URL");
         }
 
@@ -40,7 +39,7 @@ namespace WebEid.Security.Tests.Validator
             {
                 SiteOrigin = new Uri("https://valid", UriKind.RelativeOrAbsolute),
             };
-            Assert.Throws<ArgumentException>(() => configuration.Validate())
+            Assert.Throws<ArgumentException>(configuration.Validate)
                 .WithMessage("At least one trusted certificate authority must be provided");
         }
 
@@ -51,9 +50,9 @@ namespace WebEid.Security.Tests.Validator
             {
                 SiteOrigin = new Uri("https://valid", UriKind.RelativeOrAbsolute),
             };
-            configuration.TrustedCaCertificates.Add(new X509Certificate2(Array.Empty<byte>()));
+            configuration.TrustedCaCertificates.Add(CreateTestCertificate());
             configuration.OcspRequestTimeout = TimeSpan.Zero;
-            Assert.Throws<ArgumentOutOfRangeException>(() => configuration.Validate())
+            Assert.Throws<ArgumentOutOfRangeException>(configuration.Validate)
                 .WithMessage("OCSP request timeout must be greater than zero (Parameter 'timeSpan')");
         }
 
@@ -91,8 +90,8 @@ namespace WebEid.Security.Tests.Validator
             {
                 SiteOrigin = new Uri("https://valid", UriKind.RelativeOrAbsolute),
             };
-            configuration.TrustedCaCertificates.Add(new X509Certificate2(Array.Empty<byte>()));
-            Assert.DoesNotThrow(() => configuration.Validate());
+            configuration.TrustedCaCertificates.Add(CreateTestCertificate());
+            Assert.DoesNotThrow(configuration.Validate);
         }
 
         [Test]
@@ -101,21 +100,34 @@ namespace WebEid.Security.Tests.Validator
             var configuration = new AuthTokenValidationConfiguration
             {
                 SiteOrigin = new Uri("https://valid", UriKind.RelativeOrAbsolute),
+                OcspRequestTimeout = TimeSpan.FromMinutes(1)
             };
-            configuration.OcspRequestTimeout = TimeSpan.FromMinutes(1);
             configuration.TrustedCaCertificates.Add(new X509Certificate2(Certificates.GetTestEsteid2015Ca()));
             configuration.TrustedCaCertificates.Add(new X509Certificate2(Certificates.GetTestEsteid2018Ca()));
             configuration.DesignatedOcspServiceConfiguration = new DesignatedOcspServiceConfiguration(
                 new Uri("http://ocsp.ee"),
                 DotNetUtilities.FromX509Certificate(Certificates.GetTestEsteid2018Ca()),
-                new List<X509Certificate>
-                {
+                [
                         DotNetUtilities.FromX509Certificate(Certificates.GetTestEsteid2015Ca()),
                         DotNetUtilities.FromX509Certificate(Certificates.GetTestEsteid2018Ca())
-                });
+                ]);
 
             var copyOfConfiguration = configuration.Copy();
             Assert.That(configuration, Is.EqualTo(copyOfConfiguration));
+        }
+
+        private static X509Certificate2 CreateTestCertificate()
+        {
+            using var rsa = RSA.Create(2048);
+            var request = new CertificateRequest(
+                "CN=Test Certificate",
+                rsa,
+                HashAlgorithmName.SHA256,
+                RSASignaturePadding.Pkcs1);
+
+            return request.CreateSelfSigned(
+                DateTimeOffset.UtcNow.AddDays(-1),
+                DateTimeOffset.UtcNow.AddDays(1));
         }
     }
 }
